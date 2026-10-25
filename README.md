@@ -1,5 +1,7 @@
 # Zero Hour
 
+[![Zero Hour: a 3D bomb case with Memory, Knob, Simon, Morse, Glyphs and Combination modules](site/zero-hour-preview.png)](https://zero-hour.sunken.dev/)
+
 **One team. One bomb. One manual.**
 
 A cooperative bomb defusal game that runs in the browser. One of you inspects a 3D bomb case and defuses its modules; the
