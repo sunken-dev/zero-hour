@@ -1,6 +1,8 @@
 // Typesets the PDF manual. tools/build-manual-pdf.mjs reads manualHTML() from the game page as a tree of elements
 // and writes it to manual.json next to this file: a string is text, { t, c, k } is an element with its tag, class and
-// children, and { t: "svg", svg } is an SVG image. The look follows the manual's print stylesheet in site/index.html.
+// children, and { t: "svg", svg } is an SVG image. The `revision` input is the manual's fingerprint.
+// The layout is a technical manual: a cover, a contents page and one numbered section per page. The colours follow
+// the manual's print stylesheet in site/index.html.
 // An element this template does not know stops the build, so new markup in a module's manual cannot silently vanish.
 
 #let ink = rgb("#14191c")
@@ -20,30 +22,79 @@
   green: (rgb("#2fbf63"), ink),
 )
 #let mono = "DejaVu Sans Mono"   // built into Typst
+#let revision = sys.inputs.at("revision", default: none)
 
 #set document(title: "Zero Hour: defusal manual", date: none)
-#set page(
-  paper: "a4",
-  margin: (top: 15mm, bottom: 18mm, x: 14mm),
-  footer: context align(center, text(8pt, fill: rgb("#667"))[
-    Zero Hour defusal manual #sym.dash.em page #counter(page).display() of #counter(page).final().first()
-  ]),
-)
 #set text(font: "Chakra Petch", size: 10.5pt, fill: ink, lang: "en")
 #set par(leading: 0.6em, spacing: 0.9em)
 #set list(indent: 0.4em, spacing: 0.75em)
 #set enum(indent: 0.4em, spacing: 0.75em)
+
+#let section-label(h) = {
+  if h.numbering == none { h.body }
+  else { [#numbering(h.numbering, ..counter(heading).at(h.location())) #h.body] }
+}
+
+// the document on the left, the section of the current page on the right
+#let running-head = context {
+  let page-now = here().page()
+  let seen = query(heading.where(level: 1)).filter(h => h.location().page() <= page-now)
+  set text(8pt, fill: deep, tracking: 0.08em)
+  grid(columns: (1fr, auto), [ZERO HOUR #sym.dash.em DEFUSAL MANUAL], if seen.len() > 0 { upper(section-label(seen.last())) })
+  v(-4pt)
+  line(length: 100%, stroke: 0.6pt + rule)
+}
+#let running-foot = context {
+  set text(8pt, fill: deep)
+  line(length: 100%, stroke: 0.6pt + rule)
+  v(-4pt)
+  grid(columns: (1fr, auto),
+    if revision != none [Revision #revision],
+    [Page #counter(page).display() of #counter(page).final().first()])
+}
+
+#set page(
+  paper: "a4",
+  margin: (top: 22mm, bottom: 22mm, x: 18mm),
+  header: running-head,
+  footer: running-foot,
+)
+
+#set heading(numbering: "1.1")
 #show heading: set text(fill: navy)
-#show heading.where(level: 1): set text(24pt)
-#show heading.where(level: 2): it => block(below: 9pt, sticky: true, width: 100%, {
-  place(top + left, dy: -1.5pt, rect(width: 56pt, height: 3pt, fill: teal))
+#show heading.where(level: 1): it => block(width: 100%, below: 16pt, {
+  let title = text(22pt, weight: "bold", upper(it.body))
+  if it.numbering == none { title } else {
+    let number = box(fill: teal, inset: (x: 9pt, y: 6pt), text(18pt, fill: white, weight: "bold", counter(heading).display(it.numbering)))
+    grid(columns: (auto, 1fr), column-gutter: 10pt, align: horizon, number, title)
+  }
+  v(6pt)
   line(length: 100%, stroke: 1.5pt + teal)
-  v(4pt)
-  text(16pt, it.body)
 })
-#show heading.where(level: 3): it => block(above: 14pt, below: 6pt, sticky: true, text(12pt, fill: teal-dark, it.body))
+#show heading.where(level: 2): it => block(above: 16pt, below: 7pt, sticky: true, text(12pt, fill: teal-dark, {
+  if it.numbering != none { box(width: 2.4em, counter(heading).display(it.numbering)) }
+  it.body
+}))
+#show outline.entry.where(level: 1): set block(above: 12pt)
+#show outline.entry.where(level: 1): set text(weight: "bold")
+
+#let cover(logo, title, intro) = page(header: none, footer: none, margin: (x: 22mm, top: 40mm, bottom: 25mm), {
+  logo
+  v(18pt)
+  text(44pt, weight: "bold", fill: navy, tracking: 0.04em)[ZERO HOUR]
+  v(-12pt)
+  text(20pt, fill: teal, tracking: 0.12em, upper(title))
+  v(6pt)
+  line(length: 100%, stroke: 2pt + teal)
+  v(14pt)
+  block(width: 85%, text(12pt, intro))
+  v(1fr)
+  set text(9pt, fill: deep)
+  if revision != none [Revision #revision]
+})
 
 #let has-class(n, name) = n.at("c", default: "").split(" ").contains(name)
+#let is-el(k, tag) = type(k) == dictionary and k.t == tag
 
 #let svg-image(n, width, color) = image(
   bytes(n.svg.replace("currentColor", color.to-hex())),
@@ -56,21 +107,32 @@
   let t = n.t
   if t == "svg" and n.svg.contains("class=\"logo-mark\"") {
     // the logo is drawn for the dark screen: its pale zero becomes navy on paper, as in the print stylesheet
-    return box(baseline: 20%, image(bytes(n.svg.replace("#d6eef3", navy.to-hex())), format: "svg", width: 34pt))
+    return image(bytes(n.svg.replace("#d6eef3", navy.to-hex())), format: "svg", width: 90pt)
   }
   if t == "svg" { panic("manual.typ only knows the logo and the glyph columns as images") }
   if has-class(n, "no-print") or t == "nav" { return none }
   let kids = n.k
   let inner() = kids.map(render).join()
-  if t == "div" and has-class(n, "mh") {
-    grid(columns: 2, column-gutter: 10pt, align: horizon, ..kids.map(render))
+  if t == "div" and has-class(n, "manual") {
+    // the logo, title and introduction make the cover; the sections follow the contents page
+    let front = kids.filter(k => not is-el(k, "section"))
+    let mh = front.find(k => is-el(k, "div") and has-class(k, "mh"))
+    if mh == none { panic("manual.typ expects the manual to open with its logo and title") }
+    cover(
+      render(mh.k.find(k => is-el(k, "svg"))),
+      mh.k.find(k => is-el(k, "h1")).k.map(render).join(),
+      front.filter(k => k != mh).map(render).join(),
+    )
+    counter(page).update(1)
+    outline(title: [Contents], depth: 2, indent: 1.6em)
+    kids.filter(k => is-el(k, "section")).map(render).join()
   }
   else if t == "div" and has-class(n, "gcols") {
     block(breakable: false, grid(columns: (1fr,) * 4, column-gutter: 6pt, ..kids.map(render)))
   }
   else if t == "div" and has-class(n, "gcol") {
     rect(width: 100%, stroke: 0.75pt + rule, inset: 6pt, align(center, stack(spacing: 6pt, ..kids.map(k =>
-      if type(k) == dictionary and k.t == "svg" { svg-image(k, 26pt, deep) }
+      if is-el(k, "svg") { svg-image(k, 26pt, deep) }
       else { text(font: mono, fill: amber, weight: "bold", render(k)) }
     ))))
   }
@@ -90,11 +152,10 @@
       text(font: mono, size: 12pt, fill: deep, render(kids.at(i)))
     )))
   }
-  else if t == "section" { block(width: 100%, above: 22pt, inner()) }
-  else if t == "div" and n.c in ("", "manual") { block(width: 100%, inner()) }
-  else if t == "h1" { heading(level: 1, outlined: false, inner()) }
-  else if t == "h2" { heading(level: 2, inner()) }
-  else if t == "h3" { heading(level: 3, inner()) }
+  else if t == "section" { pagebreak(weak: true); inner() }
+  else if t == "div" and n.c == "" { block(width: 100%, inner()) }
+  else if t == "h2" { heading(level: 1, inner()) }
+  else if t == "h3" { heading(level: 2, inner()) }
   else if t == "p" { par(inner()) }
   else if t == "ul" { list(..kids.map(render)) }
   else if t == "ol" { enum(..kids.map(render)) }

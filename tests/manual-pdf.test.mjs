@@ -7,9 +7,10 @@ const el = (t, c, ...k) => ({ t, c, k });
 const svg = { t: 'svg', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4 L20 20" stroke="currentColor"/></svg>' };
 const logo = { t: 'svg', svg: '<svg xmlns="http://www.w3.org/2000/svg" class="logo-mark" viewBox="0 0 120 120"><ellipse cx="60" cy="61" rx="12" ry="19" stroke="#d6eef3"/></svg>' };
 
+const manual = (...sections) => el('div', 'manual', el('div', 'mh', logo, el('h1', '', 'Defusal manual')), ...sections);
+
 test('the template typesets every kind of element the manual uses', () => {
-  const tree = el('div', 'manual',
-    el('div', 'mh', logo, el('h1', '', 'Defusal manual')),
+  const tree = manual(
     el('div', 'mact no-print', el('button', 'mbtn', 'Open PDF')),
     el('nav', '', el('a', '', 'Wires')),
     el('section', '', el('h2', '', 'Wires'),
@@ -22,12 +23,14 @@ test('the template typesets every kind of element the manual uses', () => {
       el('div', 'gcols', el('div', 'gcol', el('b', '', 'I'), svg)),
       el('div', 'mchart', el('div', '', el('b', '', 'A'), ' ·−')),
       el('div', 'words', el('div', '', 'about'))));
-  const pdf = typeset(tree);
+  const pdf = typeset(tree, 'abc123');
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
 });
 
 test('the template refuses markup it does not know, so nothing in the manual goes missing from the PDF', () => {
-  assert.throws(() => typeset(el('div', 'manual', el('blink', '', 'surprise'))), /does not know how to typeset <blink/);
-  assert.throws(() => typeset(el('div', 'manual', el('div', 'gauge', 'surprise'))), /does not know how to typeset <div class="gauge">/);
-  assert.throws(() => typeset(el('div', 'manual', el('p', '', svg))), /only knows the logo and the glyph columns/);
+  const section = (...k) => manual(el('section', '', el('h2', '', 'Wires'), ...k));
+  assert.throws(() => typeset(section(el('blink', '', 'surprise'))), /does not know how to typeset <blink/);
+  assert.throws(() => typeset(section(el('div', 'gauge', 'surprise'))), /does not know how to typeset <div class="gauge">/);
+  assert.throws(() => typeset(section(el('p', '', svg))), /only knows the logo and the glyph columns/);
+  assert.throws(() => typeset(el('div', 'manual', el('p', '', 'no cover'))), /expects the manual to open with its logo and title/);
 });

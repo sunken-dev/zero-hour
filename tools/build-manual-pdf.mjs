@@ -4,9 +4,10 @@
 //
 // It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualHTML(), the same source
 // as the on-screen manual, as a tree of elements. Typst typesets that tree with tools/manual.typ and the fonts in
-// tools/fonts. The result is written to zero-hour-manual.pdf next to the page and embedded in the page together with a
-// fingerprint of the manual text. The game only offers the embedded PDF while that fingerprint still matches the manual;
-// if the manual changes and this script has not been re-run, its buttons print a fresh copy from the live manual instead.
+// tools/fonts, with the manual's fingerprint as its revision. The result is written to zero-hour-manual.pdf next to the
+// page and embedded in the page together with the fingerprint. The game only offers the embedded PDF while that
+// fingerprint still matches the manual; if the manual changes and this script has not been re-run, its buttons print a
+// fresh copy from the live manual instead.
 //
 // Needs the typst CLI on the PATH, or TYPST_PATH set to it.
 import fs from 'node:fs';
@@ -37,7 +38,7 @@ function manualTree() {
   return walk(root.firstElementChild);
 }
 
-export function typeset(tree) {
+export function typeset(tree, revision) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zero-hour-manual-'));
   try {
     fs.copyFileSync(path.join(toolsDir, 'manual.typ'), path.join(dir, 'manual.typ'));
@@ -46,6 +47,7 @@ export function typeset(tree) {
     try {
       execFileSync(process.env.TYPST_PATH || 'typst', [
         'compile', '--root', dir, '--font-path', path.join(toolsDir, 'fonts'), '--ignore-system-fonts',
+        ...(revision ? ['--input', 'revision=' + revision] : []),
         path.join(dir, 'manual.typ'), out
       ], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
     } catch (e) {
@@ -66,7 +68,7 @@ export async function buildManualPdf(file) {
     hash = await page.evaluate(() => window.__zh.manualFingerprint());
     tree = await page.evaluate(manualTree);
   } finally { await browser.close(); }
-  const pdf = typeset(tree);
+  const pdf = typeset(tree, hash);
   const pdfFile = path.join(path.dirname(file), 'zero-hour-manual.pdf');
   fs.writeFileSync(pdfFile, pdf);
   const slot = /<!--MANUAL-PDF:BEGIN-->[\s\S]*?<!--MANUAL-PDF:END-->/;
