@@ -52,10 +52,10 @@ The manual is generated from the modules' own text (`manual()` and `manualBack()
 the rules. `tools/build-manual-pdf.mjs` reads that same manual from the page in headless Chrome and has Typst typeset it
 with `tools/manual.typ` and the fonts in `tools/fonts/`. The PDF is stored inside `index.html` with a fingerprint of the
 manual text. Typst stops with an error when a manual uses markup the template does not know: teach `tools/manual.typ` the
-new element. CI pins the Typst version; use the same one locally (`typst-version` in `.github/workflows/ci.yml`) so
+new element. CI pins the Typst version; use the same one locally (`typst-version` in `.github/workflows/`) so
 `npm run pdf` produces the same file. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
 print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
-test fails if you forget, and the CI workflow rebuilds the PDF anyway.
+test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
 
 ### Adding a module
 
@@ -78,8 +78,8 @@ registry describes each field, and there is a template just before the "ADD YOUR
 5. When GitHub has issued the certificate, tick **Enforce HTTPS**.
 6. Recommended: verify `sunken.dev` under your account's **Settings, Pages** so nobody else can claim a subdomain of it.
 
-Every push to `main` then runs `.github/workflows/ci.yml`: install, test, build, deploy. Pull requests and other branches run
-the same workflow, which tests and builds without publishing.
+Every push to `main` then runs `.github/workflows/deploy.yml`: install, test, build, deploy. Pull requests and other branches run
+`.github/workflows/ci.yml`, which tests and builds without publishing.
 
 ### Metadata
 
