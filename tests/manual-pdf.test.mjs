@@ -22,7 +22,9 @@ test('the template typesets every kind of element the manual uses', () => {
         el('tr', '', el('td', '', el('span', 'chip c-white', 'white')), el('td', 'pat-c', '●', el('br', ''), '○')))),
       el('div', 'gcols', el('div', 'gcol', el('b', '', 'I'), svg)),
       el('div', 'mchart', el('div', '', el('b', '', 'A'), ' ·−')),
-      el('div', 'words', el('div', '', 'about'))));
+      el('div', 'words', el('div', '', 'about'))),
+    el('section', 'appendix', el('h2', '', 'Bomb basics'), el('h3', '', 'The case'),
+      el('figure', 'schem', { t: 'svg', svg: svg.svg.replace('viewBox', 'width="260" viewBox') }, el('figcaption', '', 'The case unfolded.'))));
   const pdf = typeset(tree, 'abc123');
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
 });
@@ -31,6 +33,6 @@ test('the template refuses markup it does not know, so nothing in the manual goe
   const section = (...k) => manual(el('section', '', el('h2', '', 'Wires'), ...k));
   assert.throws(() => typeset(section(el('blink', '', 'surprise'))), /does not know how to typeset <blink/);
   assert.throws(() => typeset(section(el('div', 'gauge', 'surprise'))), /does not know how to typeset <div class="gauge">/);
-  assert.throws(() => typeset(section(el('p', '', svg))), /only knows the logo and the glyph columns/);
+  assert.throws(() => typeset(section(el('p', '', svg))), /only knows the logo, the glyph columns and schematic figures/);
   assert.throws(() => typeset(el('div', 'manual', el('p', '', 'no cover'))), /expects the manual to open with its logo and title/);
 });

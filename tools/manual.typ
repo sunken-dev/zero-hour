@@ -77,6 +77,9 @@
 }))
 #show outline.entry.where(level: 1): set block(above: 12pt)
 #show outline.entry.where(level: 1): set text(weight: "bold")
+#show figure: set block(breakable: false, above: 12pt, below: 14pt)
+#show figure.caption: set text(9pt, fill: deep)
+#set figure.caption(separator: [. ])
 
 #let cover(logo, title, intro) = page(header: none, footer: none, margin: (x: 22mm, top: 40mm, bottom: 25mm), {
   logo
@@ -109,7 +112,7 @@
     // the logo is drawn for the dark screen: its pale zero becomes navy on paper, as in the print stylesheet
     return image(bytes(n.svg.replace("#d6eef3", navy.to-hex())), format: "svg", width: 90pt)
   }
-  if t == "svg" { panic("manual.typ only knows the logo and the glyph columns as images") }
+  if t == "svg" { panic("manual.typ only knows the logo, the glyph columns and schematic figures as images") }
   if has-class(n, "no-print") or t == "nav" { return none }
   let kids = n.k
   let inner() = kids.map(render).join()
@@ -125,7 +128,12 @@
     )
     counter(page).update(1)
     outline(title: [Contents], depth: 2, indent: 1.6em)
-    kids.filter(k => is-el(k, "section")).map(render).join()
+    let sections = kids.filter(k => is-el(k, "section"))
+    sections.filter(k => not has-class(k, "appendix")).map(render).join()
+    // appendices are lettered: A, A.1, ...
+    counter(heading).update(0)
+    set heading(numbering: "A.1", supplement: [Appendix])
+    sections.filter(k => has-class(k, "appendix")).map(render).join()
   }
   else if t == "div" and has-class(n, "gcols") {
     block(breakable: false, grid(columns: (1fr,) * 4, column-gutter: 6pt, ..kids.map(render)))
@@ -151,6 +159,13 @@
     block(breakable: false, grid(columns: (1fr,) * 5, row-gutter: 5pt, ..order.map(i =>
       text(font: mono, size: 12pt, fill: deep, render(kids.at(i)))
     )))
+  }
+  else if t == "figure" and has-class(n, "schem") {
+    // schematics are drawn 520 units wide for the full measure; narrower ones keep their proportion
+    let svg = kids.find(k => is-el(k, "svg"))
+    let caption = kids.find(k => is-el(k, "figcaption"))
+    let width = float(svg.svg.match(regex("viewBox=\"0 0 ([0-9.]+)")).captures.first())
+    figure(svg-image(svg, calc.min(100%, width / 520 * 100%), ink), caption: caption.k.map(render).join())
   }
   else if t == "section" { pagebreak(weak: true); inner() }
   else if t == "div" and n.c == "" { block(width: 100%, inner()) }
