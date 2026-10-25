@@ -1,0 +1,19 @@
+{
+  "name": "Zero Hour: bomb defusal",
+  "short_name": "Zero Hour",
+  "description": "One team. One bomb. One manual. A cooperative bomb defusal game for your browser.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060b10",
+  "theme_color": "#060b10",
+  "lang": "en",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

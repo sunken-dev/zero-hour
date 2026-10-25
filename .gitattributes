@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.ico binary
+# the page carries the PDF manual inside it, so a diff of index.html is not useful
+site/index.html -diff
