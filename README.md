@@ -30,15 +30,15 @@ Or just open `site/index.html` in a browser.
 site/                the published site (this folder is what gets deployed)
   index.html         the game, its manual and the embedded PDF manual
   zero-hour-manual.pdf, zero-hour-preview.png, icons, CNAME, robots.txt, sitemap.xml, ...
-tools/               build scripts
+tools/               build scripts, the Typst template for the PDF manual and its fonts
 tests/               tests (node:test)
 .github/workflows/   CI and deployment
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Runs all tests. The browser tests need Chrome: set `CHROME_PATH` to a Chrome or Chromium binary. |
-| `npm run pdf` | Rebuilds the PDF manual from the manual's source and embeds it in `site/index.html`. |
+| `npm test` | Runs all tests. The browser tests need Chrome: set `CHROME_PATH` to a Chrome or Chromium binary. The PDF tests need [Typst](https://typst.app). |
+| `npm run pdf` | Rebuilds the PDF manual from the manual's source and embeds it in `site/index.html`. Needs Chrome and Typst. |
 | `npm run build` | Copies `site/` to `dist/` and rebuilds the PDF inside `dist/`. This is what gets published. |
 | `npm run icons` | Redraws every favicon and app icon from the logo mark. |
 | `npm run preview` | Re-renders the link-preview images (`-- --seed 202` picks the bomb). |
@@ -47,8 +47,11 @@ tests/               tests (node:test)
 ### The manual and its PDF
 
 The manual is generated from the modules' own text (`manual()` and `manualBack()` on each module), so it cannot drift from
-the rules. The PDF is printed from that same page by `tools/build-manual-pdf.mjs` and stored inside `index.html` with a
-fingerprint of the manual text. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
+the rules. `tools/build-manual-pdf.mjs` reads that same manual from the page in headless Chrome and has Typst typeset it
+with `tools/manual.typ` and the fonts in `tools/fonts/`. The PDF is stored inside `index.html` with a fingerprint of the
+manual text. Typst stops with an error when a manual uses markup the template does not know: teach `tools/manual.typ` the
+new element. CI pins the Typst version; use the same one locally (`typst-version` in `.github/workflows/ci.yml`) so
+`npm run pdf` produces the same file. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
 print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
 test fails if you forget, and the CI workflow rebuilds the PDF anyway.
 

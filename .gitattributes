@@ -2,5 +2,6 @@
 *.png binary
 *.pdf binary
 *.ico binary
+*.ttf binary
 # the page carries the PDF manual inside it, so a diff of index.html is not useful
 site/index.html -diff
