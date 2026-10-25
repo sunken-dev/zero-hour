@@ -50,7 +50,7 @@ The manual is generated from the modules' own text (`manual()` and `manualBack()
 the rules. The PDF is printed from that same page by `tools/build-manual-pdf.mjs` and stored inside `index.html` with a
 fingerprint of the manual text. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
 print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
-test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
+test fails if you forget, and the CI workflow rebuilds the PDF anyway.
 
 ### Adding a module
 
@@ -73,8 +73,8 @@ registry describes each field, and there is a template just before the "ADD YOUR
 5. When GitHub has issued the certificate, tick **Enforce HTTPS**.
 6. Recommended: verify `sunken.dev` under your account's **Settings, Pages** so nobody else can claim a subdomain of it.
 
-Every push to `main` then runs `.github/workflows/pages.yml`: install, test, build, deploy. Pull requests and other branches run
-`.github/workflows/ci.yml`, which tests and builds without publishing.
+Every push to `main` then runs `.github/workflows/ci.yml`: install, test, build, deploy. Pull requests and other branches run
+the same workflow, which tests and builds without publishing.
 
 ### Metadata
 
