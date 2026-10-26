@@ -79,7 +79,7 @@ svg{display:block}
 
 /* ================= start page ================= */
 .start{max-width:1240px;margin:0 auto;padding:34px 24px 48px;min-height:100vh;display:grid;
-  grid-template-columns:minmax(300px,470px) minmax(0,1fr);gap:30px;align-items:center}
+  grid-template-columns:minmax(300px,470px) minmax(0,1fr);gap:72px;align-items:center}
 .lockup{display:flex;align-items:center;gap:22px;margin-bottom:22px}
 .word{width:226px}
 .word b,.word span{display:block;font-size:54px;line-height:.92;text-align:justify;text-align-last:justify;letter-spacing:.05em}
@@ -92,8 +92,9 @@ svg{display:block}
 .seg-ctl{display:flex;gap:6px;flex-wrap:wrap}
 .seg-ctl button{padding:8px 16px;background:#43dfff10;border:1px solid #43dfff44;clip-path:var(--cut8)}
 .seg-ctl button[aria-pressed=true]{background:var(--cyan);color:#021117;border-color:var(--cyan);font-weight:600}
-.arm{padding:14px 32px;font-weight:700;font-size:18px;letter-spacing:.06em;border:0;background:var(--amber);color:#1b1200;
-  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.arm{padding:11px 16px;font-weight:700;font-size:15px;letter-spacing:.04em;border:0;background:var(--amber);color:#1b1200;white-space:nowrap;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.arm.diff-easy{background:var(--mint);color:#021117}.arm.diff-hard{background:var(--red);color:#fff}
 .arm:hover{filter:brightness(1.1)}
 .arm:active{transform:translateY(1px)}
 .start a{color:var(--cyan);margin-left:20px;font-size:15px}
@@ -750,10 +751,10 @@ svg{display:block}
 
 /* ================= settings, seed ================= */
 input,textarea{-webkit-user-select:text;user-select:text}
-.startrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.setbtn{padding:11px 20px;font-size:15px}
+.startrow{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.setbtn{padding:11px 16px;font-size:15px;white-space:nowrap}
 .seedrow{display:flex;gap:8px;align-items:center}
-.seedin{flex:1;min-width:0;height:36px;padding:0 12px;font:16px var(--mono);letter-spacing:.06em;color:var(--ice);background:#06111a;border:1px solid #43dfff55;outline:none;border-radius:0}
+.seedin{flex:0 1 230px;min-width:0;height:36px;padding:0 12px;font:16px var(--mono);letter-spacing:.06em;color:var(--ice);background:#06111a;border:1px solid #43dfff55;outline:none;border-radius:0}
 .seedin:focus{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}
 .seedin::placeholder{color:#5d7782;letter-spacing:0;font-size:14px}
 .seedhint{display:block;margin-top:6px;font-size:13px;color:var(--mute);line-height:1.4}
@@ -791,7 +792,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bench-head{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid #43dfff33}
 .bench-head b{letter-spacing:.16em}
 .bench-head small{flex:1;color:var(--mute);font-size:13px}
-.bench-body{display:grid;grid-template-columns:200px minmax(0,1fr) 350px;min-height:0}
+.bench-body{display:grid;grid-template-columns:250px minmax(0,1fr) 400px;min-height:0}
 .bench-list{overflow:auto;padding:10px;border-right:1px solid #43dfff22;display:flex;flex-direction:column;gap:6px}
 .bench-item{text-align:left;padding:7px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:15px;color:var(--ice);display:flex;flex-direction:column;gap:3px}
 .bench-item .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3939,7 +3940,7 @@ function openExplorer() {
       feedback,
       config(def),
       h('section', { class: 'bench-box' }, h('h4', {}, 'Practice bomb'), practiceBomb(bomb)),
-      h('details', { class: 'bench-box' }, h('summary', {}, 'Manual page'), man));
+      h('details', { class: 'bench-box', open: true }, h('summary', {}, 'Manual page'), man));
   }
 
   const view = (yaw, pitch) => () => rigs.forEach(r => r.animateTo({ yaw, pitch, zoom: 1.25 }, 600));
@@ -4039,7 +4040,7 @@ function mountDemo(host, view) {
 
 function showStart() {
   endGame(); destroyDemo();
-  const arm = h('button', { class: 'arm', onclick: () => play() }, 'ARM THE BOMB');
+  const arm = h('button', { class: 'arm diff-' + opts.difficulty, onclick: () => play() }, 'ARM THE BOMB');
   const host = h('div', { class: 'stage demo' });
   const remount = () => mountDemo(host);
   const seedIn = h('input', { class: 'seedin', type: 'text', value: settings.seed, placeholder: 'empty = a new random bomb', maxlength: '24', spellcheck: 'false', autocomplete: 'off', 'aria-label': 'Seed' });
@@ -4061,7 +4062,7 @@ function showStart() {
       h('div', { class: 'opts' },
         h('div', { class: 'opt' }, h('b', {}, 'Time on the clock'), seg([[3, '3 min'], [5, '5 min'], [8, '8 min'], [12, '12 min']], opts.minutes, v => { opts.minutes = v; save(); remount(); })),
         h('div', { class: 'opt' }, h('b', {}, 'Modules on the bomb'), seg([[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], opts.count, v => { opts.count = v; save(); remount(); })),
-        h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), (w => { [...w.children].forEach((b, i) => b.classList.add('diff-' + DIFFICULTIES[i])); return w; })(seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; save(); remount(); }))),
+        h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), (w => { [...w.children].forEach((b, i) => b.classList.add('diff-' + DIFFICULTIES[i])); return w; })(seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; arm.className = 'arm diff-' + v; save(); remount(); }))),
         h('div', { class: 'opt' }, h('b', {}, 'Seed'), seedRow,
           h('small', { class: 'seedhint' }, 'The same seed with the same time, module count, difficulty, module choices and screen size gives the same bomb. Numbers and words both work.'), last)),
       h('div', { class: 'startrow' }, arm,
