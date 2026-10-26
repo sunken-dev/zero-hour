@@ -890,8 +890,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .badges{display:flex;gap:4px;flex-wrap:nowrap}
 .badge{font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border:1px solid currentColor;border-radius:2px;color:var(--mute);white-space:nowrap}
 .badge.diff-easy{color:var(--mint)}.badge.diff-medium{color:var(--amber)}.badge.diff-hard{color:var(--red)}
-.bench-item.is-off .ttl{opacity:.5;text-decoration:line-through}
-.badge.rear{color:#b9c6ce}.badge.needy{color:#ff8a3d}.badge.off{color:var(--mute);border-style:dashed}
+.bench-item.is-off{opacity:.42;filter:grayscale(1)}
+.bench-item.is-off .ttl{text-decoration:line-through}
+.badge.rear{color:#b9c6ce}.badge.needy{color:#ff8a3d}
 .bench-item:hover{background:#43dfff22}
 .bench-item[aria-pressed=true]{background:#43dfff2e;border-color:var(--cyan)}
 .bench-main{display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0}
@@ -4203,8 +4204,7 @@ function openExplorer() {
   const badges = d => [
     h('span', { class: 'badge diff-' + d.difficulty }, d.difficulty),
     d.mountBack ? h('span', { class: 'badge rear' }, d.rearOptional ? 'rear optional' : 'rear') : null,
-    d.needy ? h('span', { class: 'badge needy' }, 'needy') : null,
-    cfg(d).off ? h('span', { class: 'badge off' }, 'off') : null];
+    d.needy ? h('span', { class: 'badge needy' }, 'needy') : null];
   const list = h('div', { class: 'bench-list' });
   const itemBtns = defs.map(d => {
     const b = h('button', { class: 'bench-item', type: 'button', 'aria-pressed': 'false' }, h('span', { class: 'ttl' }, d.title), h('span', { class: 'badges' }, badges(d)));

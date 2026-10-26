@@ -178,7 +178,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   await page.click('.bench-side .cfg-enabled'); await clickText(page, '.bench-side .cfg-rear button', 'Never'); await sleep(200);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('zero-hour-settings-v1')).modules.wires);
   assert.deepEqual(saved, { off: true, rear: 'never' });
-  assert.ok(await page.evaluate(() => !![...document.querySelectorAll('.bench-item')].find(b => b.querySelector('.ttl').textContent === 'Wires').querySelector('.badge.off')));
+  assert.ok(await page.evaluate(() => [...document.querySelectorAll('.bench-item')].find(b => b.querySelector('.ttl').textContent === 'Wires').classList.contains('is-off')), 'a switched-off module is greyed out');
   // linking the two views turns them together
   const yaws = () => page.evaluate(() => [...document.querySelectorAll('.bench-stage .bomb3d')].map(b => +/rotateY\((-?[\d.]+)deg/.exec(b.style.transform)[1]));
   await clickText(page, '.bench-tools .tbtn', 'Link views: off'); await sleep(900);
