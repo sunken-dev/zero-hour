@@ -57,7 +57,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 - Turning clockwise raises the number at the mark. Entering it: turn clockwise to the first number, then anticlockwise
   to the second, then clockwise to the third, then pull the handle. A number is entered where the dial changes
   direction; turning anticlockwise before the first number is only positioning. The third is where the dial stands
-  when the handle is pulled. The lamps count the numbers entered (no hint whether they are right). A full turn in one
+  when the handle is pulled. The first two lamps light as the first two numbers are entered, the third when the safe opens (no hint whether a number is right). A full turn in one
   direction clears the entries. A wrong combination is a strike and clears the entries.
 - Optional rear plate: the maker's plate with the sum of the serial number's digits.
 
