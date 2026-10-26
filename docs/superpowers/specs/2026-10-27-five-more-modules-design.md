@@ -1,4 +1,4 @@
-# Five more modules: Key Lock, Multimeter, Semaphore, Safe, Tiles
+# Five more modules: DIP Switches, Multimeter, Semaphore, Safe, Tiles
 
 ## Intent
 
@@ -10,26 +10,29 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 
 - 1 easy, 2 medium, 2 hard. No needy modules. Proper 3D models and smooth animations.
 - As many as possible with optional rear plates (all five have one).
-- The lineup: Key Lock (easy), Multimeter (medium), Semaphore (medium), Safe (hard), Tiles (hard).
+- The lineup: DIP Switches (easy), Multimeter (medium), Semaphore (medium), Safe (hard), Tiles (hard).
+- DIP Switches replaces the first easy module, Key Lock, which the user did not like.
+- The Multimeter measures between any two of six jacks and patches a cable, so guessing rarely works; its meter has a
+  3D needle.
 
 ## Rules
 
-### Key Lock (easy)
+### DIP Switches (easy)
 
-- Front: a key ring with four keys (brass, steel, red tag, blue tag, in a shuffled order) and a cylinder lock. Clicking
-  a key moves it into the lock and turns it. The right key solves the module; a wrong one is a strike and comes back.
-- Key, first rule that applies: no batteries: steel; any lit indicator: red; more than two batteries: blue; otherwise
-  brass.
-- Optional rear plate: a service tag stamped with the number of batteries and the number of lit indicators.
+- Front: a red DIP block with four slide switches numbered 1 to 4 (up is ON) and an Apply button. The switches never
+  start at the answer.
+- Number: batteries + lit indicators + the serial number's last digit, minus 16 if it is 16 or more. The manual's table
+  gives the pattern (the number in binary, switch 1 the highest bit). Apply with any other pattern is a strike.
+- Optional rear plate: the code base, batteries + lit indicators.
 
 ### Multimeter (medium)
 
-- Front: four terminal pairs A to D, a needle meter from 0 to 12 V, and a Bridge button. Clicking a pair touches the
-  probes to it and the needle swings to its voltage. Bridge bridges the pair the probes are on.
-- Each pair has a different voltage from 1.5, 3, 4.5, 6, 9 and 12 V.
-- Target voltage: the coin cells' total voltage; with no coin cells, 1.5 V times the number of batteries. Bridge the pair
-  at the target voltage; if no pair has it (or the target is 0), bridge the pair with the highest voltage. Any other
-  pair is a strike.
+- Front: six banana jacks A to F, a red and a black probe, a panel meter from 0 to 12 V (a tick every half volt) and a
+  Patch button. Clicking a jack puts a probe on it (red first, then black, then always the probe that has stood
+  longest); the meter shows the voltage between the probes. Patch plugs a cable across the probed jacks.
+- Target: the coin cells' total voltage; with no coin cells, 1.5 V per battery; with neither, 12 V.
+- The jacks sit on a half-volt grid from 0 to 12 V. Exactly one pair reads the target; every other pair reads at least
+  1 V away from it. Patching any other pair is a strike.
 - Optional rear plate: a power label with the number of batteries and the coin cells' total voltage.
 
 ### Semaphore (medium)
@@ -47,12 +50,14 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 
 - Front: a safe door with a combination dial numbered 0 to 39 (turned by dragging, or one step per click on its left
   or right half), three tumbler lamps and a handle.
-- The combination: first = (sum of the serial number's digits x 2) mod 40; second = (first + 13 x batteries) mod 40;
-  third = (second + 7 x (lit indicators + 1)) mod 40.
-- Entering it: turn clockwise to the first number, then anticlockwise to the second, then clockwise to the third, then
-  pull the handle. A number is entered when the dial changes direction there; the third is where the dial stands when
-  the handle is pulled. The lamps count the numbers entered (no hint whether they are right). A wrong combination is a
-  strike and clears the entries.
+- The combination: first = (sum of the serial number's digits x 2) mod 40; second = (first + 13 x (batteries + 1)) mod
+  40; third = (second + 7 x (lit indicators + 1)) mod 40. Neighbouring numbers always differ, so no number needs a full
+  turn of the dial.
+- Turning clockwise raises the number at the mark. Entering it: turn clockwise to the first number, then anticlockwise
+  to the second, then clockwise to the third, then pull the handle. A number is entered where the dial changes
+  direction; turning anticlockwise before the first number is only positioning. The third is where the dial stands
+  when the handle is pulled. The lamps count the numbers entered (no hint whether they are right). A full turn in one
+  direction clears the entries. A wrong combination is a strike and clears the entries.
 - Optional rear plate: the maker's plate with the sum of the serial number's digits.
 
 ### Tiles (hard)
