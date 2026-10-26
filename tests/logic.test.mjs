@@ -93,6 +93,27 @@ test('module configuration: switched-off modules are never dealt, and optional r
   assert.equal(outcomes.size, 2, 'sometimes means both happen');
 });
 
+test('needy modules: Knob, Breaker and Coolant at most; dealing keeps to the needy limits', () => {
+  const needy = g.Modules.list.filter(m => m.needy).map(m => m.id);
+  assert.ok(needy.every(id => ['knob', 'breaker', 'coolant'].includes(id)), needy.join());
+  assert.ok(needy.includes('knob'));
+  for (const d of g.DIFFICULTIES) for (let count = 2; count <= 6; count++) {
+    const limit = count <= 2 ? 0 : (d === 'easy' || count < 6) ? 1 : 2;
+    let most = 0;
+    for (let seed = 1; seed <= 1500; seed++) {
+      const defs = [...g.pickModules(g.rng(seed), count, d)];
+      const n = defs.filter(m => m.needy).length;
+      assert.ok(n <= limit, `${d}, ${count} modules: ${n} needy`);
+      assert.equal(defs.length, count, 'a full bomb');
+      assert.ok(defs.some(m => !m.needy), 'something to defuse');
+      const ids = defs.filter(m => m.needy).map(m => m.id);
+      assert.equal(new Set(ids).size, ids.length, 'each needy module once');
+      most = Math.max(most, n);
+    }
+    if (limit) assert.ok(most >= 1, `${d}, ${count}: needy modules do get dealt`);
+  }
+});
+
 test('every module can be made for many bombs, and the rules always give a real answer', () => {
   for (let seed = 1; seed <= 500; seed++) {
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000);

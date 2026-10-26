@@ -185,6 +185,47 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.ok(await page.evaluate(() => !document.querySelector('.bench')));
 }));
 
+test('needy modules wake with a countdown, sleep once handled, strike when it runs out, and stop on cleanup', T, () => withPage(pathToFileURL(testCopy).href, async page => {
+  const problems = await page.evaluate(async () => {
+    const T = window.__t, out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+    const awake = root => root.querySelector('.needy-lcd').classList.contains('awake');
+    const until = async (cond, ms) => { const t0 = performance.now(); while (!cond() && performance.now() - t0 < ms) await sleep(20); return cond(); };
+    const handle = {
+      knob(root, s) {
+        const lit = [...root.querySelectorAll('.pat .led')].map(l => l.classList.contains('off') ? '0' : '1').join('');
+        const e = T.KNOB_TABLE.find(x => x[0] === lit); if (!e) return 'pattern not in table ' + lit;
+        const dir = T.KNOB_DIRS.indexOf(e[1]); let turns = Math.round(parseFloat(root.querySelector('.kn').style.getPropertyValue('--ang')) / 90);
+        while (turns % 4 !== dir) { root.querySelector('.kwrap').click(); turns++; }
+        root.querySelector('.go').click();
+      }
+    };
+    for (const def of T.Modules.list.filter(d => d.needy)) {
+      for (let seed = 1; seed <= 3; seed++) {
+        const r = T.rng(seed), bomb = T.makeBomb(r, 300000); T.ensureNeeds(bomb, [def], r);
+        const s = def.create(bomb, r), root = document.createElement('div'), back = document.createElement('div'); document.body.append(root, back);
+        let strikes = 0;
+        const ctl = { bomb, sfx: T.sfx, timeScale: .02, isSolved: () => false, timeText: () => '04:12', solve() { out.push(def.id + ': a needy module called solve'); }, strike() { strikes++; } };
+        const stop = def.mount(root, s, ctl), stopBack = def.mountBack ? def.mountBack(back, s, ctl) : null;
+        const fail = m => out.push(`${def.id} seed ${seed}: ${m}`);
+        if (awake(root)) fail('awake straight away');
+        if (!await until(() => awake(root), 3000)) { fail('never woke'); continue; }
+        const why = handle[def.id](root, s, back, bomb); if (why) fail(why);
+        if (awake(root) || strikes) fail(`handling it right did not put it to sleep without a strike (strikes ${strikes})`);
+        if (!await until(() => awake(root), 4000)) fail('did not wake again');
+        await until(() => strikes > 0, 3000);
+        if (strikes !== 1) fail(`letting the countdown run out gave ${strikes} strikes`);
+        if (awake(root)) fail('still awake after its countdown ran out');
+        stop && stop(); stopBack && stopBack();
+        await sleep(2500);
+        if (strikes !== 1) fail('kept going after cleanup');
+        root.remove(); back.remove();
+      }
+    }
+    return out;
+  });
+  assert.deepEqual(problems, []);
+}));
+
 test('rear plates show what their module needs', T, () => withPage(pathToFileURL(testCopy).href, async page => {
   const problems = await page.evaluate(() => {
     const T = window.__t, out = [];
@@ -214,6 +255,7 @@ test('every module can be solved through its real controls, and a wrong answer i
     for (let seed = 1; seed <= 40; seed++) {
       const r = T.rng(seed), bomb = T.makeBomb(r, 300000);
       for (const def of T.Modules.list) {
+        if (def.needy) continue;                                   // needy modules have their own test
         T.ensureNeeds(bomb, [def], r);
         const s = def.create(bomb, r), root = document.createElement('div'); document.body.append(root);
         let solved = false, strikes = 0;
@@ -235,14 +277,6 @@ test('every module can be solved through its real controls, and a wrong answer i
               hist.push({ pos: want, label: labels[want - 1] }); click(root.querySelectorAll('.mk')[want - 1]);
             }
             if (!solved || strikes) fail(`memory solved=${solved} strikes=${strikes}`);
-          } else if (def.id === 'knob') {
-            const lit = [...root.querySelectorAll('.pat .led')].map(l => l.classList.contains('off') ? '0' : '1').join('');
-            const e = T.KNOB_TABLE.find(x => x[0] === lit); if (!e) { fail('pattern not in table ' + lit); }
-            else {
-              const dir = T.KNOB_DIRS.indexOf(e[1]); let turns = Math.round(parseFloat(root.querySelector('.kn').style.getPropertyValue('--ang')) / 90);
-              while (turns % 4 !== dir) { click(root.querySelector('.kwrap')); turns++; }
-              click(root.querySelector('.go')); if (!solved) fail('knob not solved');
-            }
           } else if (def.id === 'breaker') {
             const n = +root.querySelector('.mini-lcd').textContent, lamp = root.querySelector('.led').style.getPropertyValue('--lc').includes('ff3b5c') ? 'red' : 'green';
             const want = T.breakerWantUp({ n, lamp }, bomb);
