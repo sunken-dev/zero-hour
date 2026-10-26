@@ -825,6 +825,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bench-fact>span:first-child{color:var(--mute)}
 .seg-ctl button.diff-easy{color:var(--mint);border-color:#4dffb066;background:#4dffb012}.seg-ctl button.diff-medium{color:var(--amber);border-color:#ffb22466;background:#ffb22412}.seg-ctl button.diff-hard{color:var(--red);border-color:#ff3b5c66;background:#ff3b5c12}
 .seg-ctl button.diff-easy[aria-pressed=true]{background:var(--mint);border-color:var(--mint);color:#021117}.seg-ctl button.diff-medium[aria-pressed=true]{background:var(--amber);border-color:var(--amber);color:#021117}.seg-ctl button.diff-hard[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+.seg-ctl button:not([aria-pressed=true]):hover{background:#43dfff24}
+.seg-ctl button.diff-easy:not([aria-pressed=true]):hover{background:#4dffb02a}.seg-ctl button.diff-medium:not([aria-pressed=true]):hover{background:#ffb2242a}.seg-ctl button.diff-hard:not([aria-pressed=true]):hover{background:#ff3b5c2a}
+.seg-ctl button[aria-pressed=true]:hover{filter:brightness(1.12)}
 .bench-side{overflow:auto;padding:10px;border-left:1px solid #43dfff22;display:flex;flex-direction:column;gap:8px;font-size:14px;min-height:0}
 .bench-enc{display:inline-flex;align-items:center;gap:4px}
 .bench-enc .tbtn{padding:2px 9px}
