@@ -191,6 +191,14 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
     const awake = root => root.querySelector('.needy-lcd').classList.contains('awake');
     const until = async (cond, ms) => { const t0 = performance.now(); while (!cond() && performance.now() - t0 < ms) await sleep(20); return cond(); };
     const handle = {
+      async coolant(root, s, back, bomb) {
+        if (!root.querySelector('.idle-lamp .led.off')) return 'the IDLE lamp is still lit while awake';
+        if (+root.querySelector('.demand').textContent !== s.demand) return 'the demand display does not show the demand';
+        const target = T.coolantTarget(s, bomb), to = v => { while (s.valve < v) back.querySelector('.v-up').click(); while (s.valve > v) back.querySelector('.v-dn').click(); };
+        to(target); const p0 = s.pressure; await sleep(300);
+        if (s.valve !== p0 && s.pressure === p0) return 'the gauge on the front does not follow the valve turned on the back';
+        s.pressure = s.valve; root.querySelector('.go').click();
+      },
       breaker(root, s, back, bomb) {
         const n = +root.querySelector('.mini-lcd').textContent, lamp = root.querySelector('.led').style.getPropertyValue('--lc').includes('ff3b5c') ? 'red' : 'green';
         bomb.lever.up = T.breakerWantUp({ n, lamp }, bomb); root.querySelector('.go').click();
@@ -213,7 +221,7 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
         const fail = m => out.push(`${def.id} seed ${seed}: ${m}`);
         if (awake(root)) fail('awake straight away');
         if (!await until(() => awake(root), 3000)) { fail('never woke'); continue; }
-        const why = handle[def.id](root, s, back, bomb); if (why) fail(why);
+        const why = await handle[def.id](root, s, back, bomb); if (why) fail(why);
         if (awake(root) || strikes) fail(`handling it right did not put it to sleep without a strike (strikes ${strikes})`);
         if (!await until(() => awake(root), 4000)) fail('did not wake again');
         await until(() => strikes > 0, 3000);
@@ -289,23 +297,6 @@ test('every module can be solved through its real controls, and a wrong answer i
             const cells = [...root.querySelectorAll('.mini-lcd')].map(e => +e.textContent);
             cells.forEach((d, i) => { bomb.encoders[i].value = (d + T.COMBO_RULES[i][1](bomb)) % 10; });
             click(root.querySelector('.go')); if (!solved) fail('combination not solved');
-          } else if (def.id === 'coolant') {
-            const back = document.createElement('div'); document.body.append(back);
-            const cleanBack = def.mountBack(back, s, ctl) || null;
-            const target = T.coolantTarget(s, bomb), to = v => { while (s.valve < v) click(back.querySelector('.v-up')); while (s.valve > v) click(back.querySelector('.v-dn')); };
-            click(back.querySelector('.v-up')); await sleep(300);
-            if (!(s.pressure > 0)) fail('the gauge on the front does not follow the valve turned on the back');
-            const idle = def.create(bomb, T.rng(seed)), idleRoot = document.createElement('div'), stopIdle = def.mount(idleRoot, idle, ctl);
-            stopIdle(); idle.valve = 9; await sleep(300);
-            if (idle.pressure !== 0) fail('an unsolved gauge kept moving after cleanup');
-            to(target + 1); s.pressure = s.valve; click(root.querySelector('.go'));
-            if (strikes !== 1 || solved) fail('sealing at the wrong pressure did not strike');
-            to(target); s.pressure = s.valve; click(root.querySelector('.go')); if (!solved) fail('coolant not solved');
-            click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
-            if (back.querySelector('.relief').textContent !== `RELIEF ${s.relief} BAR`) fail('relief tag ' + back.querySelector('.relief').textContent);
-            cleanup && cleanup(); s.valve = 9; const p0 = s.pressure; await sleep(350);
-            if (s.pressure !== p0) fail('the needle kept moving after cleanup');
-            cleanBack && cleanBack(); back.remove();
           } else if (def.id === 'relay') {
             const jp = [...root.querySelectorAll('.jp')], set = want => jp.forEach((j, k) => { if (j.classList.contains('on') !== !!want[k]) click(j); });
             const ans = [...T.relayAnswer(s)];

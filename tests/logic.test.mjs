@@ -170,19 +170,22 @@ test('relay logic: every dealt puzzle has exactly one jumper setting, both gates
   for (const n of names) assert.ok(byG1[n].size > 1, `gate 1 alone (${n}) does not give the answer away`);
 });
 
-test('coolant: the target pressure is between 1 and 9 and never above the relief valve', () => {
+test('coolant: the target starts from the demand, stays between 1 and 9 and never above the relief valve', () => {
   const def = g.Modules.list.find(m => m.id === 'coolant');
+  assert.ok(def.needy, 'coolant is needy');
   for (let seed = 1; seed <= 500; seed++) {
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000), s = def.create(bomb, r);
     assert.ok(s.relief >= 4 && s.relief <= 8, 'relief 4 to 8');
-    const raw = Math.max(1, Math.min(9, Number(bomb.serial.slice(-1)) + bomb.indicators.filter(i => i.lit).length - bomb.batteries));
-    const t = g.coolantTarget(s, bomb);
-    assert.equal(t, raw > s.relief ? s.relief - 1 : raw);
-    assert.ok(t >= 1 && t <= 8);
+    for (let demand = 1; demand <= 9; demand++) {
+      const raw = Math.max(1, Math.min(9, demand + bomb.indicators.filter(i => i.lit).length - bomb.batteries));
+      const t = g.coolantTarget({ ...s, demand }, bomb);
+      assert.equal(t, raw > s.relief ? s.relief - 1 : raw);
+      assert.ok(t >= 1 && t <= 8);
+    }
   }
-  const zero = g.makeBomb(g.rng(7), 300000);
-  Object.assign(zero, { serial: 'AB1CD0', indicators: [], batteries: 2 });
-  assert.equal(g.coolantTarget({ relief: 6 }, zero), 1, 'a serial ending in 0 still gives a reachable target');
+  const quiet = g.makeBomb(g.rng(7), 300000);
+  Object.assign(quiet, { indicators: [], batteries: 2 });
+  assert.equal(g.coolantTarget({ relief: 6, demand: 1 }, quiet), 1, 'a low demand still gives a reachable target');
 });
 
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
