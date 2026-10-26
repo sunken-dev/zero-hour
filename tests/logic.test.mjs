@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are seventeen modules, at least half with a rear plate, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 17);
+test('there are eighteen modules, at least half with a rear plate, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 18);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
@@ -129,6 +129,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'cipher') {
+        assert.ok(g.CIPHER_WORDS.includes(s.word), 'a word from the list');
+        assert.equal(s.shifts.length, 5); assert.ok(s.shifts.every(d => d >= 0 && d <= 9));
+        assert.equal(s.enc, g.cipherEncode(s.word, s.shifts));
+        const back = [...s.enc].map((c, i) => String.fromCharCode((c.charCodeAt(0) - 65 - s.shifts[i] + 26) % 26 + 65)).join('');
+        assert.equal(back, s.word, 'moving each letter back by its rotor gives the word');
+      }
       if (def.id === 'throttle') {
         assert.ok(g.THROTTLE_GRIPS.includes(s.grip), 'a known grip');
         const want = g.throttleWant(s, bomb), base = g.THROTTLE_POS[s.grip];
