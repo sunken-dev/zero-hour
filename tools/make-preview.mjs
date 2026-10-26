@@ -1,7 +1,7 @@
 // Renders the link-preview images from the game itself: site/zero-hour-preview.png (1200 x 630) and
 // site/zero-hour-preview@2x.png (2400 x 1260).
 //
-//   npm run preview [-- --seed 202] [-- --out some/folder]
+//   npm run preview [-- --seed 1978] [-- --out some/folder]
 //
 // It starts a bomb with the given seed, freezes it at a tense moment (07.43 on the clock, one strike), photographs the
 // case, and lays it out next to the logo and tagline. Uses the real fonts from node_modules, so the result does not
@@ -13,7 +13,7 @@ import { launch } from './chrome.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (name, dflt) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : dflt; };
-const seed = arg('seed', '202'), outDir = path.resolve(arg('out', path.join(root, 'site')));
+const seed = arg('seed', '1978'), outDir = path.resolve(arg('out', path.join(root, 'site')));
 const page0 = pathToFileURL(path.join(root, 'site', 'index.html')).href;
 
 const fontFile = (pkg, w) => path.join(root, 'node_modules', '@fontsource', pkg, 'files', `${pkg}-latin-${w}-normal.woff2`);
@@ -87,7 +87,7 @@ body{position:relative;width:1200px;height:630px;overflow:hidden;background:#060
   <p class="tag">One team. One bomb. One manual.</p>
   <p class="sub">Inspect the case. Keep your cool.</p>
 </div>
-<div class="pills"><i>20 modules</i><i>3D bomb case</i><i>Seeded bombs</i></div>`;
+<div class="pills"><i>25 modules</i><i>3D bomb case</i><i>Seeded bombs</i></div>`;
   fs.mkdirSync(outDir, { recursive: true });
   for (const [scale, name] of [[1, 'zero-hour-preview.png'], [2, 'zero-hour-preview@2x.png']]) {
     const page = await browser.newPage();
