@@ -79,7 +79,7 @@ svg{display:block}
 
 /* ================= start page ================= */
 .start{max-width:1240px;margin:0 auto;padding:34px 24px 48px;min-height:100vh;display:grid;
-  grid-template-columns:minmax(300px,510px) minmax(0,1fr);gap:100px;align-items:center}
+  grid-template-columns:minmax(300px,510px) minmax(0,1fr);gap:140px;align-items:center}
 .lockup{display:flex;align-items:center;gap:22px;margin-bottom:22px}
 .word{width:226px}
 .word b,.word span{display:block;font-size:54px;line-height:.92;text-align:justify;text-align-last:justify;letter-spacing:.05em}
@@ -4121,7 +4121,7 @@ function openSettings() {
 /* ---- start page: the hero is the case itself, already draggable ---- */
 function destroyDemo() { if (demo) { demo.rig.destroy(); demo = null; } }
 function mountDemo(host, view) {
-  const keep = view || (demo && demo.rig.getView()) || { yaw: -20, pitch: -12, zoom: 1 };
+  const keep = view || (demo && demo.rig.getView()) || { yaw: -20, pitch: -12, zoom: 1.1 };
   destroyDemo();
   const L = layoutFor(window.innerWidth), r = rng(20261025);
   const bomb = makeBomb(r, opts.minutes * 60000);
@@ -4169,8 +4169,8 @@ function showStart() {
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: () => drawer.classList.add('open') }, 'Manual'),
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: openExplorer }, 'Modules'))),
     host));
-  mountDemo(host, { yaw: -70, pitch: -24, zoom: .8 });
-  demo.rig.animateTo({ yaw: -20, pitch: -12, zoom: 1 }, 1600);
+  mountDemo(host, { yaw: -70, pitch: -24, zoom: .88 });
+  demo.rig.animateTo({ yaw: -20, pitch: -12, zoom: 1.1 }, 1600);
 }
 
 
