@@ -419,14 +419,12 @@ svg{display:block}
 .gyro3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .gyro{position:relative;width:120px;height:120px}
 .gy{position:absolute;left:60px;top:60px;width:0;height:0}
-.gy .torus .tube .fc{background:
-  linear-gradient(rgb(255 255 255 / calc((var(--b) - .66) * 1.5)),rgb(255 255 255 / calc((var(--b) - .66) * 1.5))),
-  color-mix(in srgb,var(--c) calc(18% + var(--b) * 82%),#000)}
-.gy-outer,.gy-inner,.gy-rotor{position:absolute;left:0;top:0;width:0;height:0}
-.gy-outer{transform:translateZ(38px) rotateX(68deg)}
-.gy-inner{transform:translateZ(38px) rotateY(62deg) rotateX(18deg)}
-.gy-rotor{transform:translateZ(38px);animation:gy-spin 2.4s linear infinite}
-@keyframes gy-spin{to{transform:translateZ(38px) rotateZ(360deg)}}
+.gy-face{position:absolute;left:-42px;top:-42px;width:84px;height:84px;border-radius:50%;transform:translateZ(13.1px);background:radial-gradient(circle at 50% 40%,#16232a,#05090b 75%);box-shadow:inset 0 4px 10px #000,inset 0 0 0 2px #2b3438}
+.gy-rotor{position:absolute;left:0;top:0;width:0;height:0;transform:translateZ(13.2px);animation:gy-spin 3s linear infinite}
+.gy-disc{position:absolute;left:-30px;top:-30px;width:60px;height:60px;border-radius:50%;transform:translateZ(6.05px);
+  background:repeating-conic-gradient(from 0deg,#e8c98f 0 8deg,#b88a48 8deg 16deg),radial-gradient(circle,#d8b67a,#9c7432);box-shadow:inset 0 0 0 3px #7a5426;background-blend-mode:soft-light}
+.gy-index{position:absolute;left:-1.5px;top:-44px;width:3px;height:16px;border-radius:2px;background:var(--amber);box-shadow:0 0 6px #ffb224aa;transform:translateZ(22px)}
+@keyframes gy-spin{to{transform:translateZ(13.2px) rotateZ(360deg)}}
 @media(prefers-reduced-motion:reduce){.gy-rotor{animation:none}}
 .gyro-lbl{font:700 14px var(--mono);letter-spacing:.08em;color:#0b141a;background:linear-gradient(#ffd36b,#e09a00);padding:4px 10px;border-radius:3px}
 .cph-enc{height:46px;font-size:30px;letter-spacing:.32em;padding-left:.3em}
@@ -3014,13 +3012,14 @@ Modules.register({
       arrow('mz-up', ARROW_UP, 0, 'Up'), arrow('mz-left', ARROW_L, 3, 'Left'), arrow('mz-right', ARROW_R, 1, 'Right'), arrow('mz-down', ARROW_DN, 2, 'Down'))));
   },
   mountBack(root, s) {
-    // a gyroscope: a steel pedestal, two brass gimbal rings at angles, and a spinning steel rotor in the middle
+    // the gyro: a steel housing with a knurled bezel, a dark recessed face with a fixed index line, and a heavy
+    // brass rotor turning slowly inside
     root.append(h('div', { class: 'gyro3d' }, h('small', {}, 'gyro'),
       h('div', { class: 'gyro' }, h('div', { class: 'gy' },
-        cylZ(16, 4, 24, { color: '#3a464d' }), cylZ(3.5, 34, 10, { z: 4, color: '#aab8c0' }),
-        h('div', { class: 'gy-outer' }, torus(46, 3, 32, '#c9a36a')),
-        h('div', { class: 'gy-inner' }, torus(34, 2.6, 28, '#d8b67a')),
-        h('div', { class: 'gy-rotor' }, cylZ(19, 7, 32, { z: -3.5, color: '#d3dce1', knurl: true }), cylZ(4, 9, 10, { z: -4.5, color: '#4a5860' })))),
+        cylZ(52, 10, 48, { color: '#8d9ca4' }), cylZ(48, 3, 48, { z: 10, color: '#c9d3d8', knurl: true }),
+        h('i', { class: 'gy-face' }),
+        h('div', { class: 'gy-rotor' }, cylZ(30, 6, 36, { color: '#c9a36a' }), h('i', { class: 'gy-disc' }), cylZ(6, 4, 14, { z: 6, color: '#4a5860' })),
+        h('i', { class: 'gy-index' }))),
       h('b', { class: 'gyro-lbl' }, MAZE_ROT[s.rot])));
   },
   manual() {
