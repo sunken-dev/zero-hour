@@ -191,6 +191,10 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
     const awake = root => root.querySelector('.needy-lcd').classList.contains('awake');
     const until = async (cond, ms) => { const t0 = performance.now(); while (!cond() && performance.now() - t0 < ms) await sleep(20); return cond(); };
     const handle = {
+      breaker(root, s, back, bomb) {
+        const n = +root.querySelector('.mini-lcd').textContent, lamp = root.querySelector('.led').style.getPropertyValue('--lc').includes('ff3b5c') ? 'red' : 'green';
+        bomb.lever.up = T.breakerWantUp({ n, lamp }, bomb); root.querySelector('.go').click();
+      },
       knob(root, s) {
         const lit = [...root.querySelectorAll('.pat .led')].map(l => l.classList.contains('off') ? '0' : '1').join('');
         const e = T.KNOB_TABLE.find(x => x[0] === lit); if (!e) return 'pattern not in table ' + lit;
@@ -277,11 +281,6 @@ test('every module can be solved through its real controls, and a wrong answer i
               hist.push({ pos: want, label: labels[want - 1] }); click(root.querySelectorAll('.mk')[want - 1]);
             }
             if (!solved || strikes) fail(`memory solved=${solved} strikes=${strikes}`);
-          } else if (def.id === 'breaker') {
-            const n = +root.querySelector('.mini-lcd').textContent, lamp = root.querySelector('.led').style.getPropertyValue('--lc').includes('ff3b5c') ? 'red' : 'green';
-            const want = T.breakerWantUp({ n, lamp }, bomb);
-            bomb.lever.up = !want; click(root.querySelector('.go')); if (solved || strikes !== 1) fail('wrong lever did not strike');
-            bomb.lever.up = want; click(root.querySelector('.go')); if (!solved) fail('breaker not solved');
           } else if (def.id === 'morse') {
             const lcd = root.querySelector('.mini-lcd'), arrows = [...root.querySelectorAll('.sk')]; let guard = 0;
             while (lcd.textContent !== s.word[1] + ' MHz' && guard++ < 20) click(arrows[1]);

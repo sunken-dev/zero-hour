@@ -96,7 +96,7 @@ test('module configuration: switched-off modules are never dealt, and optional r
 test('needy modules: Knob, Breaker and Coolant at most; dealing keeps to the needy limits', () => {
   const needy = g.Modules.list.filter(m => m.needy).map(m => m.id);
   assert.ok(needy.every(id => ['knob', 'breaker', 'coolant'].includes(id)), needy.join());
-  assert.ok(needy.includes('knob'));
+  assert.ok(needy.includes('knob') && needy.includes('breaker'));
   for (const d of g.DIFFICULTIES) for (let count = 2; count <= 6; count++) {
     const limit = count <= 2 ? 0 : (d === 'easy' || count < 6) ? 1 : 2;
     let most = 0;
