@@ -3745,7 +3745,10 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
   const ease = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
   const FOLLOW = 20, DECAY = 3.4;          // follow speed and momentum decay, both per second
   const narrow = L.cols === 2;
-  let api = null, fitScale = 1, facing = '', raf = 0, last = 0, anim = null, drag = null;
+  let api = null, fitScale = 1, facing = '', raf = 0, last = 0, anim = null, drag = null, lastInput = 0;
+  // init.spin: a slow turn in degrees per second while nobody touches the case (start screen); off for reduced motion
+  const spin = init.spin && !matchMedia('(prefers-reduced-motion: reduce)').matches ? init.spin : 0;
+  const idle = now => spin && !drag && now - lastInput > 2500;
   const pend = { x: 0, y: 0 }, vel = { yaw: 0, pitch: 0 }, lastDim = {};
   stage.classList.toggle('narrow', narrow);
 
@@ -3795,7 +3798,7 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
       const p = clamp((now - anim.t0) / anim.ms, 0, 1), e = ease(p);
       for (const k in anim.to) st[k] = anim.from[k] + (anim.to[k] - anim.from[k]) * e;
       Object.assign(goal, st);
-      if (p >= 1) anim = null; else busy = true;
+      if (p >= 1) { anim = null; busy = !!spin; } else busy = true;
     } else {
       if (drag && (pend.x || pend.y)) {                      // all pointer movement since the last frame, applied at once
         const dyaw = pend.x * .32 * settings.sens, dpitch = -pend.y * .32 * settings.sens;
@@ -3810,10 +3813,13 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
         goal.yaw += vel.yaw * dt; goal.pitch = clamp(goal.pitch + vel.pitch * dt, -90, 90);
         api && api.onTurn && api.onTurn(goal.yaw, goal.pitch);
         const f = Math.exp(-dt * DECAY); vel.yaw *= f; vel.pitch *= f;
-      } else vel.yaw = vel.pitch = 0;
+      } else {
+        vel.yaw = vel.pitch = 0;
+        if (idle(now)) goal.yaw += spin * dt;
+      }
       const k = 1 - Math.exp(-dt * FOLLOW);                  // ease the picture toward the goal
       st.yaw += (goal.yaw - st.yaw) * k; st.pitch += (goal.pitch - st.pitch) * k; st.zoom += (goal.zoom - st.zoom) * k;
-      busy = !!drag || !!vel.yaw || !!vel.pitch || Math.abs(goal.yaw - st.yaw) > .01 || Math.abs(goal.pitch - st.pitch) > .01 || Math.abs(goal.zoom - st.zoom) > .0005;
+      busy = !!spin || !!drag || !!vel.yaw || !!vel.pitch || Math.abs(goal.yaw - st.yaw) > .01 || Math.abs(goal.pitch - st.pitch) > .01 || Math.abs(goal.zoom - st.zoom) > .0005;
       if (!busy) Object.assign(st, goal);
     }
     apply();
@@ -3828,6 +3834,7 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
   const settleHere = () => { anim = null; Object.assign(goal, st); vel.yaw = vel.pitch = 0; };   // take over from whatever was moving
 
   stage.addEventListener('pointerdown', e => {
+    lastInput = performance.now();
     if (e.button > 0 || e.target.closest('button,[role=button],.nodrag,input,a')) return;
     settleHere();
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
@@ -3854,6 +3861,7 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
     e.preventDefault();
     if (anim) settleHere();
     goal.zoom = clamp(goal.zoom * Math.exp(-e.deltaY * .0012), .6, 2.2);
+    lastInput = performance.now();
     wake();
     api && api.onZoom && api.onZoom(goal.zoom);
   }, { passive: false, signal: ac.signal });
@@ -4394,7 +4402,7 @@ function mountDemo(host, view) {
   const t = fmt(opts.minutes * 60000);
   asm.refs.live.textContent = t; asm.refs.ghost.textContent = t.replace(/\d/g, '8');
   host.replaceChildren(h('div', { class: 'floor' }), h('div', { class: 'pool' }), asm.bomb3d, h('span', { class: 'demo-cap' }, 'Drag the case to turn it'));
-  demo = { rig: createRig(host, asm.bomb3d, asm.faces, L, keep) };
+  demo = { rig: createRig(host, asm.bomb3d, asm.faces, L, { ...keep, spin: 6 }) };
 }
 
 function showStart() {
