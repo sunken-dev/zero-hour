@@ -167,9 +167,16 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.ok(s.seq.every(c => g.SEMAPHORE[c]), 'every signal is a letter');
       }
       if (def.id === 'meter') {
-        assert.equal(new Set(s.volts).size, 4); assert.ok(s.volts.every(v => g.METER_VOLTS.includes(v)));
-        const target = bomb.coinVolts > 0 ? bomb.coinVolts : bomb.batteries * 1.5, at = s.volts.indexOf(target);
-        assert.equal(g.meterPair(s, bomb), target > 0 && at >= 0 ? at : s.volts.indexOf(Math.max(...s.volts)));
+        const v = [...s.volts], target = bomb.coinVolts || bomb.batteries * 1.5 || 12;
+        assert.equal(g.meterTarget(bomb), target);
+        assert.equal(v.length, 6); assert.equal(new Set(v).size, 6);
+        assert.ok(v.every(x => x >= 0 && x <= 12 && Number.isInteger(x * 2)), 'every jack sits on the half-volt grid from 0 to 12 V');
+        const pairs = [];
+        for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) pairs.push([i, j, Math.abs(v[i] - v[j])]);
+        const hits = pairs.filter(p => p[2] === target);
+        assert.equal(hits.length, 1, 'exactly one pair reads the target');
+        assert.deepEqual([...g.meterPair(s, bomb)], hits[0].slice(0, 2));
+        assert.ok(pairs.every(p => p[2] === target || Math.abs(p[2] - target) >= 1), 'every other pair reads at least 1 V away');
       }
       if (def.id === 'dip') {
         const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1))) % 16;

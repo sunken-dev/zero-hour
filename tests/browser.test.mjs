@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,meterPair,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -420,13 +420,18 @@ test('every module can be solved through its real controls, and a wrong answer i
             goTo(odd); click(root.querySelector('.go')); if (!solved) fail('semaphore not solved');
             click(root.querySelector('.sem-next')); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'meter') {
-            const pairs = [...root.querySelectorAll('.mt-pair')], want = T.meterPair(s, bomb);
-            click(root.querySelector('.go')); if (strikes) fail('bridging with no pair probed struck');
-            click(pairs[(want + 1) % 4]);
-            if (root.querySelector('.mt-needle').style.getPropertyValue('--v') !== String(s.volts[(want + 1) % 4])) fail('the needle does not show the probed voltage');
-            click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('bridging the wrong pair did not strike');
-            click(pairs[want]); click(root.querySelector('.go')); if (!solved) fail('multimeter not solved');
-            click(pairs[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
+            const ports = [...root.querySelectorAll('.mt-port')], want = [...T.meterPair(s, bomb)];
+            const [a, b] = [0, 1, 2, 3, 4, 5].filter(k => !want.includes(k));
+            click(root.querySelector('.go')); if (strikes) fail('patching with no probes placed struck');
+            click(ports[a]); click(root.querySelector('.go')); if (strikes) fail('patching with one probe placed struck');
+            click(ports[b]);
+            if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== Math.abs(s.volts[a] - s.volts[b])) fail('the needle does not show the voltage between the probes');
+            click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('patching the wrong pair did not strike');
+            click(ports[want[0]]); click(ports[want[1]]);
+            if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== T.meterTarget(bomb)) fail('the right pair does not read the target');
+            click(root.querySelector('.go')); if (!solved) fail('multimeter not solved');
+            if (!root.querySelector('.mt-cable')) fail('no cable patched after solving');
+            click(ports[a]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'dip') {
             const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(bomb))];
             const set = p => sw.forEach((e, k) => { if (e.classList.contains('on') !== p[k]) click(e); });
