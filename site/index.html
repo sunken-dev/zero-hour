@@ -496,12 +496,12 @@ svg{display:block}
 .fuse.out .stand{transform:translateZ(22px) translateY(-14px) rotateZ(-6deg)}
 .fuse.out .bed{box-shadow:inset 0 2px 6px #000,0 0 0 1px #ff3b5c55}
 .thr{display:flex;justify-content:center;align-items:stretch;gap:30px;height:156px}
-.thr-gate{position:relative;width:64px;height:100%;--travel:126px}
+.thr-gate{position:relative;width:64px;height:100%;--travel:126px;cursor:grab;touch-action:none}
 .thr-gate .cb{--c:#1c2a32;--top:linear-gradient(90deg,#24323a,#3a4a54 50%,#24323a)}
 .thr-gate .cb>.t{border-radius:4px;box-shadow:inset 0 0 0 1px #43dfff22}
 .thr-slot{position:absolute;left:24px;top:10px;bottom:10px;width:16px;border-radius:8px;background:linear-gradient(90deg,#000,#0b1216 40%,#000);box-shadow:inset 0 3px 8px #000,0 1px 0 #ffffff22}
 .thr-det{position:absolute;left:-14px;width:10px;height:2px;background:#9fb0b9;bottom:calc((var(--n) - 1) * (100% - 0px) / 4.6 + 3px)}
-.thr-lever{position:absolute;left:32px;width:0;height:0;bottom:calc(13px + (var(--pos) - 1) * var(--travel) / 4);transition:bottom .25s cubic-bezier(.3,1.3,.5,1);transform:translateZ(5px)}
+.thr-lever{position:absolute;left:32px;width:0;height:0;bottom:calc(13px + (var(--drag,var(--pos)) - 1) * var(--travel) / 4);transition:bottom .25s cubic-bezier(.3,1.3,.5,1);transform:translateZ(5px)}
 .thr-grip{position:absolute;left:-23px;top:0;width:0;height:0;transform:translateZ(38px)}
 .thr-grip .tube.rib .fc{background:
   repeating-linear-gradient(90deg,#0000 0 3px,#0006 3px 4.5px),
@@ -2882,7 +2882,27 @@ Modules.register({
     const lever = h('div', { class: 'thr-lever' }, cylZ(5, 30, 16, { color: '#c9d3d8' }), cylZ(9, 3, 20, { color: '#4a5860' }), h('div', { class: 'thr-grip' }, grip));
     const slot = h('div', { class: 'thr-gate' }, cuboid(5, h('div', { class: 'thr-slot' },
       [1, 2, 3, 4, 5].map(n => h('i', { class: 'thr-det', style: `--n:${n}` }))), 'fill'), lever);
-    const place = () => slot.style.setProperty('--pos', pos);
+    const place = () => { slot.style.setProperty('--pos', pos); slot.style.removeProperty('--drag'); };
+    // the lever can be dragged along the slot; it follows the pointer and snaps to the nearest position on release
+    slot.classList.add('nodrag');
+    let drag = null;
+    const posAt = e => { const r = slot.getBoundingClientRect(); return Math.max(1, Math.min(5, 1 + (r.bottom - 13 - e.clientY) / ((r.height - 26) / 4))); };
+    slot.addEventListener('pointerdown', e => {
+      if (e.button > 0 || ctl.isSolved()) return;
+      drag = { id: e.pointerId }; slot.classList.add('turning');
+      try { slot.setPointerCapture(e.pointerId); } catch (_) { /* capture is only a nicety */ }
+      slot.style.setProperty('--drag', posAt(e));
+    });
+    slot.addEventListener('pointermove', e => { if (drag && e.pointerId === drag.id) slot.style.setProperty('--drag', posAt(e)); });
+    const drop = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag = null; slot.classList.remove('turning');
+      const n = Math.round(posAt(e));
+      if (n !== pos) { pos = n; ctl.sfx.click(); }
+      place();
+    };
+    slot.addEventListener('pointerup', drop);
+    slot.addEventListener('pointercancel', drop);
     const notches = [1, 2, 3, 4, 5].map(n => activate(h('div', { class: 'notch sk' }, button3d(String(n), '', 5)), () => {
       if (ctl.isSolved() || pos === n) return;
       pos = n; place(); ctl.sfx.click();

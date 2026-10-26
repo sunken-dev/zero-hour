@@ -269,6 +269,23 @@ test('knobs turn by dragging round them, and a drag is not also a click', T, () 
   assert.deepEqual(problems, []);
 }));
 
+test('the throttle lever can be dragged along its slot', T, () => withPage(pathToFileURL(testCopy).href, async page => {
+  const problems = await page.evaluate(() => {
+    const T = window.__t, out = [], def = T.Modules.list.find(m => m.id === 'throttle');
+    const bomb = T.makeBomb(T.rng(3), 300000), s = def.create(bomb, T.rng(4)), root = document.createElement('div');
+    root.style.cssText = 'position:fixed;left:40px;top:40px;width:240px'; document.body.append(root);
+    let solved = false, strikes = 0;
+    def.mount(root, s, { bomb, sfx: T.sfx, isSolved: () => solved, solve() { solved = true; }, strike() { strikes++; } });
+    const gate = root.querySelector('.thr-gate'), want = T.throttleWant(s, bomb), r = gate.getBoundingClientRect();
+    const yFor = p => r.bottom - 13 - (p - 1) * (r.height - 26) / 4, ev = (type, y) => gate.dispatchEvent(new PointerEvent(type, { clientX: r.left + 32, clientY: y, pointerId: 1, bubbles: true }));
+    ev('pointerdown', yFor(s.start)); for (let k = 0; k <= 10; k++) ev('pointermove', yFor(s.start) + (yFor(want) - yFor(s.start)) * k / 10 + 3); ev('pointerup', yFor(want) + 3);
+    root.querySelector('.go').click();
+    if (!solved || strikes) out.push(`dragging the lever from ${s.start} to ${want} did not set it (solved ${solved}, strikes ${strikes})`);
+    return out;
+  });
+  assert.deepEqual(problems, []);
+}));
+
 test('rear plates show what their module needs', T, () => withPage(pathToFileURL(testCopy).href, async page => {
   const problems = await page.evaluate(() => {
     const T = window.__t, out = [];
