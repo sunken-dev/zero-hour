@@ -170,7 +170,6 @@ svg{display:block}
 .f-front .band{display:grid;grid-template-columns:1fr auto auto;gap:12px}
 .diff-plate{width:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(#cfdadf,#8da0aa);border-radius:3px;box-shadow:0 2px 4px #000a,inset 0 1px 0 #fff8;--dc:var(--amber)}
 .diff-plate.diff-easy{--dc:var(--mint)}.diff-plate.diff-hard{--dc:var(--red)}
-.diff-plate .lamp{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,var(--dc) 55%);box-shadow:0 0 10px var(--dc)}
 .diff-plate b{writing-mode:vertical-rl;transform:rotate(180deg);font:700 12px var(--mono);letter-spacing:.14em;color:#0b141a}
 .screen{position:relative;background:linear-gradient(#04141a,#08212a);border:1px solid #43dfff55;padding:8px 18px 10px;overflow:hidden;
   box-shadow:inset 0 0 44px #000d,0 0 26px #43dfff1a;display:flex;flex-direction:column;justify-content:center;
@@ -3911,7 +3910,7 @@ function assembleCase(bomb, L, plan, fillBay, fillRear) {
   const bar = h('div', { class: 'bar' }, h('i'));
   const pips = [0, 1, 2].map(() => h('div', { class: 'strike' }, cuboid(5, '\u00d7', 'fill')));
   const diff = bomb.difficulty || 'medium';
-  const diffPlate = h('div', { class: 'diff-plate diff-' + diff, 'aria-label': diff + ' difficulty' }, h('i', { class: 'lamp' }), h('b', {}, diff.toUpperCase()));
+  const diffPlate = h('div', { class: 'diff-plate diff-' + diff, 'aria-label': diff + ' difficulty' }, led({ easy: '#4dffb0', medium: '#ffb224', hard: '#ff3b5c' }[diff], true, 'lg'), h('b', {}, diff.toUpperCase()));
   faces.front.append(h('div', { class: 'fi' },
     h('div', { class: 'band' }, h('div', { class: 'screen' }, clock, bar), h('div', { class: 'strikecol', 'aria-label': 'Strikes' }, pips), diffPlate),
     bays(front)));
