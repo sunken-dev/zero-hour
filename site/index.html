@@ -528,19 +528,26 @@ svg{display:block}
   repeating-linear-gradient(90deg,#0000 0 13px,#0003 13px 15px),
   linear-gradient(rgb(255 255 255 / calc((var(--b) - .72) * 1.6)),rgb(255 255 255 / calc((var(--b) - .72) * 1.6))),
   color-mix(in srgb,var(--c) calc(18% + var(--b) * 82%),#000)}
+@property --sway{syntax:'<angle>';inherits:true;initial-value:0deg}
+@keyframes wire-sway{from{--sway:-1.2deg}to{--sway:1.2deg}}
+.wire{animation:wire-sway 3.2s ease-in-out var(--sd,0s) infinite alternate}
+.wire .seg.l{transform-origin:0 50%;transform:rotateZ(var(--tilt,0deg)) rotateY(calc(var(--bow,0deg) * -1 - var(--sway)))}
+.wire .seg.r{transform-origin:100% 50%;transform:rotateZ(calc(var(--tilt,0deg) * -1)) rotateY(calc(var(--bow,0deg) + var(--sway)))}
 .wire .gap{flex:0}
+.wire:not(.cut) .seg .disc{visibility:hidden}
 .wire:not(.cut):hover .tube .fc{filter:brightness(1.3)}
 .wire.cut .seg{flex:0 0 38%}
 .wire.cut .glow{opacity:.12}
 .wire.cut .gap{flex:1}
-.wire.cut .seg.l{transform:rotate(-8deg);transform-origin:left center}
-.wire.cut .seg.r{transform:rotate(8deg);transform-origin:right center}
+.wire.cut .seg.l{transform:rotate(-8deg) rotateY(calc(var(--bow,0deg) * -1.8));transform-origin:left center}
+.wire.cut .seg.r{transform:rotate(8deg) rotateY(calc(var(--bow,0deg) * 1.8));transform-origin:right center}
 .seg .disc{position:absolute;top:0;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle,#f0b27a,#a8602c)}
 .seg.l .disc{right:-4.5px;transform:translateZ(5.5px) rotateY(90deg)}
 .seg.r .disc{left:-4.5px;transform:translateZ(5.5px) rotateY(-90deg)}
 .spark{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;opacity:0;pointer-events:none;transform:translateZ(11px);
   background:radial-gradient(#fff 0,#ffe27a 28%,#ff8a3d 48%,#0000 70%)}
 .wire.cut .spark{animation:spark .5s ease-out}
+.wire.cut{animation:none}
 @keyframes spark{0%{opacity:1;scale:.3}100%{opacity:0;scale:2.8}}
 
 /* generic facet cylinder (wires, batteries): the axis lies along x */
@@ -1777,7 +1784,9 @@ Modules.register({
     const seg = side => h('span', { class: 'seg ' + side }, tube(4.5, 14, 5.5), h('i', { class: 'disc' }));
     const box = h('div', { class: 'wires' });
     s.wires.forEach((c, i) => {
-      const w = h('div', { class: 'wire', style: `--c:${WIRE_HEX[c]};--g:${WIRE_GLOW[c]}` },
+      // each wire bows out a little and sits at its own slight angle, so they read as loose wires, not rods
+      const bow = 4 + (i * 37 % 5) * 1.1, tilt = ((i * 53 % 5) - 2) * .7;
+      const w = h('div', { class: 'wire', style: `--c:${WIRE_HEX[c]};--g:${WIRE_GLOW[c]};--bow:${bow}deg;--tilt:${tilt}deg;--sd:${-(i * 1.3) % 4}s` },
         h('i', { class: 'shd' }), h('i', { class: 'glow' }), peg(), seg('l'), h('span', { class: 'gap' }), seg('r'), peg(), h('b', { class: 'spark' }));
       activate(w, () => {
         if (w.classList.contains('cut') || ctl.isSolved()) return;
