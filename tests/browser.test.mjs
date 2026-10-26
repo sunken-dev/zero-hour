@@ -243,6 +243,32 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
   assert.deepEqual(problems, []);
 }));
 
+test('knobs turn by dragging round them, and a drag is not also a click', T, () => withPage(pathToFileURL(testCopy).href, async page => {
+  const problems = await page.evaluate(() => {
+    const T = window.__t, out = [], def = T.Modules.list.find(m => m.id === 'signal');
+    const bomb = T.makeBomb(T.rng(1), 300000), s = def.create(bomb, T.rng(2)), root = document.createElement('div');
+    root.style.cssText = 'position:fixed;left:40px;top:40px;width:240px'; document.body.append(root);
+    def.mount(root, s, { bomb, sfx: T.sfx, isSolved: () => false, solve() {}, strike() {} });
+    const knob = root.querySelector('.k-amp'), well = knob.querySelector('.sk-well'), value = () => +knob.querySelector('b').textContent;
+    const drag = degrees => {
+      const r = well.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, at = a => ({ clientX: cx + 30 * Math.sin(a * Math.PI / 180), clientY: cy - 30 * Math.cos(a * Math.PI / 180), pointerId: 1, bubbles: true });
+      knob.dispatchEvent(new PointerEvent('pointerdown', at(0)));
+      for (let a = 0; Math.abs(a) <= Math.abs(degrees); a += Math.sign(degrees) * 10) knob.dispatchEvent(new PointerEvent('pointermove', at(a)));
+      knob.dispatchEvent(new PointerEvent('pointerup', at(degrees)));
+      knob.dispatchEvent(new MouseEvent('click', { bubbles: true }));            // the browser clicks after a drag; it must not step again
+    };
+    const start = value(), up = start < 5 ? start + 1 : start - 1;
+    drag(start < 5 ? 60 : -60);
+    if (value() !== up) out.push(`dragging one step turned AMP from ${start} to ${value()}`);
+    drag(start < 5 ? -60 : 60);
+    if (value() !== start) out.push(`dragging back left AMP at ${value()}, not ${start}`);
+    knob.click();
+    if (value() === start) out.push('a plain click no longer steps the knob');
+    return out;
+  });
+  assert.deepEqual(problems, []);
+}));
+
 test('rear plates show what their module needs', T, () => withPage(pathToFileURL(testCopy).href, async page => {
   const problems = await page.evaluate(() => {
     const T = window.__t, out = [];
