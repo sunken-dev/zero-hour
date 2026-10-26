@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are fifteen modules, at least half with a rear plate, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 15);
+test('there are sixteen modules, at least half with a rear plate, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 16);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
@@ -129,6 +129,12 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'throttle') {
+        assert.ok(g.THROTTLE_GRIPS.includes(s.grip), 'a known grip');
+        const want = g.throttleWant(s, bomb), base = g.THROTTLE_POS[s.grip];
+        assert.equal(want, bomb.batteries > 2 ? Math.max(1, base - 1) : base);
+        assert.ok(s.start >= 1 && s.start <= 5 && s.start !== want, 'starts away from the answer');
+      }
       if (def.id === 'gears') {
         assert.ok(s.gears >= 3 && s.gears <= 6, 'three to six gears');
         assert.ok(s.dots.length >= 1 && s.dots.length <= 3 && new Set(s.dots).size === s.dots.length, 'one to three distinct red dots');
