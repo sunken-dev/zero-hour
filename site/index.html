@@ -148,7 +148,11 @@ svg{display:block}
     linear-gradient(180deg,#2b3b47,#16212a);
   border:5px solid;border-color:#4a5e6e #2d3d49 #1a2630 #364955;
   box-shadow:inset 0 0 0 1px #000b,inset 0 0 0 7px #111b22,inset 0 0 0 8px #43dfff38,inset 0 0 70px #000b}
-.face::after{content:"";position:absolute;inset:0;background:#02060a;opacity:var(--dim,0);pointer-events:none;z-index:30;transform:translateZ(4.2px);backface-visibility:hidden}
+/* The shading of a face turned away from the light: a dark film lying just on the plate, below every part mounted on
+   it. Higher up it would cut through the parts (bezels are 4px tall) and their edges would flicker as the case turns. */
+.face::after{content:"";position:absolute;inset:0;background:#02060a;opacity:var(--dim,0);pointer-events:none;z-index:30;transform:translateZ(.15px);backface-visibility:hidden}
+/* Smooth the edges of 3D facets (a transparent outline makes the browser anti-alias them) */
+.cb>*,.fz,.fc,.cz-top,.disc{outline:1px solid transparent}
 .face,.face *{transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .f-front,.f-back{width:var(--W);height:var(--H);margin:calc(var(--H)/-2) 0 0 calc(var(--W)/-2)}
 .f-left,.f-right{width:var(--D);height:var(--H);margin:calc(var(--H)/-2) 0 0 calc(var(--D)/-2)}
@@ -2603,7 +2607,7 @@ function gear3d(R, { drum = false } = {}) {
   const teeth = Math.round(R * .62), e = h('div', { class: 'gear3d' });
   e.append(h('i', { class: 'g-shadow', style: `width:${2 * R + 6}px;height:${2 * R + 6}px;left:${-R - 3}px;top:${-R - 1}px` }));
   e.append(cylZ(R - 2.5, 5, 32, { color: '#aab8c0' }));
-  for (let k = 0; k < teeth; k++) e.append(h('div', { class: 'g-tooth', style: `transform:rotateZ(${k * 360 / teeth}deg) translateY(${-R + 2}px)` }, cuboid(5, '', 'fill')));
+  for (let k = 0; k < teeth; k++) e.append(h('div', { class: 'g-tooth', style: `transform:rotateZ(${k * 360 / teeth}deg) translateY(${-R + 2}px)` }, cuboid(4.6, '', 'fill')));   // a little lower than the disc, so their tops never meet
   e.append(cylZ(R * .42, 7.5, 20, { color: '#d3dce1' }));
   e.append(h('i', { class: 'g-bore', style: `width:${R * .32}px;height:${R * .32}px;left:${-R * .16}px;top:${-R * .16}px` }));
   if (drum) e.append(cylZ(R * .62, 15, 24, { z: 7.5, color: '#8a5a1c' }), h('i', { class: 'g-rope', style: `width:${R * 1.24}px;height:${R * 1.24}px;left:${-R * .62}px;top:${-R * .62}px` }));
@@ -3457,7 +3461,7 @@ function coinHolder(c) {
 // A solid upright cylinder (axis along z) built from facets and closed by a top disc, drawn around a zero-size anchor.
 function cylZ(R, hgt, n, { z = 0, color = '#cfd8dd', knurl = false, hex = false } = {}) {
   const side = 2 * R * Math.sin(Math.PI / n) * 1.05, apo = R * Math.cos(Math.PI / n);
-  const e = h('div', { class: 'cz', style: `transform:translateZ(${z}px);--fc:${color}` });
+  const e = h('div', { class: 'cz', style: `transform:translateZ(${z + .03}px);--fc:${color}` });   // a hair above z: stacked parts never share a plane
   for (let k = 0; k < n; k++) {
     const phi = k * 360 / n, rad = phi * Math.PI / 180;
     const lit = Math.max(0, -.55 * Math.sin(rad) + .8 * Math.cos(rad));
