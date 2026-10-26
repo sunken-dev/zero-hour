@@ -1,6 +1,6 @@
 # Zero Hour
 
-[![Zero Hour: a 3D bomb case with Glyphs, Wires, Switches, Relay logic, Coolant and Gears modules](site/zero-hour-preview.png)](https://zero-hour.sunken.dev/)
+[![Zero Hour: a 3D bomb case with Morse, Signal, Maze, Coolant, Gears and Resistors modules](site/zero-hour-preview.png)](https://zero-hour.sunken.dev/)
 
 **One team. One bomb. One manual.**
 
