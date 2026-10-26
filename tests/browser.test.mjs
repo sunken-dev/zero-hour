@@ -236,6 +236,11 @@ test('every module can be solved through its real controls, and a wrong answer i
             const back = document.createElement('div'); document.body.append(back);
             const cleanBack = def.mountBack(back, s, ctl) || null;
             const target = T.coolantTarget(s, bomb), to = v => { while (s.valve < v) click(back.querySelector('.v-up')); while (s.valve > v) click(back.querySelector('.v-dn')); };
+            click(back.querySelector('.v-up')); await sleep(300);
+            if (!(s.pressure > 0)) fail('the gauge on the front does not follow the valve turned on the back');
+            const idle = def.create(bomb, T.rng(seed)), idleRoot = document.createElement('div'), stopIdle = def.mount(idleRoot, idle, ctl);
+            stopIdle(); idle.valve = 9; await sleep(300);
+            if (idle.pressure !== 0) fail('an unsolved gauge kept moving after cleanup');
             to(target + 1); s.pressure = s.valve; click(root.querySelector('.go'));
             if (strikes !== 1 || solved) fail('sealing at the wrong pressure did not strike');
             to(target); s.pressure = s.valve; click(root.querySelector('.go')); if (!solved) fail('coolant not solved');
