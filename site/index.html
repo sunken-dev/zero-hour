@@ -3563,7 +3563,9 @@ function signaller() {
     h('div', { class: 'sem-torso' }, cuboid(10, '', 'fill')), h('div', { class: 'sem-head' }, cylZ(9, 9, 20, { color: '#d8b48a' }), cylZ(10, 3, 20, { z: 9, color: '#22384a' })),
     h('div', { class: 'sem-shoulder' }, a, b));
   // arm a always hangs from the left shoulder, arm b from the right
-  return { fig, show: c => { const arms = Object.fromEntries(semArms(c).map(([dx, ang]) => [dx, ang])); a.style.setProperty('--a', arms[-11] + 'deg'); b.style.setProperty('--a', arms[11] + 'deg'); } };
+  const at = { [-11]: 0, 11: 0 };                    // each arm turns the short way round from where it is
+  const turn = (el, dx, ang) => { at[dx] += mod(ang - at[dx] + 180, 360) - 180; el.style.setProperty('--a', at[dx] + 'deg'); };
+  return { fig, show: c => { const arms = Object.fromEntries(semArms(c)); turn(a, -11, arms[-11]); turn(b, 11, arms[11]); } };
 }
 
 Modules.register({

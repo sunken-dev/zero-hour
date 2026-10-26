@@ -424,6 +424,11 @@ test('every module can be solved through its real controls, and a wrong answer i
           } else if (def.id === 'semaphore') {
             const sem = root.querySelector('.sem'), at = () => +sem.dataset.i, goTo = n => { let g = 0; while (at() !== n && g++ < 8) click(root.querySelector('.sem-next')); };
             const odd = T.semaphoreOdd(s, bomb);
+            const arms = () => [...root.querySelectorAll('.sem-arm')].map(e => parseFloat(e.style.getPropertyValue('--a')) || 0);
+            for (let k = 0; k < 8; k++) {
+              const was = arms(); click(root.querySelector(k < 4 ? '.sem-next' : '.sem-prev'));
+              arms().forEach((a, j) => { if (Math.abs(a - was[j]) > 180) fail(`an arm swung ${a - was[j]} degrees`); });
+            }
             goTo((odd + 1) % 4); click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('acknowledging a serial letter did not strike');
             goTo(odd); click(root.querySelector('.go')); if (!solved) fail('semaphore not solved');
             click(root.querySelector('.sem-next')); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
