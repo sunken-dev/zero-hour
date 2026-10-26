@@ -793,8 +793,12 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bench-head b{letter-spacing:.16em}
 .bench-head small{flex:1;color:var(--mute);font-size:13px}
 .bench-body{display:grid;grid-template-columns:250px minmax(0,1fr) 400px;min-height:0}
-.bench-list{overflow:auto;padding:10px;border-right:1px solid #43dfff22;display:flex;flex-direction:column;gap:6px}
-.bench-item{text-align:left;padding:7px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:15px;color:var(--ice);display:flex;flex-direction:column;gap:3px}
+.bench-list{overflow-y:auto;padding:10px 6px 10px 10px;border-right:1px solid #43dfff22;display:flex;flex-direction:column;gap:5px;scrollbar-width:thin;scrollbar-color:#43dfff88 #06111a}
+.bench-list::-webkit-scrollbar{width:10px}
+.bench-list::-webkit-scrollbar-track{background:#06111a;border-left:1px solid #43dfff22}
+.bench-list::-webkit-scrollbar-thumb{background:#43dfff55;border:2px solid #06111a;border-radius:5px}
+.bench-list::-webkit-scrollbar-thumb:hover{background:#43dfff99}
+.bench-item{flex:none;text-align:left;padding:5px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:14.5px;line-height:1.3;color:var(--ice);display:flex;flex-direction:column;gap:2px}
 .bench-item .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .badges{display:flex;gap:4px;flex-wrap:nowrap}
 .badge{font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border:1px solid currentColor;border-radius:2px;color:var(--mute);white-space:nowrap}
