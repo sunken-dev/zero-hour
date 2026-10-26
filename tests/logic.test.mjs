@@ -16,8 +16,9 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are fourteen modules and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 14);
+test('there are fifteen modules, at least half with a rear plate, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 15);
+  assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
     assert.match(m.manual(), /\S/, `${m.id} manual`);
@@ -105,6 +106,21 @@ test('relay logic: every dealt puzzle has exactly one jumper setting, and every 
   }
   assert.deepEqual([...seen].sort(), [...possible].sort());
   assert.equal(possible.size, 8);
+});
+
+test('coolant: the target pressure is between 1 and 9 and never above the relief valve', () => {
+  const def = g.Modules.list.find(m => m.id === 'coolant');
+  for (let seed = 1; seed <= 500; seed++) {
+    const r = g.rng(seed), bomb = g.makeBomb(r, 300000), s = def.create(bomb, r);
+    assert.ok(s.relief >= 4 && s.relief <= 8, 'relief 4 to 8');
+    const raw = Math.max(1, Math.min(9, Number(bomb.serial.slice(-1)) + bomb.indicators.filter(i => i.lit).length - bomb.batteries));
+    const t = g.coolantTarget(s, bomb);
+    assert.equal(t, raw > s.relief ? s.relief - 1 : raw);
+    assert.ok(t >= 1 && t <= 8);
+  }
+  const zero = g.makeBomb(g.rng(7), 300000);
+  Object.assign(zero, { serial: 'AB1CD0', indicators: [], batteries: 2 });
+  assert.equal(g.coolantTarget({ relief: 6 }, zero), 1, 'a serial ending in 0 still gives a reachable target');
 });
 
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
