@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,keyFor,meterPair,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,keyFor,meterPair,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -77,7 +77,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 23);
+  assert.equal(shown.n, 24);
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -159,7 +159,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
   await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
-  assert.equal(items.length, 22);
+  assert.equal(items.length, 23);
   const rank = { easy: 0, medium: 1, hard: 2 };
   const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
   for (let i = 1; i < items.length; i++) {
@@ -308,6 +308,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
     for (const bomb of [...bombs, zero]) {
       const last = Number(bomb.serial.slice(-1)), vowels = [...bomb.serial].filter(c => 'AEIOU'.includes(c)).join('');
       const w = rear('wires', bomb), si = rear('simon', bomb), sw = rear('switches', bomb), br = rear('breaker', bomb);
+      const sm = rear('semaphore', bomb), letters = [...bomb.serial].filter(c => /[A-Z]/.test(c)).join('');
+      if (sm.querySelector('.cs-letters')?.textContent !== letters) out.push(`${bomb.serial}: call sign ${sm.querySelector('.cs-letters')?.textContent}`);
+      sm.remove();
       const mt = rear('meter', bomb);
       if (mt.querySelector('.pw-cells')?.textContent !== String(bomb.batteries) || mt.querySelector('.pw-coin')?.textContent !== bomb.coinVolts.toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-cells')?.textContent}/${mt.querySelector('.pw-coin')?.textContent}`);
       mt.remove();
@@ -410,6 +413,12 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (!path) fail('no way to the goal');
             else { path.forEach(d => click(root.querySelector(btn[d]))); if (!solved || strikes !== 1) fail(`maze solved=${solved} strikes=${strikes}`); }
             click(root.querySelector(btn[0])); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'semaphore') {
+            const sem = root.querySelector('.sem'), at = () => +sem.dataset.i, goTo = n => { let g = 0; while (at() !== n && g++ < 8) click(root.querySelector('.sem-next')); };
+            const odd = T.semaphoreOdd(s, bomb);
+            goTo((odd + 1) % 4); click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('acknowledging a serial letter did not strike');
+            goTo(odd); click(root.querySelector('.go')); if (!solved) fail('semaphore not solved');
+            click(root.querySelector('.sem-next')); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'meter') {
             const pairs = [...root.querySelectorAll('.mt-pair')], want = T.meterPair(s, bomb);
             click(root.querySelector('.go')); if (strikes) fail('bridging with no pair probed struck');

@@ -17,10 +17,10 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
 test('21 modules: 7 easy, 8 medium, 6 hard, 13 with a rear plate, 3 needy, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 22);
+  assert.equal(g.Modules.list.length, 23);
   const count = d => g.Modules.list.filter(m => m.difficulty === d).length;
-  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 9, 6]);
-  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 14);
+  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 10, 6]);
+  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 15);
   assert.deepEqual([...g.Modules.list.filter(m => m.needy).map(m => m.id)].sort(), ['breaker', 'coolant', 'knob']);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
@@ -82,7 +82,7 @@ test('module configuration: switched-off modules are never dealt, and optional r
     for (const id of Object.keys(off)) assert.ok(!ids.includes(id), `${id} is switched off`);
   }
   const optional = [...g.Modules.list.filter(m => m.rearOptional).map(m => m.id)].sort();
-  assert.deepEqual(optional, ['breaker', 'glyphs', 'keylock', 'meter', 'simon', 'switches', 'wires']);
+  assert.deepEqual(optional, ['breaker', 'glyphs', 'keylock', 'meter', 'semaphore', 'simon', 'switches', 'wires']);
   const wires = g.Modules.list.find(m => m.id === 'wires'), fuses = g.Modules.list.find(m => m.id === 'fuses'), button = g.Modules.list.find(m => m.id === 'button');
   const outcomes = new Set();
   for (let seed = 1; seed <= 200; seed++) {
@@ -158,6 +158,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.equal(s.enc, g.cipherEncode(s.word, s.shifts));
         const back = [...s.enc].map((c, i) => String.fromCharCode((c.charCodeAt(0) - 65 - s.shifts[i] + 26) % 26 + 65)).join('');
         assert.equal(back, s.word, 'moving each letter back by its rotor gives the word');
+      }
+      if (def.id === 'semaphore') {
+        assert.equal(s.seq.length, 4);
+        const letters = [...bomb.serial].filter(c => /[A-Z]/.test(c)), outside = s.seq.map((c, i) => [c, i]).filter(([c]) => !letters.includes(c));
+        assert.equal(outside.length, 1, 'exactly one signal is not in the serial number');
+        assert.equal(g.semaphoreOdd(s, bomb), outside[0][1]);
+        assert.ok(s.seq.every(c => g.SEMAPHORE[c]), 'every signal is a letter');
       }
       if (def.id === 'meter') {
         assert.equal(new Set(s.volts).size, 4); assert.ok(s.volts.every(v => g.METER_VOLTS.includes(v)));
@@ -295,6 +302,13 @@ test('up to nine modules: a third row of bays only for 7 to 9, and every module 
       assert.equal(new Set(w.plan.bays.map(b => b.i)).size, count, 'each module in its own bay');
     }
   }
+});
+
+test('semaphore: 26 letters, each with its own pair of arm positions', () => {
+  const keys = Object.keys(g.SEMAPHORE);
+  assert.equal(keys.length, 26);
+  assert.equal(new Set(keys.map(k => [...g.SEMAPHORE[k]].sort((a, b) => a - b).join())).size, 26, 'no two letters look the same');
+  for (const k of keys) for (const a of g.SEMAPHORE[k]) assert.ok(a % 45 === 0 && a >= 0 && a < 360);
 });
 
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
