@@ -4331,7 +4331,20 @@ function startPreview() {
   music.start(); music.step = 0; music.I = music.target = .05;
   previewTimer = setInterval(() => { music.target = Math.min(1, music.target + .02); }, 400);
 }
-function stopPreview() { clearInterval(previewTimer); previewTimer = 0; if (music.on) music.stop(.4); }
+function stopPreview() {
+  clearInterval(previewTimer); previewTimer = 0;
+  if (music.on) music.stop(.4);
+  if (!G) setTimeout(startMenuMusic, 600);                 // back to the start screen's own music
+}
+// The start screen plays the chosen track at its calm level. Browsers only allow sound after a click or a key press,
+// so it starts with the first one (or straight away when the audio is already unlocked).
+function startMenuMusic() {
+  if (G || previewTimer || music.on || !$('.start')) return;
+  sfx.init();
+  if (!sfx.ctx) return;
+  if (sfx.ctx.state === 'running') { music.start(); music.I = music.target = .06; }
+  else sfx.ctx.resume().then(() => { if (sfx.ctx.state === 'running') startMenuMusic(); }).catch(() => { /* not allowed yet: the next click tries again */ });
+}
 
 function openSettings() {
   if ($('.settings')) return;
@@ -4439,13 +4452,16 @@ function showStart() {
     host));
   const zoom = demoZoom(host);
   mountDemo(host, { yaw: -70, pitch: -24, zoom: zoom * .8 });
+  if (sfx.ctx) startMenuMusic();                           // audio already unlocked (back from a game)
+  const unlock = () => { startMenuMusic(); if (music.on || G) ['pointerdown', 'keydown'].forEach(t => document.removeEventListener(t, unlock, true)); };
+  ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, unlock, true));
   demo.rig.animateTo({ yaw: -20, pitch: -12, zoom }, 1600);
 }
 
 
 /* ---- the game ---- */
 function endGame() {
-  clearInterval(previewTimer);                             // a music preview from the settings must not steer the game's music
+  clearInterval(previewTimer); previewTimer = 0;           // a music preview from the settings must not steer the game's music
   music.stop(.4);
   if (!G) return;
   cancelAnimationFrame(G.raf);
