@@ -346,15 +346,6 @@ svg{display:block}
 .ser .t{display:grid;place-items:center;font:700 20px var(--mono);color:#0b141a;background:linear-gradient(#cfdadf,#8da0aa)}
 .ser.on .cb{--c:#8a5a00}
 .ser.on .t{background:linear-gradient(#ffd36b,#e09a00)}
-.fuses{display:flex;gap:12px;justify-content:center;padding-top:6px}
-.fuse{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .25s,opacity .25s}
-.fuse .clip{width:30px;height:12px;background:linear-gradient(#e2e9ec,#8d9ca4);border-radius:2px;box-shadow:0 2px 3px #000a}
-.fuse .glass{position:relative;width:24px;height:150px;margin:-3px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#9fc4d466,#e8f6fbaa 40%,#9fc4d444);border-radius:4px}
-.fuse .cap{width:26px;height:26px;background:linear-gradient(90deg,#8d9ca4,#eef3f5 45%,#8d9ca4);border-radius:3px}
-.fuse .wire{position:absolute;top:26px;bottom:26px;left:11px;width:2px;background:#c9932a}
-.fuse b{position:relative;z-index:1;font:700 12px var(--mono);color:#0b141a;background:#eef3f5;padding:1px 2px;border-radius:2px}
-.fuse.out{transform:translateY(-34px);opacity:.55}
-.fuse:hover .glass{box-shadow:0 0 10px #43dfff66}
 .fusemap3d{display:flex;flex-direction:column;align-items:center;gap:12px}
 .fusemap3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .fusemap{display:flex;gap:4px;padding:12px 8px;border:2px solid #2b3b45;border-radius:4px}
@@ -476,6 +467,24 @@ svg{display:block}
 .sknob small{font-size:10px;letter-spacing:.08em;color:var(--mute)}
 .sknob .dial{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d3dce1,#6f7d86 70%,#3a464d);box-shadow:0 2px 5px #000b}
 .sknob b{font-size:15px;color:var(--cyan)}
+.fuses{display:flex;gap:8px;justify-content:center;height:186px;padding-top:2px}
+.fuse{position:relative;width:34px;height:100%;cursor:pointer}
+.fuse .bed{position:absolute;left:3px;right:3px;top:12px;bottom:12px;border-radius:5px;background:linear-gradient(90deg,#05090b,#121c22,#05090b);box-shadow:inset 0 2px 6px #000,0 0 0 1px #43dfff1f}
+.fuse .stand{position:absolute;left:50%;top:50%;width:0;height:0;transition:transform .3s cubic-bezier(.3,1.3,.5,1)}
+.fuse3d{position:absolute;left:-72px;top:-10px;transform:rotateZ(90deg)}
+.fuse3d .clip-base{position:absolute;top:-3px;width:8px;height:26px}
+.fuse3d .clip-base .cb{--c:#26323a;--top:linear-gradient(90deg,#1a252c,#33424c)}
+.fuse3d .sh{position:absolute;left:4px;right:4px;top:3px;bottom:-1px;background:#000;opacity:.55;border-radius:8px;filter:blur(3px);transform:translateZ(.5px)}
+.fuse3d .tube.glass .fc{background:
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .62) * 1.6)),rgb(255 255 255 / calc((var(--b) - .62) * 1.6))),
+  rgb(150 205 225 / calc(.04 + (1 - var(--b)) * .22))}
+.fuse3d .disc{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#eef3f5,#8a99a1)}
+.fuse-mark{position:absolute;top:6px;margin-left:-13px;width:26px;transform:translateZ(20.4px) rotateZ(-90deg);font:700 9px var(--mono);text-align:center;color:#0b141a;background:#eef3f5d9;border-radius:2px}
+.fuse:hover .tube.glass .fc{background:
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .62) * 1.6)),rgb(255 255 255 / calc((var(--b) - .62) * 1.6))),
+  rgb(120 230 255 / calc(.14 + (1 - var(--b)) * .3))}
+.fuse.out .stand{transform:translateZ(22px) translateY(-14px) rotateZ(-6deg)}
+.fuse.out .bed{box-shadow:inset 0 2px 6px #000,0 0 0 1px #ff3b5c55}
 .plug3d,.speaker3d,.backup3d{display:flex;flex-direction:column;align-items:center;gap:10px}
 .plug3d small,.speaker3d small,.backup3d small,.trip-row small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .plug{display:grid;grid-template-columns:repeat(5,22px);gap:8px;padding:12px 14px;background:linear-gradient(#20292f,#11171b);border-radius:6px 6px 14px 14px;box-shadow:inset 0 2px 6px #000c,0 2px 0 #fff6}
@@ -1042,6 +1051,41 @@ function tube(r, n, lift = r, o = {}) {
   return e;
 }
 
+
+// A horizontal turned part from tubes along x, all on one axis at height r: add(radius, facets, x, length, opts, css, cls).
+function axisPart(r, w, hgt = 2 * r) {
+  const wrap = h('div', { class: 'axis-part', style: `width:${w}px;height:${hgt}px` });
+  const add = (rad, n, x, len, o = {}, css = '', cls = '') => {
+    const t = tube(rad, n, r, o);
+    t.style.cssText += `;position:absolute;left:${x}px;width:${len}px;top:${hgt / 2 - rad}px;${css}`;
+    if (cls) t.classList.add(cls);
+    wrap.append(t); return t;
+  };
+  const disc = (rad, x, side, css = '') => wrap.append(h('i', { class: 'disc', style: `width:${2 * rad}px;height:${2 * rad}px;left:${x - rad}px;top:${hgt / 2 - rad}px;transform:translateZ(${r}px) rotateY(${side < 0 ? -90 : 90}deg);${css}` }));
+  return { wrap, add, disc };
+}
+
+// A glass cartridge fuse lying along x: steel caps with rings, a copper filament inside the glass, sprung clips over the caps.
+function fuse3d(amps) {
+  const r = 10, cap = 22, glass = 100, L = 2 * cap + glass;
+  const { wrap, add, disc } = axisPart(r, L);
+  wrap.classList.add('fuse3d');
+  wrap.prepend(h('i', { class: 'sh' }));
+  add(1.1, 8, cap - 3, glass + 6, {}, '--c:#e09a4a', 'filament');
+  [cap - 10, cap + glass + 2].forEach(x => wrap.append(h('div', { class: 'clip-base', style: `left:${x}px` }, cuboid(5, '', 'fill'))));
+  add(r - .4, 28, cap, glass, {}, '', 'glass');
+  [0, cap + glass].forEach(x => {
+    add(r + .5, 28, x, cap, {}, '--c:#c9d3d8', 'cap');
+    add(r + 1.1, 28, x + (x ? 0 : cap - 2.4), 2.4, {}, '--c:#8e9ca4');   // crimp ring where the cap meets the glass
+  });
+  disc(r + .5, 0, -1); disc(r + .5, L, 1);
+  [6, L - 14].forEach(x => {                                            // sprung steel clips arching over each cap
+    add(r + 2.6, 28, x, 7, { keep: a => Math.abs(a) <= 100 }, '--c:#b8c4cb');
+    add(r + 2.6, 28, x, 7, { keep: a => Math.abs(a) <= 100, inward: true }, '--c:#b8c4cb');
+  });
+  wrap.append(h('b', { class: 'fuse-mark', style: `left:${cap + glass / 2}px` }, amps + 'A'));
+  return wrap;
+}
 
 // One cell: silver end, amber band, dark body, raised + terminal. Bigger holders get bigger cells.
 // One cell in a round cradle. The cell is a single smooth cylinder (silver end, amber band, dark body, crimped + shoulder, raised + button).
@@ -2405,7 +2449,7 @@ Modules.register({
   mount(root, s, ctl) {
     const row = h('div', { class: 'fuses' });
     s.amps.forEach((a, i) => {
-      const f = h('div', { class: 'fuse' }, h('i', { class: 'clip' }), h('div', { class: 'glass' }, h('i', { class: 'cap' }), h('i', { class: 'wire' }), h('b', {}, a + 'A'), h('i', { class: 'cap' })), h('i', { class: 'clip' }));
+      const f = h('div', { class: 'fuse' }, h('i', { class: 'bed' }), h('div', { class: 'stand' }, fuse3d(a)));
       activate(f, () => {
         if (f.classList.contains('out') || ctl.isSolved()) return;
         f.classList.add('out'); ctl.sfx.click();
