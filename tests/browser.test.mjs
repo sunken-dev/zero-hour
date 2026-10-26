@@ -105,6 +105,14 @@ test('settings, time, module count and seed survive a reload; the same seed give
   assert.deepEqual(await bomb(), a);
 }));
 
+test('the difficulty chosen on the main screen survives a reload', T, () => withPage(home(), async page => {
+  await fresh(page);
+  await clickText(page, '.opt button', 'Hard'); await sleep(200);
+  await page.reload({ waitUntil: 'domcontentloaded' }); await page.waitForSelector('.arm'); await sleep(300);
+  const pressed = await page.evaluate(() => [...document.querySelectorAll('.opt button[aria-pressed=true]')].map(b => b.textContent));
+  assert.ok(pressed.includes('Hard'), 'Hard is still chosen: ' + pressed.join(', '));
+}));
+
 test('Abort asks first, the clock keeps running behind the dialog, and a bomb that ends closes it', T, () => withPage(home(), async page => {
   await fresh(page);
   await page.click('.arm'); await sleep(2200);

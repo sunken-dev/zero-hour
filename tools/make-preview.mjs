@@ -27,7 +27,7 @@ try {
   await game.setViewport({ width: 1700, height: 1000, deviceScaleFactor: 2 });
   await game.goto(page0, { waitUntil: 'domcontentloaded' });
   await game.addStyleTag({ content: fontCss });
-  await game.evaluate(s => localStorage.setItem('zero-hour-settings-v1', JSON.stringify({ minutes: 5, count: 6, seed: String(s), intro: false, startZoom: 1, musicOn: false, fxOn: false })), seed);
+  await game.evaluate(s => localStorage.setItem('zero-hour-settings-v1', JSON.stringify({ minutes: 5, count: 6, difficulty: 'medium', seed: String(s), intro: false, startZoom: 1, musicOn: false, fxOn: false })), seed);
   await game.goto(page0, { waitUntil: 'domcontentloaded' });
   await game.addStyleTag({ content: fontCss });
   await game.evaluate(() => document.fonts.load("700 20px 'Chakra Petch'"));

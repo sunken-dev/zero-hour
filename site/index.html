@@ -921,10 +921,11 @@ function rearSelector(caption, labels, active) {
    Settings are remembered in this browser (localStorage), so a reload keeps them.
    ===================================================================== */
 const SETTINGS_KEY = 'zero-hour-settings-v1';
+const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const DEFAULTS = {
   master: .85, music: .55, fx: 1, musicOn: true, fxOn: true,      // sound
   sens: 1, momentum: true, startZoom: .85, intro: true,           // controls
-  minutes: 5, count: 4, seed: '', lastSeed: '',                   // the game on the main screen
+  minutes: 5, count: 4, difficulty: 'medium', seed: '', lastSeed: '',   // the game on the main screen
   benchLink: false                                                // module viewer: turn the front and the rear plate together
 };
 const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'sens', 'momentum', 'startZoom', 'intro'];
@@ -939,6 +940,7 @@ const settings = (() => {
   if (![1, .85, .7].includes(s.startZoom)) s.startZoom = DEFAULTS.startZoom;
   if (![3, 5, 8, 12].includes(s.minutes)) s.minutes = DEFAULTS.minutes;
   s.count = Math.round(clamp(s.count, 2, 6));
+  if (!DIFFICULTIES.includes(s.difficulty)) s.difficulty = DEFAULTS.difficulty;
   s.seed = String(s.seed).slice(0, 24);
   return s;
 })();
@@ -1360,7 +1362,6 @@ const music = {
    Style hooks: the plate, header and status light are added for you.
    Use the CSS variables --cyan --amber --red --mint for your own widgets.
    ===================================================================== */
-const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const Modules = {
   list: [],
   register(def) { this.list.push(def); }
@@ -2092,12 +2093,18 @@ function ensureNeeds(bomb, defs, r) {
   }
 }
 
-function pickModules(r, count) {
-  const pool = Modules.list, used = {}, out = [];
-  const order = r.shuffle(pool);
-  let i = 0, guard = 0;
+// Deals `count` modules at random. Modules of the chosen difficulty are three times as likely as the others; each module
+// is dealt once before any repeats, and `max` caps repeats.
+function pickModules(r, count, difficulty = 'medium') {
+  const weight = d => d.difficulty === difficulty ? 3 : 1;
+  const draw = pool => {
+    let x = r() * pool.reduce((a, d) => a + weight(d), 0);
+    return pool.find(d => (x -= weight(d)) < 0) || pool[pool.length - 1];
+  };
+  const fresh = Modules.list.slice(), used = {}, out = [];
+  let guard = 0;
   while (out.length < count && guard++ < 200) {
-    const cand = i < order.length ? order[i++] : r.pick(pool);
+    const cand = fresh.length ? fresh.splice(fresh.indexOf(draw(fresh)), 1)[0] : draw(Modules.list);
     if (cand.max && (used[cand.id] || 0) >= cand.max) continue;
     used[cand.id] = (used[cand.id] || 0) + 1;
     out.push(cand);
@@ -3065,7 +3072,7 @@ function mountDemo(host, view) {
   destroyDemo();
   const L = layoutFor(window.innerWidth), r = rng(20261025);
   const bomb = makeBomb(r, opts.minutes * 60000);
-  const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows));
+  const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows), opts.difficulty);
   ensureNeeds(bomb, defs, r);
   const plan = planCase(r, bomb, L, defs.length);
   const asm = assembleCase(bomb, L, plan, k => sealedCard(defs[k], false), k => defs[k].mountBack ? sealedCard(defs[k], true) : null);
@@ -3099,8 +3106,9 @@ function showStart() {
       h('div', { class: 'opts' },
         h('div', { class: 'opt' }, h('b', {}, 'Time on the clock'), seg([[3, '3 min'], [5, '5 min'], [8, '8 min'], [12, '12 min']], opts.minutes, v => { opts.minutes = v; save(); remount(); })),
         h('div', { class: 'opt' }, h('b', {}, 'Modules on the bomb'), seg([[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], opts.count, v => { opts.count = v; save(); remount(); })),
+        h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; save(); remount(); })),
         h('div', { class: 'opt' }, h('b', {}, 'Seed'), seedRow,
-          h('small', { class: 'seedhint' }, 'The same seed with the same time, module count and screen size gives the same bomb. Numbers and words both work.'), last)),
+          h('small', { class: 'seedhint' }, 'The same seed with the same time, module count, difficulty and screen size gives the same bomb. Numbers and words both work.'), last)),
       h('div', { class: 'startrow' }, arm,
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: openSettings }, 'Settings'),
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: () => drawer.classList.add('open') }, 'Manual'))),
@@ -3131,7 +3139,7 @@ function play(o = {}) {
   const r = rng(seed.num);
   const bomb = makeBomb(r, opts.minutes * 60000);
   const L = layoutFor(window.innerWidth);
-  const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows));
+  const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows), opts.difficulty);
   ensureNeeds(bomb, defs, r);
   const plan = planCase(r, bomb, L, defs.length);
   G = { bomb, seed, over: false, mods: [], last: performance.now(), lastSec: -1, raf: 0, L };

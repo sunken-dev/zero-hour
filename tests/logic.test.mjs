@@ -6,9 +6,9 @@ const g = loadGame();
 const isPlate = k => k === 'serial' || k === 'plate';
 
 // Everything the game builds for a seed, as plain data.
-function world(seed, vw = 1360, count = 6) {
+function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
   const r = g.rng(seed), bomb = g.makeBomb(r, 300000), L = g.layoutFor(vw);
-  const defs = g.pickModules(r, Math.min(count, L.cols * L.rows));
+  const defs = g.pickModules(r, Math.min(count, L.cols * L.rows), difficulty);
   g.ensureNeeds(bomb, defs, r);
   const plan = g.planCase(r, bomb, L, defs.length);
   const states = defs.map(d => d.create(bomb, r));
@@ -31,6 +31,29 @@ test('every module has a difficulty: easy, medium or hard', () => {
   for (const m of g.Modules.list) {
     assert.ok(g.DIFFICULTIES.includes(m.difficulty), `${m.id}: ${m.difficulty}`);
     if (want[m.id]) assert.equal(m.difficulty, want[m.id], m.id);
+  }
+});
+
+test('the chosen difficulty deals more modules of that difficulty, without excluding the others', () => {
+  const share = {};
+  for (const choice of g.DIFFICULTIES) {
+    const n = { easy: 0, medium: 0, hard: 0 };
+    for (let seed = 1; seed <= 2000; seed++) for (const d of g.pickModules(g.rng(seed), 6, choice)) n[d.difficulty]++;
+    share[choice] = n;
+  }
+  for (const d of g.DIFFICULTIES) {
+    for (const other of g.DIFFICULTIES) if (other !== d) assert.ok(share[d][d] > share[other][d], `${d} deals more ${d} modules than ${other} does`);
+    for (const any of g.DIFFICULTIES) assert.ok(share[d][any] > 0, `${d} still deals ${any} modules`);
+  }
+});
+
+test('dealing respects max and is the same for the same seed and difficulty', () => {
+  for (let seed = 1; seed <= 500; seed++) {
+    for (const choice of g.DIFFICULTIES) {
+      const ids = g.pickModules(g.rng(seed), 6, choice).map(d => d.id);
+      assert.deepEqual(g.pickModules(g.rng(seed), 6, choice).map(d => d.id), ids);
+      for (const m of g.Modules.list) if (m.max) assert.ok(ids.filter(i => i === m.id).length <= m.max, `${m.id} at most ${m.max}`);
+    }
   }
 });
 
