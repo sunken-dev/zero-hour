@@ -2801,7 +2801,7 @@ Modules.register({
     const draw = () => needle.style.setProperty('--ang', gaugeAngle(s.pressure) + 'deg');
     draw();
     const cycle = needyCycle(root, ctl, {
-      window: 45,
+      window: 60,
       onWake() {
         s.demand = 1 + r.int(9); demand.textContent = String(s.demand);
         const slip = r.int(9); s.valve = slip >= s.valve ? slip + 1 : slip;   // the valve slips to another setting
