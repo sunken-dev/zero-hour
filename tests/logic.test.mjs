@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are eleven modules and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 11);
+test('there are twelve modules and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 12);
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
     assert.match(m.manual(), /\S/, `${m.id} manual`);
@@ -72,6 +72,12 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'fuses') {
+        assert.deepEqual([...s.circuits].sort(), [...g.FUSE_CIRCUITS].sort(), 'each circuit once');
+        assert.deepEqual([...s.amps].sort((x, y) => x - y), [...g.FUSE_AMPS], 'each rating once');
+        const k = s.circuits.indexOf(g.fuseCircuit(bomb));
+        assert.ok(k >= 0 && k < 5, 'the fuse to pull is on the module');
+      }
       if (def.id === 'breaker') assert.ok(bomb.lever, 'breaker brings its lever');
       if (def.id === 'combination') assert.ok(bomb.encoders.length >= 3, 'combination brings its encoders');
     }
