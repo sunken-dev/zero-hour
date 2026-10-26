@@ -133,7 +133,8 @@ test('module viewer: every module shows its front and its rear plate (or the bla
   await page.click('.setbtn'); await sleep(200);
   await page.evaluate(() => [...document.querySelectorAll('.sp .srow')].find(r => r.textContent.startsWith('Module viewer')).querySelector('button').click());
   await sleep(1500);
-  const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.firstChild.textContent, rear: b.querySelector('small').textContent.includes('rear') })));
+  const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.firstChild.textContent, note: b.querySelector('small').textContent, rear: b.querySelector('small').textContent.includes('rear') })));
+  for (const it of items) assert.match(it.note, /^(easy|medium|hard) · (front only|front and rear plate)$/, it.title);
   assert.equal(items.length, 11);
   for (let i = 0; i < items.length; i++) {
     await page.evaluate(i => document.querySelectorAll('.bench-item')[i].click(), i); await sleep(400);

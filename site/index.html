@@ -648,6 +648,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bench-list{overflow:auto;padding:10px;border-right:1px solid #43dfff22;display:flex;flex-direction:column;gap:6px}
 .bench-item{text-align:left;padding:8px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:15px;color:var(--ice)}
 .bench-item small{display:block;opacity:.65;font-size:11.5px;margin-top:1px}
+.bench-item .diff-easy{color:var(--mint)}.bench-item .diff-medium{color:var(--amber)}.bench-item .diff-hard{color:var(--red)}
+.bench-item[aria-pressed=true] [class^=diff-]{color:inherit}
 .bench-item:hover{background:#43dfff22}
 .bench-item[aria-pressed=true]{background:var(--cyan);color:#021117;font-weight:600}
 .bench-main{display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0}
@@ -1334,6 +1336,7 @@ const music = {
    Modules.register({
      id:     'unique-id',
      title:  'Shown on the bomb and in the manual',
+     difficulty: 'easy',               // 'easy', 'medium' or 'hard'
      max:    1,                        // optional: at most N per bomb
      needs:  ['lever'],                // optional: parts the bomb must have ('lever', 'encoders')
      create(bomb, r) { return {...} }, // roll the random puzzle data
@@ -1357,6 +1360,7 @@ const music = {
    Style hooks: the plate, header and status light are added for you.
    Use the CSS variables --cyan --amber --red --mint for your own widgets.
    ===================================================================== */
+const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const Modules = {
   list: [],
   register(def) { this.list.push(def); }
@@ -1408,6 +1412,7 @@ function wireAnswer(w, b) {
 Modules.register({
   id: 'wires',
   title: 'Wires',
+  difficulty: 'easy',
   create(bomb, r) {
     const wires = Array.from({ length: 3 + r.int(4) }, () => r.pick(Object.keys(WIRE_HEX)));
     return { wires, answer: wireAnswer(wires, bomb) };
@@ -1461,6 +1466,7 @@ const BTN_RELEASE = { blue: '4', white: '1', yellow: '5', red: '1' };
 Modules.register({
   id: 'button',
   title: 'Button',
+  difficulty: 'easy',
   create(bomb, r) {
     return {
       color: r.pick(Object.keys(BTN_HEX)),
@@ -1552,6 +1558,7 @@ const glyphSVG = id => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 Modules.register({
   id: 'glyphs',
   title: 'Glyphs',
+  difficulty: 'easy',
   create(bomb, r) {
     const colIdx = r.int(4), col = GLYPH_COLS[colIdx];
     const chosen = r.shuffle(col).slice(0, 4);
@@ -1607,6 +1614,7 @@ const SIMON_MAP = {
 Modules.register({
   id: 'simon',
   title: 'Simon',
+  difficulty: 'medium',
   max: 1,
   create(bomb, r) {
     return { seq: Array.from({ length: 3 + r.int(3) }, () => r.int(4)) };
@@ -1698,6 +1706,7 @@ const ARROW_DN = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5 L8 1
 Modules.register({
   id: 'password',
   title: 'Password',
+  difficulty: 'medium',
   create(bomb, r) {
     for (;;) {
       const ans = r.pick(WORDS);
@@ -1754,6 +1763,7 @@ const TOGGLE_RULES = [
 Modules.register({
   id: 'switches',
   title: 'Switches',
+  difficulty: 'medium',
   create(bomb, r) {
     return { lamps: Array.from({ length: 5 }, () => r() < .5), pos: Array.from({ length: 5 }, () => r() < .5) };
   },
@@ -1801,6 +1811,7 @@ const ARROW_R = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3 L11 8
 Modules.register({
   id: 'morse',
   title: 'Morse',
+  difficulty: 'medium',
   create(bomb, r) {
     return { word: r.pick(MORSE_WORDS), start: r.int(MORSE_CHANNELS.length) };
   },
@@ -1860,6 +1871,7 @@ const memText = u => u.k === 'pos' ? `press the key in position ${u.n}`
 Modules.register({
   id: 'memory',
   title: 'Memory',
+  difficulty: 'hard',
   create(bomb, r) { return { seed: r.int(1e9) }; },
   mount(root, s, ctl) {
     const rr = rng(s.seed);
@@ -1910,6 +1922,7 @@ const KNOB_DIRS = ['up', 'right', 'down', 'left'];
 Modules.register({
   id: 'knob',
   title: 'Knob',
+  difficulty: 'easy',
   create(bomb, r) {
     const e = r.pick(KNOB_TABLE), dir = KNOB_DIRS.indexOf(e[1]), start = r.int(4);
     return { pattern: e[0], dir, start: start === dir ? (start + 1) % 4 : start };
@@ -1957,6 +1970,7 @@ const breakerWantUp = (s, b) => {
 Modules.register({
   id: 'breaker',
   title: 'Breaker',
+  difficulty: 'medium',
   needs: ['lever'],
   create(bomb, r) { return { n: 10 + r.int(90), lamp: r.pick(['red', 'green']) }; },
   mount(root, s, ctl) {
@@ -1994,6 +2008,7 @@ const COMBO_RULES = [
 Modules.register({
   id: 'combination',
   title: 'Combination',
+  difficulty: 'medium',
   needs: ['encoders'],
   create(bomb, r) { return { digits: [r.int(10), r.int(10), r.int(10)] }; },
   mount(root, s, ctl) {
@@ -2018,6 +2033,7 @@ Modules.register({
    Modules.register({
      id: 'example',
      title: 'Example',
+     difficulty: 'easy',
      create(bomb, r) { return { target: r.int(10) }; },
      mount(root, s, ctl) {
        root.append(activate(h('div', { class: 'go' }, button3d('PRESS ME')), () => ctl.solve()));
@@ -2876,7 +2892,7 @@ function openBench() {
 
   const list = h('div', { class: 'bench-list' });
   const itemBtns = defs.map(d => {
-    const b = h('button', { class: 'bench-item', type: 'button', 'aria-pressed': 'false' }, d.title, h('small', {}, d.mountBack ? 'front and rear plate' : 'front only'));
+    const b = h('button', { class: 'bench-item', type: 'button', 'aria-pressed': 'false' }, d.title, h('small', {}, h('span', { class: 'diff-' + d.difficulty }, d.difficulty), ` · ${d.mountBack ? 'front and rear plate' : 'front only'}`));
     b.addEventListener('click', () => { def = d; load(); });
     list.append(b); return b;
   });

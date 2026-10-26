@@ -25,6 +25,15 @@ test('there are eleven modules and each explains itself', () => {
   }
 });
 
+test('every module has a difficulty: easy, medium or hard', () => {
+  const want = { wires: 'easy', button: 'easy', glyphs: 'easy', knob: 'easy', simon: 'medium', password: 'medium', switches: 'medium',
+    morse: 'medium', breaker: 'medium', combination: 'medium', memory: 'hard' };
+  for (const m of g.Modules.list) {
+    assert.ok(g.DIFFICULTIES.includes(m.difficulty), `${m.id}: ${m.difficulty}`);
+    if (want[m.id]) assert.equal(m.difficulty, want[m.id], m.id);
+  }
+});
+
 test('every module can be made for many bombs, and the rules always give a real answer', () => {
   for (let seed = 1; seed <= 500; seed++) {
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000);

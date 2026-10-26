@@ -8,7 +8,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const siteDir = path.resolve(here, '..', 'site');
 export const indexFile = path.join(siteDir, 'index.html');
 export const BOOT = '/* =====================================================================\n   7. BOOT';
-export const EXPORTS = 'Modules, makeBomb, pickModules, rng, planCase, layoutFor, ensureNeeds, manualHTML, manualFingerprint, wireAnswer, WIRE_RULES, BTN_RULES, TOGGLE_RULES, MEM_TABLE, KNOB_TABLE, KNOB_DIRS, COMBO_RULES, breakerWantUp, MORSE_CHANNELS, WORDS, seedFrom, randomSeed, settings, DEFAULTS, sfx, music, fmt';
+export const EXPORTS = 'Modules, DIFFICULTIES, makeBomb, pickModules, rng, planCase, layoutFor, ensureNeeds, manualHTML, manualFingerprint, wireAnswer, WIRE_RULES, BTN_RULES, TOGGLE_RULES, MEM_TABLE, KNOB_TABLE, KNOB_DIRS, COMBO_RULES, breakerWantUp, MORSE_CHANNELS, WORDS, seedFrom, randomSeed, settings, DEFAULTS, sfx, music, fmt';
 
 export function scriptSource(html = fs.readFileSync(indexFile, 'utf8')) {
   const m = html.match(/<script>([\s\S]*)<\/script>/);          // the game script is the only attribute-less <script>
