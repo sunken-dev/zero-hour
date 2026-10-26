@@ -611,7 +611,7 @@ svg{display:block}
 .cap1{position:relative;width:100%;height:100%}
 .cap2{position:absolute;inset:3px}
 .cap2>.t{height:100%;display:grid;place-items:center;box-shadow:inset 0 1px 0 #ffffff77,inset 0 -3px 0 #0006,inset 0 0 0 1px #00000044}
-.b3:active .cap{transform:translateZ(-6px)}
+.b3:active .cap{transform:translateZ(calc(var(--press,5px) * -1))}
 
 /* button: a real arcade button in a collar */
 .btnmod{display:flex;gap:16px;align-items:center;justify-content:center}
@@ -1220,7 +1220,7 @@ function batteryCell(len = 112, r = 16) {
 function button3d(content, cls = '', capDepth = 9) {
   const upper = cuboid(3, content, 'cap2');
   const lower = cuboid(capDepth - 3, h('div', { class: 'cap1' }, upper), 'cap fill');
-  return h('div', { class: 'b3 ' + cls }, cuboid(4, h('div', { class: 'well' }, lower), 'bz fill'));
+  return h('div', { class: 'b3 ' + cls, style: `--press:${Math.max(1, (capDepth - 3) * .8).toFixed(1)}px` }, cuboid(4, h('div', { class: 'well' }, lower), 'bz fill'));   // it sinks no deeper than its own height
 }
 
 // A two- or three-position selector with a steel knob, for rear plates.
