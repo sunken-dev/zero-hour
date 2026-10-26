@@ -112,7 +112,7 @@
     // the logo is drawn for the dark screen: its pale zero becomes navy on paper, as in the print stylesheet
     return image(bytes(n.svg.replace("#d6eef3", navy.to-hex())), format: "svg", width: 90pt)
   }
-  if t == "svg" { panic("manual.typ only knows the logo, the glyph columns and schematic figures as images") }
+  if t == "svg" { panic("manual.typ only knows the logo, the glyph columns, the gate symbols and schematic figures as images") }
   if has-class(n, "no-print") or t == "nav" { return none }
   let kids = n.k
   let inner() = kids.map(render).join()
@@ -142,6 +142,17 @@
     rect(width: 100%, stroke: 0.75pt + rule, inset: 6pt, align(center, stack(spacing: 6pt, ..kids.map(k =>
       if is-el(k, "svg") { svg-image(k, 26pt, deep) }
       else { text(font: mono, fill: amber, weight: "bold", render(k)) }
+    ))))
+  }
+  else if t == "div" and has-class(n, "gates") {
+    block(breakable: false, grid(columns: (1fr,) * kids.len(), column-gutter: 6pt, ..kids.map(render)))
+  }
+  else if t == "div" and has-class(n, "gate") {
+    rect(width: 100%, stroke: 0.75pt + rule, inset: 6pt, align(center, stack(spacing: 5pt, ..kids.map(k =>
+      if is-el(k, "svg") { svg-image(k, 40pt, deep) }
+      else if is-el(k, "b") { text(font: mono, fill: amber, weight: "bold", render(k)) }
+      else if is-el(k, "span") { text(9pt, k.k.map(render).join()) }
+      else { render(k) }
     ))))
   }
   else if t == "div" and has-class(n, "mchart") {

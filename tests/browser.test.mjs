@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,fuseCircuit,gearsWant};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,fuseCircuit,gearsWant,relayAnswer};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -77,7 +77,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 14);
+  assert.equal(shown.n, 15);
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -143,7 +143,7 @@ test('module viewer: every module shows its front and its rear plate (or the bla
   await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.firstChild.textContent, note: b.querySelector('small').textContent, rear: b.querySelector('small').textContent.includes('rear') })));
   for (const it of items) assert.match(it.note, /^(easy|medium|hard) · (front only|front and rear plate)$/, it.title);
-  assert.equal(items.length, 13);
+  assert.equal(items.length, 14);
   for (let i = 0; i < items.length; i++) {
     await page.evaluate(i => document.querySelectorAll('.bench-item')[i].click(), i); await sleep(400);
     const r = await page.evaluate(() => ({ front: document.querySelector('.bench-stages .stage:nth-child(1) .mod h3')?.textContent, rear: !!document.querySelector('.bench-stages .stage:nth-child(2) .rear'), blank: !!document.querySelector('.bench-stages .stage:nth-child(2) .blank') }));
@@ -232,6 +232,14 @@ test('every module can be solved through its real controls, and a wrong answer i
             const cells = [...root.querySelectorAll('.mini-lcd')].map(e => +e.textContent);
             cells.forEach((d, i) => { bomb.encoders[i].value = (d + T.COMBO_RULES[i][1](bomb)) % 10; });
             click(root.querySelector('.go')); if (!solved) fail('combination not solved');
+          } else if (def.id === 'relay') {
+            const jp = [...root.querySelectorAll('.jp')], set = want => jp.forEach((j, k) => { if (j.classList.contains('on') !== !!want[k]) click(j); });
+            const ans = [...T.relayAnswer(s)];
+            set(ans.map((v, k) => k === 2 ? 1 - v : v)); click(root.querySelector('.go'));
+            if (strikes !== 1 || solved) fail('a wrong setting did not strike');
+            if (root.querySelector('.out .led:not(.off)')) fail('the lamp lit after a wrong test');
+            set(ans); click(root.querySelector('.go')); if (!solved) fail('relay not solved');
+            click(jp[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'gears') {
             const want = T.gearsWant(s), turn = d => click(root.querySelector(d === 'cw' ? '.crank-cw' : '.crank-ccw'));
             turn(want.dir); turn(want.dir === 'cw' ? 'ccw' : 'cw');

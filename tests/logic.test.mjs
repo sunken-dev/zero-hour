@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are thirteen modules and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 13);
+test('there are fourteen modules and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 14);
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
     assert.match(m.manual(), /\S/, `${m.id} manual`);
@@ -89,6 +89,22 @@ test('every module can be made for many bombs, and the rules always give a real 
       if (def.id === 'combination') assert.ok(bomb.encoders.length >= 3, 'combination brings its encoders');
     }
   }
+});
+
+test('relay logic: every dealt puzzle has exactly one jumper setting, and every such puzzle gets dealt', () => {
+  const names = Object.keys(g.GATES), possible = new Set(), seen = new Set();
+  for (const g1 of names) for (const g2 of names) for (const want of [0, 1]) if (g.relaySolutions(g1, g2, want).length === 1) possible.add(`${g1} ${g2} ${want}`);
+  const def = g.Modules.list.find(m => m.id === 'relay');
+  for (let seed = 1; seed <= 500; seed++) {
+    const r = g.rng(seed), s = def.create(g.makeBomb(r, 300000), r);
+    const sols = g.relaySolutions(s.g1, s.g2, s.want);
+    assert.equal(sols.length, 1, `${s.g1} ${s.g2} ${s.want}`);
+    assert.deepEqual([...g.relayAnswer(s)], [...sols[0]]);
+    assert.equal(g.GATES[s.g2](g.GATES[s.g1](sols[0][0], sols[0][1]), sols[0][2]), s.want);
+    seen.add(`${s.g1} ${s.g2} ${s.want}`);
+  }
+  assert.deepEqual([...seen].sort(), [...possible].sort());
+  assert.equal(possible.size, 8);
 });
 
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
