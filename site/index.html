@@ -153,7 +153,11 @@ svg{display:block}
 
 /* front band: clock + strikes */
 .band{height:var(--TB);margin-bottom:14px}
-.f-front .band{display:grid;grid-template-columns:1fr auto;gap:12px}
+.f-front .band{display:grid;grid-template-columns:1fr auto auto;gap:12px}
+.diff-plate{width:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(#cfdadf,#8da0aa);border-radius:3px;box-shadow:0 2px 4px #000a,inset 0 1px 0 #fff8;--dc:var(--amber)}
+.diff-plate.diff-easy{--dc:var(--mint)}.diff-plate.diff-hard{--dc:var(--red)}
+.diff-plate .lamp{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,var(--dc) 55%);box-shadow:0 0 10px var(--dc)}
+.diff-plate b{writing-mode:vertical-rl;transform:rotate(180deg);font:700 12px var(--mono);letter-spacing:.14em;color:#0b141a}
 .screen{position:relative;background:linear-gradient(#04141a,#08212a);border:1px solid #43dfff55;padding:8px 18px 10px;overflow:hidden;
   box-shadow:inset 0 0 44px #000d,0 0 26px #43dfff1a;display:flex;flex-direction:column;justify-content:center;
   clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
@@ -908,6 +912,18 @@ function fmt(ms) {
   return pad(Math.floor(s)) + '.' + pad(Math.floor((ms % 1000) / 10));   // from whole milliseconds, so 7430 shows 07.43
 }
 
+// Warning beep: how often it sounds at `msLeft` on the clock, and whether the clock just passed a beep.
+function beepInterval(msLeft, mode) {
+  if (mode === '60') return 60000;
+  if (mode === '30') return 30000;
+  if (mode === 'dynamic') return msLeft < 60000 ? 10000 : msLeft < 180000 ? 30000 : 60000;
+  return null;
+}
+function beepDue(prevMs, nowMs, mode) {
+  const i = beepInterval(nowMs, mode);
+  return !!i && nowMs > 0 && Math.ceil(prevMs / i) !== Math.ceil(nowMs / i);
+}
+
 const chip = c => `<span class="chip c-${c}">${c}</span>`;
 
 // A solid box: top face plus four walls. `d` is its height in px.
@@ -1003,10 +1019,11 @@ const DEFAULTS = {
   master: .85, music: .55, fx: 1, musicOn: true, fxOn: true,      // sound
   sens: 1, momentum: true, startZoom: .85, intro: true,           // controls
   minutes: 5, count: 4, difficulty: 'medium', seed: '', lastSeed: '',   // the game on the main screen
+  beep: 'off',                                                    // warning beep: 'off', '60', '30' or 'dynamic'
   benchLink: false,                                               // module explorer: turn the front and the rear plate together
   modules: {}                                                     // per module id: { off: true, rear: 'always' | 'sometimes' | 'never' }
 };
-const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'sens', 'momentum', 'startZoom', 'intro'];
+const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'beep', 'sens', 'momentum', 'startZoom', 'intro'];
 const settings = (() => {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) { /* storage may be blocked */ }
@@ -1019,6 +1036,7 @@ const settings = (() => {
   if (![3, 5, 8, 12].includes(s.minutes)) s.minutes = DEFAULTS.minutes;
   s.count = Math.round(clamp(s.count, 2, 6));
   if (!DIFFICULTIES.includes(s.difficulty)) s.difficulty = DEFAULTS.difficulty;
+  if (!['off', '60', '30', 'dynamic'].includes(s.beep)) s.beep = DEFAULTS.beep;
   s.modules = Object.fromEntries(Object.entries(s.modules || {}).filter(([, c]) => c && typeof c === 'object').map(([id, c]) => [id, {
     ...(c.off === true ? { off: true } : {}), ...(['always', 'sometimes', 'never'].includes(c.rear) ? { rear: c.rear } : {}) }]));
   s.seed = String(s.seed).slice(0, 24);
@@ -1184,6 +1202,11 @@ const sfx = {
   beep(f = 700, d = .18, vol = .06) {
     if (!this.ok()) return;
     this.note(f, this.now(), d, { type: 'sine', vol, attack: .01, lp: 3000 });
+  },
+  warn() {                                         // the warning beep: two short high pips
+    if (!this.ok()) return; const t = this.now();
+    this.note(1568, t, .09, { type: 'square', vol: .05, attack: .005, lp: 4200 });
+    this.note(1568, t + .16, .09, { type: 'square', vol: .05, attack: .005, lp: 4200 });
   },
   lever() {
     if (!this.ok()) return; const t = this.now();
@@ -2850,8 +2873,10 @@ function assembleCase(bomb, L, plan, fillBay, fillRear) {
   const clock = h('div', { class: 'clock' }, ghost, live);
   const bar = h('div', { class: 'bar' }, h('i'));
   const pips = [0, 1, 2].map(() => h('div', { class: 'strike' }, cuboid(5, '\u00d7', 'fill')));
+  const diff = bomb.difficulty || 'medium';
+  const diffPlate = h('div', { class: 'diff-plate diff-' + diff, 'aria-label': diff + ' difficulty' }, h('i', { class: 'lamp' }), h('b', {}, diff.toUpperCase()));
   faces.front.append(h('div', { class: 'fi' },
-    h('div', { class: 'band' }, h('div', { class: 'screen' }, clock, bar), h('div', { class: 'strikecol', 'aria-label': 'Strikes' }, pips)),
+    h('div', { class: 'band' }, h('div', { class: 'screen' }, clock, bar), h('div', { class: 'strikecol', 'aria-label': 'Strikes' }, pips), diffPlate),
     bays(front)));
 
   faces.back.append(h('div', { class: 'fi' },
@@ -3495,6 +3520,7 @@ function openSettings() {
     row('Master volume', slider('master', 0, 1, .01, pct, () => sfx.applyVolumes())),
     row('Music', toggle(settings.musicOn, v => setSound('music', v)), slider('music', 0, 1, .01, pct, () => sfx.applyVolumes())),
     row('Effects', toggle(settings.fxOn, v => setSound('fx', v)), slider('fx', 0, 1, .01, pct, () => { sfx.init(); sfx.applyVolumes(); sfx.click(); })),
+    row('Warning beep', seg([['off', 'Off'], ['60', 'Every minute'], ['30', 'Every 30 s'], ['dynamic', 'Speeds up']], settings.beep, v => { settings.beep = v; save(); if (v !== 'off') { sfx.init(); sfx.warn(); } })),
     preview && row('Music preview', preview),
     h('h4', {}, 'Controls'),
     row('Turning speed', slider('sens', .4, 2.5, .1, mult)),
@@ -3514,6 +3540,7 @@ function mountDemo(host, view) {
   destroyDemo();
   const L = layoutFor(window.innerWidth), r = rng(20261025);
   const bomb = makeBomb(r, opts.minutes * 60000);
+  bomb.difficulty = opts.difficulty;
   const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows), opts.difficulty, opts.modules);
   const rears = defs.map(d => rearFor(r, d, opts.modules));
   ensureNeeds(bomb, defs, r);
@@ -3582,6 +3609,7 @@ function play(o = {}) {
   settings.lastSeed = seed.label; save();
   const r = rng(seed.num);
   const bomb = makeBomb(r, opts.minutes * 60000);
+  bomb.difficulty = opts.difficulty;
   const L = layoutFor(window.innerWidth);
   const defs = pickModules(r, Math.min(opts.count, L.cols * L.rows), opts.difficulty, opts.modules);
   const rears = defs.map(d => rearFor(r, d, opts.modules));
@@ -3692,7 +3720,9 @@ function frame(now) {
   if (!G || G.over) return;
   const dt = Math.max(0, Math.min(now - G.last, 250));   // rAF timestamps are locked to the display refresh
   G.last = now;
+  const before = G.bomb.left;
   G.bomb.left -= dt * (1 + 0.25 * G.bomb.strikes);
+  if (beepDue(before, G.bomb.left, settings.beep)) sfx.warn();
   if (G.bomb.left <= 0) { G.bomb.left = 0; paint(); explode('The clock ran out.'); return; }
   const sec = Math.ceil(G.bomb.left / 1000);
   if (sec !== G.lastSec) { G.lastSec = sec; sfx.tick(G.bomb.left < 10000 ? 2 : G.bomb.left < 30000 ? 1 : 0); }

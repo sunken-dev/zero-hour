@@ -113,6 +113,14 @@ test('the difficulty chosen on the main screen survives a reload', T, () => with
   assert.ok(pressed.includes('Hard'), 'Hard is still chosen: ' + pressed.join(', '));
 }));
 
+test('the case shows the chosen difficulty', T, () => withPage(home(), async page => {
+  await fresh(page);
+  await clickText(page, '.opt button', 'Hard'); await page.click('.arm'); await sleep(2200);
+  const plate = await page.evaluate(() => { const p = document.querySelector('.f-front .diff-plate'); return p && { text: p.textContent.trim(), cls: p.className }; });
+  assert.equal(plate.text, 'HARD');
+  assert.match(plate.cls, /diff-hard/);
+}));
+
 test('Abort asks first, the clock keeps running behind the dialog, and a bomb that ends closes it', T, () => withPage(home(), async page => {
   await fresh(page);
   await page.click('.arm'); await sleep(2200);

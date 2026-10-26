@@ -221,6 +221,20 @@ test('the manual: Bomb basics is the appendix, with its schematics, no duplicate
   assert.equal(g.manualFingerprint(), g.manualFingerprint());
 });
 
+test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {
+  assert.equal(g.beepInterval(200000, 'off'), null);
+  assert.equal(g.beepInterval(200000, '60'), 60000);
+  assert.equal(g.beepInterval(5000, '30'), 30000);
+  assert.equal(g.beepInterval(200000, 'dynamic'), 60000);
+  assert.equal(g.beepInterval(179999, 'dynamic'), 30000);
+  assert.equal(g.beepInterval(59999, 'dynamic'), 10000);
+  const beeps = mode => { const at = []; for (let t = 300000; t > 0; t -= 16) if (g.beepDue(t, t - 16, mode)) at.push(Math.ceil((t - 16) / 1000)); return at; };
+  assert.deepEqual(beeps('off'), []);
+  assert.deepEqual(beeps('60'), [240, 180, 120, 60]);
+  assert.deepEqual(beeps('dynamic'), [240, 180, 150, 120, 90, 60, 50, 40, 30, 20, 10]);
+  assert.equal(g.settings.beep, 'off');
+});
+
 test('settings start from sane defaults', () => {
   const s = g.settings;
   assert.ok(s.master >= 0 && s.master <= 1 && s.music >= 0 && s.music <= 1 && s.fx >= 0 && s.fx <= 1);
