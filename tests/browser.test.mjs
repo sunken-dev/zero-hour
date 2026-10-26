@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -384,14 +384,16 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(notch(want)); click(root.querySelector('.go')); if (!solved) fail('throttle not solved');
             click(notch(1)); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'gears') {
-            const want = T.gearsWant(s), turn = d => click(root.querySelector(d === 'cw' ? '.crank-cw' : '.crank-ccw'));
-            turn(want.dir); turn(want.dir === 'cw' ? 'ccw' : 'cw');
-            if (strikes !== 1 || root.querySelector('.turns').textContent !== '0') fail('a wrong turn did not strike and reset');
-            for (let k = 0; k <= want.turns; k++) turn(want.dir);
-            click(root.querySelector('.go')); if (strikes !== 2 || solved) fail('release after too many turns did not strike');
-            for (let k = 0; k < want.turns; k++) turn(want.dir);
+            const want = T.gearsCount(s), shown = () => +root.querySelector('.turns').textContent.replace('\u2212', '-'), turn = d => click(root.querySelector(d > 0 ? '.crank-cw' : '.crank-ccw'));
+            turn(-Math.sign(want)); turn(-Math.sign(want));
+            if (strikes) fail('turning the crank the other way struck straight away');
+            if (shown() !== -2 * Math.sign(want)) fail(`the counter shows ${shown()} after two turns the other way`);
+            click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('release at the wrong count did not strike');
+            if (shown() !== 0) fail('the counter did not start again after a wrong release');
+            for (let k = 0; k < Math.abs(want); k++) turn(Math.sign(want));
+            if (shown() !== want) fail(`the counter shows ${shown()}, want ${want}`);
             click(root.querySelector('.go')); if (!solved) fail('gears not solved');
-            turn(want.dir); click(root.querySelector('.go')); if (strikes !== 2) fail('a click after solving struck');
+            turn(1); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'fuses') {
             const f = [...root.querySelectorAll('.fuse')], ans = s.circuits.indexOf(T.fuseCircuit(bomb));
             click(f[(ans + 1) % 5]); if (strikes !== 1) fail('wrong fuse did not strike');

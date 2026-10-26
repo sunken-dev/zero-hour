@@ -171,6 +171,7 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.ok(s.dots.every(k => k >= 0 && k < s.gears), 'dots on real gears');
         const drum = s.load === 'LIFT' ? 'cw' : 'ccw', flip = { cw: 'ccw', ccw: 'cw' };
         assert.deepEqual({ ...g.gearsWant(s) }, { dir: s.gears % 2 ? drum : flip[drum], turns: s.dots.length });
+        assert.equal(g.gearsCount(s), (g.gearsWant(s).dir === 'cw' ? 1 : -1) * s.dots.length, 'clockwise counts up, anticlockwise down');
       }
       if (def.id === 'fuses') {
         assert.deepEqual([...s.circuits].sort(), [...g.FUSE_CIRCUITS].sort(), 'each circuit once');
