@@ -6,7 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { launch } from '../tools/chrome.mjs';
-import { indexFile, BOOT } from './game.mjs';
+import { indexFile, BOOT, loadGame } from './game.mjs';
+
+const MODULE_COUNT = loadGame().Modules.list.length;
 
 let browser, testCopy;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -77,7 +79,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 24);
+  assert.equal(shown.n, MODULE_COUNT + 1, 'every module and the appendix');
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -159,7 +161,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
   await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
-  assert.equal(items.length, 23);
+  assert.equal(items.length, MODULE_COUNT);
   const rank = { easy: 0, medium: 1, hard: 2 };
   const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
   for (let i = 1; i < items.length; i++) {
