@@ -1,6 +1,6 @@
 # Zero Hour
 
-[![Zero Hour: a 3D bomb case with Memory, Knob, Simon, Morse, Glyphs and Combination modules](site/zero-hour-preview.png)](https://zero-hour.sunken.dev/)
+[![Zero Hour: a 3D bomb case with Glyphs, Wires, Switches, Relay logic, Coolant and Gears modules](site/zero-hour-preview.png)](https://zero-hour.sunken.dev/)
 
 **One team. One bomb. One manual.**
 
@@ -9,7 +9,8 @@ other reads the manual and cannot see the bomb. Describe what you see, find the 
 
 Live at **https://zero-hour.sunken.dev/**
 
-- 11 modules with a front and, for some, a rear plate on the back of the bomb
+- 15 modules, each rated easy, medium or hard, with a front and, for most, a rear plate on the back of the bomb
+- choose a difficulty: modules of that rating come up more often
 - a 3D case you turn with the mouse, with hints hidden on all sides
 - seeds: the same seed with the same settings gives the same bomb
 - a manual built from the same source as the game, also as a PDF
@@ -59,8 +60,9 @@ test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
 
 ### Adding a module
 
-A module is one `Modules.register({ ... })` block in `site/index.html`: `id`, `title`, `create(bomb, r)`, `mount(root, state, ctl)`
-and `manual()`, plus optional `mountBack` and `manualBack` for a rear plate, `max` and `needs`. The comment above the module
+A module is one `Modules.register({ ... })` block in `site/index.html`: `id`, `title`, `difficulty`, `create(bomb, r)`,
+`mount(root, state, ctl)` and `manual()`, plus optional `mountBack` and `manualBack` for a rear plate, `max` and `needs`. The
+front and the rear plate get the same `state` object, so a rear plate can be a working part of the puzzle. The comment above the module
 registry describes each field, and there is a template just before the "ADD YOUR OWN MODULE" comment. The module viewer
 (Settings, then Debug, then Module viewer) shows any module on its own, front and rear, with its state and a log.
 
