@@ -3855,6 +3855,7 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
     if (anim) settleHere();
     goal.zoom = clamp(goal.zoom * Math.exp(-e.deltaY * .0012), .6, 2.2);
     wake();
+    api && api.onZoom && api.onZoom(goal.zoom);
   }, { passive: false, signal: ac.signal });
 
   const ro = new ResizeObserver(fit);
@@ -3862,7 +3863,8 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
   fit();
 
   api = {
-    st, onFacing: init.onFacing || null, onTurn: null,
+    st, onFacing: init.onFacing || null, onTurn: null, onZoom: null,
+    zoomTo(z) { anim = null; goal.zoom = z; wake(); },     // follow another view's zoom (module explorer link)
     turnTo(yaw, pitch) {                                   // follow another view (module viewer link)
       anim = null; vel.yaw = vel.pitch = 0;
       goal.yaw = yaw + 360 * Math.round((st.yaw - yaw) / 360); goal.pitch = pitch;
@@ -4268,7 +4270,10 @@ function openExplorer() {
     const b = stageFor(rear ? 'REAR PLATE (back of the bomb)' : 'REAR: this module has no rear plate', rear ? rear.el : blankBay());
     stagesEl.replaceChildren(a.stage, b.stage);
     rigs = [a, b].map(x => createRig(x.stage, x.s.bomb3d, x.s.faces, SLAB, { yaw: -18, pitch: -8, zoom: 1.25 }));
-    rigs.forEach((r, i) => { r.onTurn = (yaw, pitch) => { if (settings.benchLink) rigs[1 - i].turnTo(yaw, pitch); }; });   // linked: turning one turns the other
+    rigs.forEach((r, i) => {                                // linked: turning or zooming one does the same to the other
+      r.onTurn = (yaw, pitch) => { if (settings.benchLink) rigs[1 - i].turnTo(yaw, pitch); };
+      r.onZoom = z => { if (settings.benchLink) rigs[1 - i].zoomTo(z); };
+    });
     say('Try it: the controls work as on a real bomb.');
     const man = h('div', { class: 'manual' });
     man.innerHTML = def.manual() + (def.manualBack ? `<h3>${def.rearOptional ? 'Rear plate (not on every bomb)' : 'Rear plate'}</h3>` + def.manualBack() : '');
@@ -4282,11 +4287,11 @@ function openExplorer() {
   }
 
   const view = (yaw, pitch) => () => rigs.forEach(r => r.animateTo({ yaw, pitch, zoom: 1.25 }, 600));
-  const linkBtn = h('button', { class: 'tbtn', type: 'button', title: 'When on, turning the front also turns the rear plate and the other way round' });
+  const linkBtn = h('button', { class: 'tbtn', type: 'button', title: 'When on, turning or zooming the front does the same to the rear plate, and the other way round' });
   const paintLink = () => { linkBtn.textContent = 'Link views: ' + (settings.benchLink ? 'on' : 'off'); linkBtn.setAttribute('aria-pressed', String(settings.benchLink)); };
   linkBtn.addEventListener('click', () => {
     settings.benchLink = !settings.benchLink; save(); paintLink();
-    if (settings.benchLink && rigs.length === 2) { const v = rigs[0].getView(); rigs[1].turnTo(v.yaw, v.pitch); }   // line the rear up with the front straight away
+    if (settings.benchLink && rigs.length === 2) { const v = rigs[0].getView(); rigs[1].turnTo(v.yaw, v.pitch); rigs[1].zoomTo(v.zoom); }   // line the rear up with the front straight away
   });
   paintLink();
   const tools = h('div', { class: 'bench-tools' },

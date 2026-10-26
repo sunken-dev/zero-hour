@@ -186,6 +186,12 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   await page.mouse.move(stage.x, stage.y); await page.mouse.down(); await page.mouse.move(stage.x + 140, stage.y - 30, { steps: 10 }); await page.mouse.up(); await sleep(1800);
   const [a, b] = await yaws();
   assert.ok(Math.abs(a - b) < 2, `linked views should match (${a} vs ${b})`);
+  const scales = () => page.evaluate(() => [...document.querySelectorAll('.bench-stage .bomb3d')].map(b => +/scale3d\((-?[\d.]+)/.exec(b.style.transform)[1]));
+  const [s0] = await scales();
+  await page.mouse.move(stage.x, stage.y); await page.mouse.wheel({ deltaY: -400 }); await sleep(1500);
+  const [s1, s2] = await scales();
+  assert.ok(s1 > s0 * 1.2, `zooming the front view should zoom it (${s0} -> ${s1})`);
+  assert.ok(Math.abs(s1 - s2) < .02, `linked views should zoom together (${s1} vs ${s2})`);
   await page.keyboard.press('Escape'); await sleep(200);
   assert.ok(await page.evaluate(() => !document.querySelector('.bench')));
 }));
