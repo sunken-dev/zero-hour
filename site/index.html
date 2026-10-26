@@ -705,10 +705,13 @@ svg{display:block}
 .tgcol small{font:11px var(--mono);color:var(--mute)}
 .tg{position:relative;width:34px;height:62px;cursor:pointer}
 .tg .well{position:relative;width:100%;height:100%;background:#03070a;box-shadow:inset 0 2px 6px #000}
-.tg .stick{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;transform:rotateX(var(--tilt));transition:transform .12s}
-.tg.up{--tilt:42deg}
-.tg.dn{--tilt:-42deg}
-.tg .stick .cb{--c:#aebcc3;--top:radial-gradient(circle at 40% 35%,#fff,#9fb0b8)}
+.tg .stick{position:absolute;left:50%;top:50%;width:0;height:0;transform:translateZ(5px) rotateX(var(--tilt));transition:transform .12s cubic-bezier(.3,1.4,.5,1)}
+.tg .tg-base{position:absolute;left:50%;top:50%;width:0;height:0}
+.tg .mk{position:absolute;left:50%;width:10px;height:2px;margin-left:-5px;background:#43dfff66}
+.tg .mk.up{top:4px}.tg .mk.dn{bottom:4px}
+.tg.up .mk.up,.tg.dn .mk.dn{background:var(--cyan);box-shadow:0 0 5px #43dfff}
+.tg.up{--tilt:34deg}
+.tg.dn{--tilt:-34deg}
 .morse{display:flex;flex-direction:column;gap:10px;align-items:stretch}
 .morse .lampwrap{display:grid;place-items:center;height:60px}
 .freqrow{display:grid;grid-template-columns:34px 1fr 34px;gap:8px;align-items:center}
@@ -2228,8 +2231,11 @@ Modules.register({
     const pos = s.pos.slice();
     const cols = h('div', { class: 'tgrow' });
     s.lamps.forEach((on, i) => {
+      // a toggle switch: hex nut and threaded bushing on the plate, a tapered chrome bat handle with a ball tip
+      const bat = h('div', { class: 'stick' }, cylZ(3.4, 14, 14, { z: 6, color: '#c9d3d8' }), cylZ(2.6, 12, 12, { z: 19, color: '#e3eaee' }), cylZ(4.6, 5, 18, { z: 30, color: '#eef3f5' }));
       const tg = h('div', { class: 'tg ' + (pos[i] ? 'up' : 'dn') },
-        cuboid(4, h('div', { class: 'well' }, h('div', { class: 'stick' }, cuboid(26, '', 'fill'))), 'bz fill'));
+        cuboid(4, h('div', { class: 'well' }, h('i', { class: 'mk up' }), h('i', { class: 'mk dn' }),
+          h('div', { class: 'tg-base' }, cylZ(10, 3, 6, { color: '#aebcc4', hex: true }), cylZ(6.5, 8, 20, { z: 3, color: '#8d9ca4', knurl: true })), bat), 'bz fill'));
       activate(tg, () => {
         if (ctl.isSolved()) return;
         pos[i] = !pos[i]; tg.classList.toggle('up', pos[i]); tg.classList.toggle('dn', !pos[i]); ctl.sfx.click();
