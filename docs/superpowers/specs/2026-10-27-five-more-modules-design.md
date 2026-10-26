@@ -43,7 +43,8 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
   arm down; H, I, K, L, M, N one arm at 45; O to S one arm at 90; T, U, Y one arm at 135; J, V at 180; W, X at 225;
   Z at 270 (the other arm as in standard semaphore). The manual's chart is drawn from the same table as the module.
 - Three of the four signals are letters in the serial number; one is not. ACK while that one shows. Anything else is a
-  strike.
+  strike. The four signals are all different (a bomb with Semaphore always has three different serial letters), so how
+  often a signal repeats never gives the answer away.
 - Optional rear plate: a call-sign plate repeating the serial number's letters.
 
 ### Safe (hard)

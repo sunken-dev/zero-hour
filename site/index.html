@@ -1888,7 +1888,7 @@ const MUSIC_TRACKS = [
      difficulty: 'easy',               // 'easy', 'medium' or 'hard'
      description: 'For players: what it looks like and what to do.',
      max:    1,                        // optional: at most N per bomb
-     needs:  ['lever'],                // optional: parts the bomb must have ('lever', 'encoders')
+     needs:  ['lever'],                // optional: what the bomb must have ('lever', 'encoders', 'letters': three different serial letters)
      create(bomb, r) { return {...} }, // roll the random puzzle data
      mount(root, state, ctl) { ... },  // build the DOM inside `root`
                                        // may return a cleanup function
@@ -3572,9 +3572,10 @@ Modules.register({
   difficulty: 'medium',
   rearOptional: true,
   description: 'A signaller spells four letters with two flags. Three of them are in the serial number; find the one that is not and acknowledge it.',
+  needs: ['letters'],
   create(bomb, r) {
     const own = serialLetters(bomb), others = Object.keys(SEMAPHORE).filter(c => !own.includes(c));
-    return { seq: r.shuffle([...Array.from({ length: 3 }, () => r.pick(own)), r.pick(others)]) };
+    return { seq: r.shuffle([...own, r.pick(others)]) };
   },
   mount(root, s, ctl) {
     let i = 0;
@@ -3850,8 +3851,10 @@ const ENC_CAPS = ['red', 'blue', 'yellow', 'white'];
 const makeEncoders = (r, n) => Array.from({ length: n }, (_, i) => ({ label: 'ABCD'[i], cap: ENC_CAPS[i], value: r.int(10) }));
 const makeLever = r => ({ up: r() < .5 });
 
+const SERIAL_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O, which read as 1 and 0
+
 function makeBomb(r, totalMs) {
-  const L = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const L = SERIAL_LETTERS;
   const serial = r.pick(L) + r.int(10) + r.pick(L) + r.pick(L) + r.int(10) + r.int(10);
   const indicators = r.shuffle(INDICATOR_LABELS).slice(0, r.int(4)).map(label => ({ label, lit: r() < .5 }));
   const coins = Array.from({ length: [0, 0, 1, 1, 1, 2][r.int(6)] }, () => ({ ...r.pick(COIN_MODELS) }));
@@ -3880,6 +3883,11 @@ function ensureNeeds(bomb, defs, r) {
   if (need('encoders') && bomb.encoders.length < 3) {
     const have = bomb.encoders.length;
     bomb.encoders.push(...makeEncoders(r, 3).slice(have));
+  }
+  if (need('letters')) {                                     // three different letters (serial positions 1, 3 and 4)
+    const c = [...bomb.serial];
+    for (const k of [2, 3]) while ([0, 2, 3].some(j => j < k && c[j] === c[k])) c[k] = r.pick(SERIAL_LETTERS);
+    bomb.serial = c.join(''); bomb.serialVowel = /[AEIOU]/.test(bomb.serial);
   }
 }
 

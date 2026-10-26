@@ -165,6 +165,7 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.equal(outside.length, 1, 'exactly one signal is not in the serial number');
         assert.equal(g.semaphoreOdd(s, bomb), outside[0][1]);
         assert.ok(s.seq.every(c => g.SEMAPHORE[c]), 'every signal is a letter');
+        assert.equal(new Set(s.seq).size, 4, 'four different signals, so how often one repeats gives nothing away');
       }
       if (def.id === 'meter') {
         const v = [...s.volts], target = bomb.coinVolts || bomb.batteries * 1.5 || 12;
@@ -341,6 +342,21 @@ test('tiles: ten different targets, each eight tiles and a gap', () => {
   assert.equal(g.TILE_TARGETS.length, 10);
   assert.equal(new Set(g.TILE_TARGETS.map(t => t.join())).size, 10);
   for (const t of g.TILE_TARGETS) assert.deepEqual([...t].sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+});
+
+test('a bomb with Semaphore has three different letters in its serial number; the digits stay', () => {
+  const semaphore = g.Modules.list.find(m => m.id === 'semaphore');
+  for (const serial of ['A1AA23', 'E5EB70', 'K2LK19']) {
+    const bomb = g.makeBomb(g.rng(5), 300000);
+    bomb.serial = serial;
+    g.ensureNeeds(bomb, [semaphore], g.rng(9));
+    const letters = [bomb.serial[0], bomb.serial[2], bomb.serial[3]];
+    assert.equal(new Set(letters).size, 3, bomb.serial);
+    assert.match(bomb.serial, /^[A-Z]\d[A-Z]{2}\d{2}$/);
+    assert.equal(bomb.serial[1] + bomb.serial.slice(4), serial[1] + serial.slice(4), 'the digits are untouched');
+    assert.equal(bomb.serialVowel, /[AEIOU]/.test(bomb.serial));
+    assert.ok(!/[IO]/.test(bomb.serial), 'no I or O, as on every serial');
+  }
 });
 
 test('up to nine modules: a third row of bays only for 7 to 9, and every module gets a bay', () => {
