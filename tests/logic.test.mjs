@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are eighteen modules, at least half with a rear plate, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 18);
+test('there are nineteen modules, at least half with a rear plate, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 19);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
@@ -129,6 +129,18 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'resistors') {
+        assert.equal(s.r.length, 3); assert.ok(s.r.every(v => g.RES_VALUES.includes(v)), 'known values');
+        assert.ok(['series', 'mixed'].includes(s.wiring));
+        if (s.wiring === 'mixed') assert.equal(s.r[1], s.r[2], 'the parallel pair is equal');
+        const total = s.wiring === 'series' ? s.r[0] + s.r[1] + s.r[2] : s.r[0] + s.r[1] / 2;
+        assert.equal(g.resTotal(s), total);
+        assert.ok(Number.isInteger(total) && total <= 999, 'a whole number of ohms up to 999');
+        for (const v of s.r) {
+          const [a, b, m] = g.resBands(v);
+          assert.equal((g.BAND_COLORS.indexOf(a) * 10 + g.BAND_COLORS.indexOf(b)) * (m === 'brown' ? 10 : 1), v, 'bands spell the value');
+        }
+      }
       if (def.id === 'cipher') {
         assert.ok(g.CIPHER_WORDS.includes(s.word), 'a word from the list');
         assert.equal(s.shifts.length, 5); assert.ok(s.shifts.every(d => d >= 0 && d <= 9));

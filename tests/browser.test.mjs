@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,fuseCircuit,gearsWant,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,resTotal,fuseCircuit,gearsWant,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -77,7 +77,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 19);
+  assert.equal(shown.n, 20);
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -150,7 +150,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
   await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
-  assert.equal(items.length, 18);
+  assert.equal(items.length, 19);
   const rank = { easy: 0, medium: 1, hard: 2 };
   const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
   for (let i = 1; i < items.length; i++) {
@@ -305,6 +305,17 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (root.querySelector('.out .led:not(.off)')) fail('the lamp lit after a wrong test');
             set(ans); click(root.querySelector('.go')); if (!solved) fail('relay not solved');
             click(jp[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'resistors') {
+            const digits = [...root.querySelectorAll('.digit')], val = () => +digits.map(d => d.querySelector('b').textContent).join('');
+            const set = n => String(n).padStart(3, '0').split('').forEach((c, i) => { let g = 0; while (digits[i].querySelector('b').textContent !== c && g++ < 12) click(digits[i].querySelector('.up')); });
+            const total = T.resTotal(s);
+            set((total + 1) % 1000); click(root.querySelector('.go'));
+            if (strikes !== 1 || solved) fail('a wrong total did not strike');
+            set(total); if (val() !== total) fail('wheels show ' + val());
+            click(root.querySelector('.go')); if (!solved) fail('resistors not solved');
+            click(digits[0].querySelector('.up')); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
+            const back = document.createElement('div'); def.mountBack(back, s, ctl);
+            if (back.querySelector('.wiring')?.dataset.kind !== s.wiring) fail('rear wiring ' + back.querySelector('.wiring')?.dataset.kind);
           } else if (def.id === 'cipher') {
             const wheels = [...root.querySelectorAll('.wheel')], letter = w => w.querySelector('.ltr').textContent;
             const setWord = word => wheels.forEach((w, i) => { let g = 0; while (letter(w) !== word[i] && g++ < 30) click(w.querySelector('.up')); });
