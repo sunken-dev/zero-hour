@@ -475,11 +475,13 @@ svg{display:block}
 .sk-top::before{content:"";position:absolute;left:50%;top:2px;width:3px;height:11px;margin-left:-1.5px;border-radius:2px;background:#ff3b5c;box-shadow:0 0 5px #ff3b5c88}
 .sknob:hover .sk-top{filter:brightness(1.08)}
 .sknob b{font-size:15px;color:var(--cyan)}
-.fuses{display:flex;gap:8px;justify-content:center;height:186px;padding-top:2px}
-.fuse{position:relative;width:34px;height:100%;cursor:pointer}
+.fuses{display:flex;gap:8px;justify-content:center;height:176px;padding-top:4px}
+.fuse{position:relative;width:34px;height:100%;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.fuse .holder{position:relative;width:100%;flex:1}
+.fuse-amp{font:700 12px var(--mono);color:#0b141a;background:linear-gradient(#eef3f5,#c9d3d8);padding:1px 4px;border-radius:2px;box-shadow:0 1px 3px #000a}
 .fuse .bed{position:absolute;left:3px;right:3px;top:12px;bottom:12px;border-radius:5px;background:linear-gradient(90deg,#05090b,#121c22,#05090b);box-shadow:inset 0 2px 6px #000,0 0 0 1px #43dfff1f}
 .fuse .stand{position:absolute;left:50%;top:50%;width:0;height:0;transition:transform .3s cubic-bezier(.3,1.3,.5,1)}
-.fuse3d{position:absolute;left:-72px;top:-10px;transform:rotateZ(90deg)}
+.fuse3d{position:absolute;left:-57px;top:-10px;transform:rotateZ(90deg)}
 .fuse3d .clip-base{position:absolute;top:-3px;width:8px;height:26px}
 .fuse3d .clip-base .cb{--c:#26323a;--top:linear-gradient(90deg,#1a252c,#33424c)}
 .fuse3d .sh{position:absolute;left:4px;right:4px;top:3px;bottom:-1px;background:#000;opacity:.55;border-radius:8px;filter:blur(3px);transform:translateZ(.5px)}
@@ -487,7 +489,6 @@ svg{display:block}
   linear-gradient(rgb(255 255 255 / calc((var(--b) - .62) * 1.6)),rgb(255 255 255 / calc((var(--b) - .62) * 1.6))),
   rgb(150 205 225 / calc(.04 + (1 - var(--b)) * .22))}
 .fuse3d .disc{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#eef3f5,#8a99a1)}
-.fuse-mark{position:absolute;top:6px;margin-left:-13px;width:26px;transform:translateZ(20.4px) rotateZ(-90deg);font:700 9px var(--mono);text-align:center;color:#0b141a;background:#eef3f5d9;border-radius:2px}
 .fuse:hover .tube.glass .fc{background:
   linear-gradient(rgb(255 255 255 / calc((var(--b) - .62) * 1.6)),rgb(255 255 255 / calc((var(--b) - .62) * 1.6))),
   rgb(120 230 255 / calc(.14 + (1 - var(--b)) * .3))}
@@ -1157,8 +1158,8 @@ function axisPart(r, w, hgt = 2 * r) {
 }
 
 // A glass cartridge fuse lying along x: steel caps with rings, a copper filament inside the glass, sprung clips over the caps.
-function fuse3d(amps) {
-  const r = 10, cap = 22, glass = 100, L = 2 * cap + glass;
+function fuse3d() {
+  const r = 10, cap = 19, glass = 76, L = 2 * cap + glass;
   const { wrap, add, disc } = axisPart(r, L);
   wrap.classList.add('fuse3d');
   wrap.prepend(h('i', { class: 'sh' }));
@@ -1174,7 +1175,6 @@ function fuse3d(amps) {
     add(r + 2.6, 28, x, 7, { keep: a => Math.abs(a) <= 100 }, '--c:#b8c4cb');
     add(r + 2.6, 28, x, 7, { keep: a => Math.abs(a) <= 100, inward: true }, '--c:#b8c4cb');
   });
-  wrap.append(h('b', { class: 'fuse-mark', style: `left:${cap + glass / 2}px` }, amps + 'A'));
   return wrap;
 }
 
@@ -2553,7 +2553,7 @@ Modules.register({
   mount(root, s, ctl) {
     const row = h('div', { class: 'fuses' });
     s.amps.forEach((a, i) => {
-      const f = h('div', { class: 'fuse' }, h('i', { class: 'bed' }), h('div', { class: 'stand' }, fuse3d(a)));
+      const f = h('div', { class: 'fuse' }, h('div', { class: 'holder' }, h('i', { class: 'bed' }), h('div', { class: 'stand' }, fuse3d())), h('b', { class: 'fuse-amp' }, a + 'A'));
       activate(f, () => {
         if (f.classList.contains('out') || ctl.isSolved()) return;
         f.classList.add('out'); ctl.sfx.click();
