@@ -407,12 +407,6 @@ svg{display:block}
 .v-dn,.v-up{position:absolute;top:0;width:50%;height:100%;cursor:pointer}
 .v-dn{left:0}.v-up{right:0}
 .relief{font:700 13px var(--mono);letter-spacing:.1em;color:#0b141a;background:linear-gradient(#ffd36b,#e09a00);padding:4px 10px;border-radius:3px}
-.thr{display:flex;justify-content:center;align-items:stretch;gap:12px;height:150px}
-.thr-slot{position:relative;width:20px;background:linear-gradient(90deg,#05090b,#1a252b,#05090b);border-radius:10px;box-shadow:inset 0 2px 6px #000}
-.thr-handle{position:absolute;left:-18px;width:56px;height:22px;bottom:calc((var(--pos) - 1) * (150px - 22px) / 4);border-radius:6px;border:1px solid #c9d3d855;background:linear-gradient(var(--c),color-mix(in srgb,var(--c) 60%,#000));box-shadow:0 3px 6px #000b,inset 0 1px 0 #fff6;transition:bottom .2s}
-.notches{display:flex;flex-direction:column;justify-content:space-between}
-.notch{width:34px;height:22px;display:grid;place-items:center;cursor:pointer;background:#0a1a21;border:1px solid #43dfff33;font:700 13px var(--mono);color:var(--cyan)}
-.notch:hover{background:#43dfff22}
 .mz{display:grid;grid-template-columns:auto auto;gap:10px;align-items:center;justify-content:center}
 .mz-grid{display:grid;grid-template-columns:repeat(6,21px);grid-template-rows:repeat(6,21px);padding:6px;background:#05090b;border:1px solid #43dfff33}
 .mz-cell{position:relative;display:grid;place-items:center}
@@ -485,6 +479,20 @@ svg{display:block}
   rgb(120 230 255 / calc(.14 + (1 - var(--b)) * .3))}
 .fuse.out .stand{transform:translateZ(22px) translateY(-14px) rotateZ(-6deg)}
 .fuse.out .bed{box-shadow:inset 0 2px 6px #000,0 0 0 1px #ff3b5c55}
+.thr{display:flex;justify-content:center;align-items:stretch;gap:30px;height:156px}
+.thr-gate{position:relative;width:64px;height:100%;--travel:126px}
+.thr-gate .cb{--c:#1c2a32;--top:linear-gradient(90deg,#24323a,#3a4a54 50%,#24323a)}
+.thr-gate .cb>.t{border-radius:4px;box-shadow:inset 0 0 0 1px #43dfff22}
+.thr-slot{position:absolute;left:24px;top:10px;bottom:10px;width:16px;border-radius:8px;background:linear-gradient(90deg,#000,#0b1216 40%,#000);box-shadow:inset 0 3px 8px #000,0 1px 0 #ffffff22}
+.thr-det{position:absolute;left:-14px;width:10px;height:2px;background:#9fb0b9;bottom:calc((var(--n) - 1) * (100% - 0px) / 4.6 + 3px)}
+.thr-lever{position:absolute;left:32px;width:0;height:0;bottom:calc(13px + (var(--pos) - 1) * var(--travel) / 4);transition:bottom .25s cubic-bezier(.3,1.3,.5,1);transform:translateZ(5px)}
+.thr-grip{position:absolute;left:-23px;top:0;width:0;height:0;transform:translateZ(38px)}
+.thr-grip .tube.rib .fc{background:
+  repeating-linear-gradient(90deg,#0000 0 3px,#0006 3px 4.5px),
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .6) * 1.2)),rgb(255 255 255 / calc((var(--b) - .6) * 1.2))),
+  color-mix(in srgb,var(--c) calc(16% + var(--b) * 84%),#000)}
+.notches{display:flex;flex-direction:column;justify-content:space-between;padding:1px 0}
+.notch{width:38px;height:28px;cursor:pointer}
 .plug3d,.speaker3d,.backup3d{display:flex;flex-direction:column;align-items:center;gap:10px}
 .plug3d small,.speaker3d small,.backup3d small,.trip-row small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .plug{display:grid;grid-template-columns:repeat(5,22px);gap:8px;padding:12px 14px;background:linear-gradient(#20292f,#11171b);border-radius:6px 6px 14px 14px;box-shadow:inset 0 2px 6px #000c,0 2px 0 #fff6}
@@ -2750,10 +2758,13 @@ Modules.register({
   },
   mount(root, s, ctl) {
     let pos = s.start;
-    const handle = h('div', { class: 'thr-handle', style: `--c:${GRIP_HEX[s.grip]}` });
-    const slot = h('div', { class: 'thr-slot' }, handle);
+    // the lever: a steel shaft standing out of the slot, with a T-grip in the grip colour on top
+    const grip = lathe([[4, 4.5, '#aab8c0'], [6, 8.5, GRIP_HEX[s.grip]], [26, 7.5, GRIP_HEX[s.grip], 'rib'], [6, 8.5, GRIP_HEX[s.grip]], [4, 4.5, '#aab8c0']], 18);
+    const lever = h('div', { class: 'thr-lever' }, cylZ(5, 30, 16, { color: '#c9d3d8' }), cylZ(9, 3, 20, { color: '#4a5860' }), h('div', { class: 'thr-grip' }, grip));
+    const slot = h('div', { class: 'thr-gate' }, cuboid(5, h('div', { class: 'thr-slot' },
+      [1, 2, 3, 4, 5].map(n => h('i', { class: 'thr-det', style: `--n:${n}` }))), 'fill'), lever);
     const place = () => slot.style.setProperty('--pos', pos);
-    const notches = [1, 2, 3, 4, 5].map(n => activate(h('div', { class: 'notch' }, h('b', {}, String(n))), () => {
+    const notches = [1, 2, 3, 4, 5].map(n => activate(h('div', { class: 'notch sk' }, button3d(String(n), '', 5)), () => {
       if (ctl.isSolved() || pos === n) return;
       pos = n; place(); ctl.sfx.click();
     }, `Move the lever to position ${n}`));
