@@ -123,9 +123,13 @@ test('the case shows the chosen difficulty', T, () => withPage(home(), async pag
 
 test('Abort asks first, the clock keeps running behind the dialog, and a bomb that ends closes it', T, () => withPage(home(), async page => {
   await fresh(page);
-  // with 4 modules on Medium, seed 94 deals Throttle and Gears: their first press always strikes, so the bomb can be detonated on purpose
-  await clickText(page, '.opt button', '4'); await clickText(page, '.opt button', 'Medium');
-  await page.click('.seedin'); await page.keyboard.type('94');
+  // only Throttle and Gears switched on: their first press always strikes, so the bomb can be detonated on purpose
+  await page.evaluate(() => {
+    const ids = [...window.__zh.manualHTML().matchAll(/<section id="man-([a-z]+)"/g)].map(m => m[1]).filter(id => id !== 'basics');
+    const modules = Object.fromEntries(ids.filter(id => id !== 'throttle' && id !== 'gears').map(id => [id, { off: true }]));
+    localStorage.setItem('zero-hour-settings-v1', JSON.stringify({ count: 4, difficulty: 'medium', intro: false, modules }));
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' }); await page.waitForSelector('.arm'); await sleep(300);
   await page.click('.arm'); await sleep(2200);
   const clock = () => page.evaluate(() => document.querySelector('.hud .t').textContent);
   await clickText(page, '.tbtn', 'Abort'); await sleep(300);
@@ -137,7 +141,7 @@ test('Abort asks first, the clock keeps running behind the dialog, and a bomb th
   assert.ok(await page.evaluate(() => !document.querySelector('.confirm') && !!document.querySelector('.game')));
   await clickText(page, '.tbtn', 'Abort'); await sleep(300);
   const modules = await page.evaluate(() => [...document.querySelectorAll('.f-front .mod h3')].map(e => e.textContent));
-  assert.ok(modules.includes('Throttle') && modules.includes('Gears'), 'seed 94 deals ' + modules.join(', '));
+  assert.ok(modules.length && modules.every(m => m === 'Throttle' || m === 'Gears'), 'only Throttle and Gears are dealt: ' + modules.join(', '));
   for (let i = 0; i < 6 && !(await page.evaluate(() => !!document.querySelector('.overlay'))); i++) {   // detonate it behind the dialog
     await page.evaluate(() => document.querySelectorAll('.f-front .go').forEach(b => b.click()));
     await sleep(150);
