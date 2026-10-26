@@ -466,7 +466,14 @@ svg{display:block}
 .sknobs{display:flex;justify-content:space-around}
 .sknob{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-family:var(--mono)}
 .sknob small{font-size:10px;letter-spacing:.08em;color:var(--mute)}
-.sknob .dial{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d3dce1,#6f7d86 70%,#3a464d);box-shadow:0 2px 5px #000b}
+.sk-well{position:relative;width:52px;height:52px}
+.sk-body{position:absolute;left:26px;top:26px;width:0;height:0}
+.sk-tick{position:absolute;left:-1px;top:0;width:2px;height:5px;background:#43dfffaa;transform:rotate(var(--a)) translateY(-25px)}
+.sk-cap{position:absolute;left:0;top:0;width:0;height:0;transform:translateZ(15.1px)}
+.sk-top{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;transform:rotate(var(--ang));transition:transform .2s cubic-bezier(.3,1.3,.5,1);
+  background:radial-gradient(circle at 38% 30%,#f4f7f8,#c9d3d8 55%,#8d9ca4);box-shadow:inset 0 0 0 2px #ffffff55}
+.sk-top::before{content:"";position:absolute;left:50%;top:2px;width:3px;height:11px;margin-left:-1.5px;border-radius:2px;background:#ff3b5c;box-shadow:0 0 5px #ff3b5c88}
+.sknob:hover .sk-top{filter:brightness(1.08)}
 .sknob b{font-size:15px;color:var(--cyan)}
 .fuses{display:flex;gap:8px;justify-content:center;height:186px;padding-top:2px}
 .fuse{position:relative;width:34px;height:100%;cursor:pointer}
@@ -3131,11 +3138,18 @@ Modules.register({
   mount(root, s, ctl) {
     const vals = { freq: s.start[0], amp: s.start[1], phase: s.start[2] };
     const next = { freq: v => v % 5 + 1, amp: v => v % 5 + 1, phase: v => (v + 90) % 360 };
+    // a knurled aluminium knob on a dark skirt, its pointer turning over a ring of tick marks
+    const angle = (k, v) => k === 'phase' ? v * .75 - 112.5 : (v - 3) * 56;
+    const steps = { freq: [1, 2, 3, 4, 5], amp: [1, 2, 3, 4, 5], phase: [0, 90, 180, 270] };
     const knob = (k, label) => {
       const out = h('b', {}, String(vals[k]));
-      return activate(h('div', { class: 'sknob k-' + k }, h('small', {}, label), h('i', { class: 'dial', style: `--a:${0}deg` }), out), () => {
+      const top = h('i', { class: 'sk-top', style: `--ang:${angle(k, vals[k])}deg` });
+      const body = h('div', { class: 'sk-body' },
+        steps[k].map(v => h('i', { class: 'sk-tick', style: `--a:${angle(k, v)}deg` })),
+        cylZ(18, 3, 28, { color: '#2b3438' }), cylZ(14.5, 12, 32, { z: 3, color: '#d3dce1', knurl: true }), h('div', { class: 'sk-cap' }, top));
+      return activate(h('div', { class: 'sknob k-' + k }, h('small', {}, label), h('div', { class: 'sk-well' }, body), out), () => {
         if (ctl.isSolved()) return;
-        vals[k] = next[k](vals[k]); out.textContent = String(vals[k]); ctl.sfx.click();
+        vals[k] = next[k](vals[k]); out.textContent = String(vals[k]); top.style.setProperty('--ang', angle(k, vals[k]) + 'deg'); ctl.sfx.click();
       }, `${label}: click to step it`);
     };
     const scope = html('div', { class: 'scope' }, `<svg viewBox="0 0 200 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 35 H200 M50 0 V70 M100 0 V70 M150 0 V70" class="grid"/><path d="${wavePath(s.wave, s.peaks)}" class="trace"/></svg>`);
