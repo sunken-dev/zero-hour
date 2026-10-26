@@ -488,7 +488,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             const w = [...root.querySelectorAll('.wire')], ans = T.wireAnswer(s.wires, bomb);
             click(w[(ans + 1) % w.length]); if (strikes !== 1) fail('wrong wire did not strike');
             click(w[ans]); if (!solved) fail('wires not solved');
-          }
+          } else if (!['button', 'glyphs', 'password', 'simon'].includes(def.id)) fail('no solver in this test');
         } catch (e) { fail('threw ' + e.message); }
         cleanup && cleanup(); root.remove(); await sleep(0);
       }
