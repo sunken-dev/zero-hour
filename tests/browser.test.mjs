@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -314,6 +314,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       const mt = rear('meter', bomb);
       if (mt.querySelector('.pw-cells')?.textContent !== String(bomb.batteries) || mt.querySelector('.pw-coin')?.textContent !== bomb.coinVolts.toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-cells')?.textContent}/${mt.querySelector('.pw-coin')?.textContent}`);
       mt.remove();
+      const sf = rear('safe', bomb);
+      if (sf.querySelector('.sf-sum')?.textContent !== String([...bomb.serial].filter(c => /\d/.test(c)).reduce((a, c) => a + +c, 0))) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-sum')?.textContent}`);
+      sf.remove();
       const dp = rear('dip', bomb);
       if (dp.querySelector('.dip-base')?.textContent !== String(bomb.batteries + bomb.indicators.filter(x => x.lit).length)) out.push(`${bomb.serial}: DIP base ${dp.querySelector('.dip-base')?.textContent}`);
       dp.remove();
@@ -432,6 +435,23 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(root.querySelector('.go')); if (!solved) fail('multimeter not solved');
             if (!root.querySelector('.mt-cable')) fail('no cable patched after solving');
             click(ports[a]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'safe') {
+            const [a, b, c] = T.safeCombo(bomb), cw = root.querySelector('.sf-cw'), ccw = root.querySelector('.sf-ccw'), pull = root.querySelector('.sf-handle');
+            const at = () => +root.querySelector('.sf-dial').dataset.at, lit = () => root.querySelectorAll('.sf-lamps .led:not(.off)').length;
+            const go = (el, to) => { let g = 0; while (at() !== to && g++ < 40) click(el); };
+            if (at() !== s.start) fail('the dial does not start at its starting number');
+            go(cw, a); click(ccw); if (lit() !== 1) fail('turning back at the first number did not light a lamp');
+            go(ccw, (b + 1) % 40); click(pull); if (strikes !== 1 || solved || lit()) fail('pulling with a wrong combination did not strike and clear');
+            const hit = root.querySelector('.sf-hit'), box = root.querySelector('.sf-dial').getBoundingClientRect(), from = at();
+            const ptr = (type, deg) => { const t = deg * Math.PI / 180; hit.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 7, clientX: box.x + box.width / 2 + 50 * Math.cos(t), clientY: box.y + box.height / 2 + 50 * Math.sin(t) })); };
+            ptr('pointerdown', -90); [-80, -70, -63, -70, -72].forEach(d => ptr('pointermove', d)); ptr('pointerup', -72); click(hit);   // the click a browser sends after a drag, which the dial swallows
+            if (at() !== (from + 2) % 40 || lit() !== 1) fail(`dragging three steps clockwise and one back left the dial at ${at()} with ${lit()} lamps`);
+            for (let k = 0; k < 39; k++) click(ccw);
+            if (lit()) fail('a full turn did not clear the lamps');
+            go(cw, a);
+            go(ccw, b); go(cw, c); if (lit() !== 2) fail('two lamps should be lit before the pull');
+            click(pull); if (!solved) fail('safe not opened');
+            click(cw); click(pull); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'dip') {
             const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(bomb))];
             const set = p => sw.forEach((e, k) => { if (e.classList.contains('on') !== p[k]) click(e); });

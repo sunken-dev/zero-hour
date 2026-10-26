@@ -16,11 +16,11 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('21 modules: 7 easy, 8 medium, 6 hard, 13 with a rear plate, 3 needy, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 23);
+test('24 modules: 7 easy, 10 medium, 7 hard, 16 with a rear plate, 3 needy, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 24);
   const count = d => g.Modules.list.filter(m => m.difficulty === d).length;
-  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 10, 6]);
-  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 15);
+  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 10, 7]);
+  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 16);
   assert.deepEqual([...g.Modules.list.filter(m => m.needy).map(m => m.id)].sort(), ['breaker', 'coolant', 'knob']);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
@@ -82,7 +82,7 @@ test('module configuration: switched-off modules are never dealt, and optional r
     for (const id of Object.keys(off)) assert.ok(!ids.includes(id), `${id} is switched off`);
   }
   const optional = [...g.Modules.list.filter(m => m.rearOptional).map(m => m.id)].sort();
-  assert.deepEqual(optional, ['breaker', 'dip', 'glyphs', 'meter', 'semaphore', 'simon', 'switches', 'wires']);
+  assert.deepEqual(optional, ['breaker', 'dip', 'glyphs', 'meter', 'safe', 'semaphore', 'simon', 'switches', 'wires']);
   const wires = g.Modules.list.find(m => m.id === 'wires'), fuses = g.Modules.list.find(m => m.id === 'fuses'), button = g.Modules.list.find(m => m.id === 'button');
   const outcomes = new Set();
   for (let seed = 1; seed <= 200; seed++) {
@@ -177,6 +177,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.equal(hits.length, 1, 'exactly one pair reads the target');
         assert.deepEqual([...g.meterPair(s, bomb)], hits[0].slice(0, 2));
         assert.ok(pairs.every(p => p[2] === target || Math.abs(p[2] - target) >= 1), 'every other pair reads at least 1 V away');
+      }
+      if (def.id === 'safe') {
+        const sum = [...bomb.serial].filter(c => /\d/.test(c)).reduce((a, c) => a + +c, 0), lit = bomb.indicators.filter(x => x.lit).length;
+        const a = sum * 2 % 40, b = (a + 13 * (bomb.batteries + 1)) % 40, c = (b + 7 * (lit + 1)) % 40;
+        assert.deepEqual([...g.safeCombo(bomb)], [a, b, c]);
+        assert.ok(a !== b && b !== c, 'neighbouring numbers differ, so none needs a full turn');
+        assert.ok(Number.isInteger(s.start) && s.start >= 0 && s.start < 40 && s.start !== a);
       }
       if (def.id === 'dip') {
         const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1))) % 16;
@@ -295,6 +302,30 @@ test('maze: nine perfect 6x6 mazes with unique markers, and every rotation can b
     assert.notEqual(s.start.join(), s.goal.join());
     assert.ok(walk(s, s.start, s.goal).length >= 4, 'the goal is a few moves away');
   }
+});
+
+test('safe: numbers are entered where the dial changes direction; a full turn clears them', () => {
+  const dial = start => ({ pos: start, dir: 0, run: 0, entries: [] });
+  const turn = (lock, d, n) => { for (let k = 0; k < n; k++) g.safeTurn(lock, d); return lock; };
+  const enter = (lock, [a, b, c]) => {
+    turn(lock, 1, (a - lock.pos + 40) % 40);       // clockwise up to the first number
+    turn(lock, -1, (a - b + 40) % 40);             // anticlockwise down to the second
+    return turn(lock, 1, (c - b + 40) % 40);       // clockwise up to the third
+  };
+  const combo = [12, 38, 5];
+  assert.ok(g.safeOpens(enter(dial(20), combo), combo), 'the plain entry opens');
+  let lock = dial(20); turn(lock, -1, 7);
+  assert.ok(g.safeOpens(enter(lock, combo), combo), 'turning anticlockwise before the first number is only positioning');
+  lock = dial(20); turn(lock, 1, 3); turn(lock, -1, 2);
+  assert.equal(lock.entries.length, 1, 'turning back records where the dial stood');
+  turn(lock, -1, 38);
+  assert.equal(lock.entries.length, 0, 'a full turn in one direction clears the entries');
+  assert.ok(g.safeOpens(enter(lock, combo), combo), 'and the combination can be entered afresh');
+  assert.ok(!g.safeOpens(enter(dial(20), [12, 37, 5]), combo), 'a wrong second number does not open');
+  lock = enter(dial(20), combo); turn(lock, -1, 1); turn(lock, 1, 1);
+  assert.ok(!g.safeOpens(lock, combo), 'an extra direction change does not open');
+  lock = dial(20); turn(lock, 1, (12 - 20 + 40) % 40); turn(lock, -1, (12 - 38 + 40) % 40);
+  assert.ok(!g.safeOpens(lock, [12, 38, 38]), 'the third number is entered clockwise');
 });
 
 test('up to nine modules: a third row of bays only for 7 to 9, and every module gets a bay', () => {
