@@ -404,17 +404,16 @@ svg{display:block}
 .v-dn,.v-up{position:absolute;top:0;width:50%;height:100%;cursor:pointer}
 .v-dn{left:0}.v-up{right:0}
 .relief{font:700 13px var(--mono);letter-spacing:.1em;color:#0b141a;background:linear-gradient(#ffd36b,#e09a00);padding:4px 10px;border-radius:3px}
-.mz{display:grid;grid-template-columns:auto auto;gap:10px;align-items:center;justify-content:center}
+.mz{display:grid;grid-template-columns:26px auto 26px;grid-template-rows:24px auto 24px;gap:5px;align-items:center;justify-items:center;justify-content:center}
+.mz .mz-up{grid-area:1/2}.mz .mz-left{grid-area:2/1}.mz .mz-grid{grid-area:2/2}.mz .mz-right{grid-area:2/3}.mz .mz-down{grid-area:3/2}
+.mz .sk{width:100%;height:100%}   /* each arrow runs the full length of its side */
+.mz .sk svg{width:14px;height:14px}
 .mz-grid{display:grid;grid-template-columns:repeat(6,21px);grid-template-rows:repeat(6,21px);padding:6px;background:#05090b;border:1px solid #43dfff33}
 .mz-cell{position:relative;display:grid;place-items:center}
 .mz-dot{width:4px;height:4px;border-radius:50%;background:#43dfff55}
 .mz-ring{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--mint);box-sizing:border-box}
 .mz-me{position:absolute;left:4.5px;top:4.5px;width:12px;height:12px;background:#fff;box-shadow:0 0 8px #fff}
 .mz-goal{position:absolute;left:3.5px;top:3px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid var(--red);filter:drop-shadow(0 0 4px #ff3b5c)}
-.mz-pad{display:grid;grid-template-columns:repeat(3,27px);grid-template-rows:repeat(3,27px);gap:2px}
-.mz-pad .mz-up{grid-area:1/2}.mz-pad .mz-left{grid-area:2/1}.mz-pad .mz-right{grid-area:2/3}.mz-pad .mz-down{grid-area:3/2}
-.mz-pad .sk{height:27px}
-.mz-pad svg{width:14px;height:14px}
 .gyro3d{display:flex;flex-direction:column;align-items:center;gap:10px}
 .gyro3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .gyro{position:relative;width:120px;height:120px}
@@ -3008,8 +3007,9 @@ Modules.register({
     };
     const arrow = (cls, svg, d, label) => activate(h('div', { class: 'sk ' + cls }, button3d(html('span', {}, svg), '', 5)), move(d), label);
     paint();
-    root.append(h('div', { class: 'mz' }, grid, h('div', { class: 'mz-pad' },
-      arrow('mz-up', ARROW_UP, 0, 'Up'), arrow('mz-left', ARROW_L, 3, 'Left'), arrow('mz-right', ARROW_R, 1, 'Right'), arrow('mz-down', ARROW_DN, 2, 'Down'))));
+    // the arrows sit on the side of the grid they move towards
+    root.append(h('div', { class: 'mz' }, arrow('mz-up', ARROW_UP, 0, 'Up'), arrow('mz-left', ARROW_L, 3, 'Left'), grid,
+      arrow('mz-right', ARROW_R, 1, 'Right'), arrow('mz-down', ARROW_DN, 2, 'Down')));
   },
   mountBack(root, s) {
     // the gyro: a steel housing with a knurled bezel, a dark recessed face with a fixed index line, and a heavy
