@@ -450,6 +450,8 @@ test('every module can be solved through its real controls, and a wrong answer i
             const at = () => +root.querySelector('.sf-dial').dataset.at, lit = () => root.querySelectorAll('.sf-lamps .led:not(.off)').length;
             const go = (el, to) => { let g = 0; while (at() !== to && g++ < 40) click(el); };
             if (at() !== s.start) fail('the dial does not start at its starting number');
+            root.querySelector('.sf-hit').dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: 40, deltaY: 0 }));
+            if (at() !== s.start) fail('a sideways scroll turned the dial');
             go(cw, a); click(ccw); if (lit() !== 1) fail('turning back at the first number did not light a lamp');
             go(ccw, (b + 1) % 40); click(pull); if (strikes !== 1 || solved || lit()) fail('pulling with a wrong combination did not strike and clear');
             const hit = root.querySelector('.sf-hit'), box = root.querySelector('.sf-dial').getBoundingClientRect(), from = at();

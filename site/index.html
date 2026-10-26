@@ -3712,7 +3712,7 @@ Modules.register({
     const ccw = activate(h('div', { class: 'sf-ccw' }), () => step(-1), 'Turn the dial anticlockwise');
     const cw = activate(h('div', { class: 'sf-cw' }), () => step(1), 'Turn the dial clockwise');
     const hit = h('div', { class: 'sf-hit' }, ccw, cw);
-    hit.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); step(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+    hit.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); if (e.deltaY) step(e.deltaY > 0 ? 1 : -1); }, { passive: false });
     let applied = 0;                                  // steps already taken during the current drag
     dragTurn(hit, { center: dial, detent: 9,
       show: d => {
