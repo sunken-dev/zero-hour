@@ -123,6 +123,8 @@ test('the case shows the chosen difficulty', T, () => withPage(home(), async pag
 
 test('Abort asks first, the clock keeps running behind the dialog, and a bomb that ends closes it', T, () => withPage(home(), async page => {
   await fresh(page);
+  // seed 94 deals Throttle and Gears: their first press always strikes, so the bomb can be detonated on purpose
+  await page.click('.seedin'); await page.keyboard.type('94');
   await page.click('.arm'); await sleep(2200);
   const clock = () => page.evaluate(() => document.querySelector('.hud .t').textContent);
   await clickText(page, '.tbtn', 'Abort'); await sleep(300);
@@ -133,8 +135,10 @@ test('Abort asks first, the clock keeps running behind the dialog, and a bomb th
   await page.keyboard.press('Escape'); await sleep(200);
   assert.ok(await page.evaluate(() => !document.querySelector('.confirm') && !!document.querySelector('.game')));
   await clickText(page, '.tbtn', 'Abort'); await sleep(300);
-  for (let i = 0; i < 12 && !(await page.evaluate(() => !!document.querySelector('.overlay'))); i++) {   // detonate it behind the dialog
-    await page.evaluate(() => { const q = s => document.querySelector('.f-front ' + s); q('.go')?.click(); document.querySelectorAll('.f-front .key:not(.ok)').forEach((k, j) => { if (j === 1) k.click(); }); q('.wire:not(.cut)')?.click(); document.querySelector('.f-front .mk')?.click(); });
+  const modules = await page.evaluate(() => [...document.querySelectorAll('.f-front .mod h3')].map(e => e.textContent));
+  assert.ok(modules.includes('Throttle') && modules.includes('Gears'), 'seed 94 deals ' + modules.join(', '));
+  for (let i = 0; i < 6 && !(await page.evaluate(() => !!document.querySelector('.overlay'))); i++) {   // detonate it behind the dialog
+    await page.evaluate(() => document.querySelectorAll('.f-front .go').forEach(b => b.click()));
     await sleep(150);
   }
   await sleep(800);
