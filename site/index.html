@@ -440,14 +440,16 @@ svg{display:block}
 .rotors{display:flex;gap:6px}
 .rotor{width:30px;height:46px;display:grid;place-items:center;font:700 22px var(--mono);color:#0b141a;background:repeating-linear-gradient(#cfdadf 0 3px,#a9b8c0 3px 5px);border:2px solid #2b3b45;border-radius:4px}
 .resm{gap:8px}
-.res-row{display:flex;justify-content:space-between;gap:6px}
+.res-row{display:flex;justify-content:space-between;gap:8px;padding:2px 2px 4px}
 .res{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--mono)}
 .res small{font-size:11px;color:var(--mute)}
-.res-body{position:relative;width:62px;height:22px;display:flex;align-items:center;gap:5px;padding:0 9px;background:linear-gradient(#e8d6b0,#c4a874 60%,#9c8150);border-radius:10px;box-shadow:0 2px 4px #000a}
-.res-body::before,.res-body::after{content:"";position:absolute;top:10px;width:12px;height:2px;background:#aab8c0}
-.res-body::before{left:-12px}.res-body::after{right:-12px}
-.res-body i{width:6px;height:100%;background:var(--b)}
-.res-body .tol{margin-left:auto;background:linear-gradient(90deg,#8d9ca4,#eef3f5,#8d9ca4)}
+.res-mount{position:relative;width:60px;height:20px}
+.res3d{position:absolute;left:0;top:1px}
+.res3d .pad{position:absolute;top:5px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#0b1216 30%,#c9a36a 36%,#7a5a26);transform:translateZ(.3px)}
+.res3d .tube.resbody .fc{background:
+  linear-gradient(rgb(0 0 0 / calc((1 - var(--b)) * .7)),rgb(0 0 0 / calc((1 - var(--b)) * .7))),
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .72) * 1.5)),rgb(255 255 255 / calc((var(--b) - .72) * 1.5))),
+  var(--bands)}
 .res-dial{display:flex;justify-content:center;align-items:center;gap:6px}
 .digit{display:flex;flex-direction:column;align-items:center;gap:3px;width:40px}
 .digit .sk{width:100%;height:22px}
@@ -3050,8 +3052,17 @@ Modules.register({
   },
   mount(root, s, ctl) {
     const at = s.start.slice();
-    const resistor = (v, k) => h('div', { class: 'res' }, h('small', {}, 'R' + (k + 1)),
-      h('div', { class: 'res-body' }, resBands(v).map(c => h('i', { style: `--b:${BAND_HEX[c]}` })), h('i', { class: 'tol' })));
+    // a resistor: a beige body with bulged ends and colour bands, thin silver leads into solder pads on the board
+    const resistor = (v, k) => {
+      const [b1, b2, b3] = resBands(v).map(c => BAND_HEX[c]), lead = 5, bulge = 6, body = 38, L = 2 * (lead + bulge) + body;
+      const { wrap, add } = axisPart(9, L);
+      wrap.classList.add('res3d');
+      wrap.append(h('i', { class: 'pad', style: 'left:-3px' }), h('i', { class: 'pad', style: `left:${L - 5}px` }));
+      add(.9, 6, 0, L, {}, '--c:#d3dce1');
+      [lead, L - lead - bulge].forEach(x => add(9, 24, x, bulge, {}, '--c:#d9c49a'));
+      add(8, 24, lead + bulge, body, {}, `--bands:linear-gradient(90deg,#c9b083 0 6%,${b1} 6% 22%,#c9b083 22% 30%,${b2} 30% 46%,#c9b083 46% 54%,${b3} 54% 70%,#c9b083 70% 80%,#c8d0d4 80% 92%,#c9b083 92%)`, 'resbody');
+      return h('div', { class: 'res' }, h('small', {}, 'R' + (k + 1)), h('div', { class: 'res-mount' }, wrap));
+    };
     const digits = at.map((v, i) => {
       const out = h('b', {}, String(v));
       const step = d => () => { if (ctl.isSolved()) return; at[i] = (at[i] + d + 10) % 10; out.textContent = String(at[i]); ctl.sfx.click(); };
