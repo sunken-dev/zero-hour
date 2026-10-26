@@ -7,7 +7,7 @@ const isPlate = k => k === 'serial' || k === 'plate';
 
 // Everything the game builds for a seed, as plain data.
 function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
-  const r = g.rng(seed), bomb = g.makeBomb(r, 300000), L = g.layoutFor(vw);
+  const r = g.rng(seed), bomb = g.makeBomb(r, 300000), L = g.layoutFor(vw, count);
   const defs = g.pickModules(r, Math.min(count, L.cols * L.rows), difficulty);
   g.ensureNeeds(bomb, defs, r);
   const plan = g.planCase(r, bomb, L, defs.length);
@@ -101,7 +101,7 @@ test('needy modules: Knob, Breaker and Coolant at most; dealing keeps to the nee
   const needy = g.Modules.list.filter(m => m.needy).map(m => m.id);
   assert.ok(needy.every(id => ['knob', 'breaker', 'coolant'].includes(id)), needy.join());
   assert.ok(needy.includes('knob') && needy.includes('breaker'));
-  for (const d of g.DIFFICULTIES) for (let count = 2; count <= 6; count++) {
+  for (const d of g.DIFFICULTIES) for (let count = 2; count <= 9; count++) {
     const limit = count <= 2 ? 0 : (d === 'easy' || count < 6) ? 1 : 2;
     let most = 0;
     for (let seed = 1; seed <= 1500; seed++) {
@@ -282,6 +282,21 @@ test('maze: nine perfect 6x6 mazes with unique markers, and every rotation can b
   }
 });
 
+test('up to nine modules: a third row of bays only for 7 to 9, and every module gets a bay', () => {
+  for (let count = 2; count <= 9; count++) {
+    const L = g.layoutFor(1360, count);
+    assert.equal(L.rows, count > 6 ? 3 : 2, `${count} modules: ${L.rows} rows`);
+    assert.ok(L.cols * L.rows >= count);
+    const narrow = g.layoutFor(600, count);
+    assert.ok(narrow.cols * narrow.rows >= count, `narrow, ${count} modules`);
+    for (let seed = 1; seed <= 200; seed++) {
+      const w = world(seed, 1360, count);
+      assert.equal(w.defs.length, count, `seed ${seed}: ${w.defs.length} of ${count} modules dealt`);
+      assert.equal(new Set(w.plan.bays.map(b => b.i)).size, count, 'each module in its own bay');
+    }
+  }
+});
+
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
   for (const vw of [1360, 600]) {
     for (let seed = 1; seed <= 1500; seed++) {
@@ -358,7 +373,7 @@ test('settings start from sane defaults', () => {
   const s = g.settings;
   assert.ok(s.master >= 0 && s.master <= 1 && s.music >= 0 && s.music <= 1 && s.fx >= 0 && s.fx <= 1);
   assert.ok([3, 5, 8, 12].includes(s.minutes));
-  assert.ok(s.count >= 2 && s.count <= 6);
+  assert.ok(s.count >= 2 && s.count <= 9);
   assert.ok([1, .85, .7].includes(s.startZoom));
   assert.equal(typeof s.seed, 'string');
 });
