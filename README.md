@@ -9,8 +9,11 @@ other reads the manual and cannot see the bomb. Describe what you see, find the 
 
 Live at **https://zero-hour.sunken.dev/**
 
-- 15 modules, each rated easy, medium or hard, with a front and, for most, a rear plate on the back of the bomb
-- choose a difficulty: modules of that rating come up more often
+- 20 modules, each rated easy, medium or hard, with a front and, for most, a rear plate on the back of the bomb
+- needy modules that keep waking up and need attention until the bomb is defused
+- choose a difficulty: modules of that rating come up more often, and the case shows it
+- a module explorer to read about every module, try it, and switch modules or optional rear plates on and off
+- an optional warning beep as the clock runs down
 - a 3D case you turn with the mouse, with hints hidden on all sides
 - seeds: the same seed with the same settings gives the same bomb
 - a manual built from the same source as the game, also as a PDF

@@ -87,7 +87,7 @@ body{position:relative;width:1200px;height:630px;overflow:hidden;background:#060
   <p class="tag">One team. One bomb. One manual.</p>
   <p class="sub">Inspect the case. Keep your cool.</p>
 </div>
-<div class="pills"><i>15 modules</i><i>3D bomb case</i><i>Seeded bombs</i></div>`;
+<div class="pills"><i>20 modules</i><i>3D bomb case</i><i>Seeded bombs</i></div>`;
   fs.mkdirSync(outDir, { recursive: true });
   for (const [scale, name] of [[1, 'zero-hour-preview.png'], [2, 'zero-hour-preview@2x.png']]) {
     const page = await browser.newPage();
