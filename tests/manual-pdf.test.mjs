@@ -34,6 +34,6 @@ test('the template refuses markup it does not know, so nothing in the manual goe
   const section = (...k) => manual(el('section', '', el('h2', '', 'Wires'), ...k));
   assert.throws(() => typeset(section(el('blink', '', 'surprise'))), /does not know how to typeset <blink/);
   assert.throws(() => typeset(section(el('div', 'gauge', 'surprise'))), /does not know how to typeset <div class="gauge">/);
-  assert.throws(() => typeset(section(el('p', '', svg))), /only knows the logo, the glyph columns, the gate symbols and schematic figures/);
+  assert.throws(() => typeset(section(el('p', '', svg))), /only knows the logo, the glyph columns, the gate symbols, the tile grids and schematic figures/);
   assert.throws(() => typeset(el('div', 'manual', el('p', '', 'no cover'))), /expects the manual to open with its logo and title/);
 });

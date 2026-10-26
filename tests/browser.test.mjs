@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,tilesTarget,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -317,6 +317,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       const sf = rear('safe', bomb);
       if (sf.querySelector('.sf-sum')?.textContent !== String([...bomb.serial].filter(c => /\d/.test(c)).reduce((a, c) => a + +c, 0))) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-sum')?.textContent}`);
       sf.remove();
+      const tl = rear('tiles', bomb);
+      if (tl.querySelector('.tl-no')?.textContent !== String(last)) out.push(`${bomb.serial}: tiles pattern ${tl.querySelector('.tl-no')?.textContent}`);
+      tl.remove();
       const dp = rear('dip', bomb);
       if (dp.querySelector('.dip-base')?.textContent !== String(bomb.batteries + bomb.indicators.filter(x => x.lit).length)) out.push(`${bomb.serial}: DIP base ${dp.querySelector('.dip-base')?.textContent}`);
       dp.remove();
@@ -452,6 +455,27 @@ test('every module can be solved through its real controls, and a wrong answer i
             go(ccw, b); go(cw, c); if (lit() !== 2) fail('two lamps should be lit before the pull');
             click(pull); if (!solved) fail('safe not opened');
             click(cw); click(pull); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'tiles') {
+            const tiles = () => [...root.querySelectorAll('.tl-tile')], order = () => { const o = Array(9).fill(0); tiles().forEach(t => { o[+t.dataset.at] = +t.dataset.n; }); return o; };
+            const want = T.tilesTarget(bomb).join();
+            if (order().join() !== [...s.start].join()) fail('the tray does not show the scramble');
+            const far = tiles().find(t => { const a = +t.dataset.at, gp = order().indexOf(0); return Math.abs(a % 3 - gp % 3) + Math.abs((a / 3 | 0) - (gp / 3 | 0)) > 1; });
+            const before = order().join(); click(far); if (order().join() !== before) fail('a tile away from the gap moved');
+            click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('checking the scramble did not strike');
+            const prev = new Map([[before, null]]), queue = [before];          // breadth-first search for the shortest slide sequence
+            while (queue.length && !prev.has(want)) {
+              const cur = queue.shift(), a = cur.split(',').map(Number), gp = a.indexOf(0);
+              for (const n of [gp - 3, gp + 3, gp % 3 ? gp - 1 : -1, gp % 3 < 2 ? gp + 1 : -1]) {
+                if (n < 0 || n > 8) continue;
+                const b = a.slice(); [b[gp], b[n]] = [b[n], b[gp]]; const k = b.join();
+                if (!prev.has(k)) { prev.set(k, [cur, a[n]]); queue.push(k); }
+              }
+            }
+            const path = []; for (let k = want; prev.get(k); k = prev.get(k)[0]) path.unshift(prev.get(k)[1]);
+            path.forEach(n => click(tiles().find(t => +t.dataset.n === n)));
+            if (order().join() !== want) fail('sliding the tiles did not reach the target');
+            click(root.querySelector('.go')); if (!solved) fail('tiles not solved');
+            click(tiles()[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'dip') {
             const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(bomb))];
             const set = p => sw.forEach((e, k) => { if (e.classList.contains('on') !== p[k]) click(e); });

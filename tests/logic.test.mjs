@@ -16,11 +16,11 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('24 modules: 7 easy, 10 medium, 7 hard, 16 with a rear plate, 3 needy, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 24);
+test('25 modules: 7 easy, 10 medium, 8 hard, 17 with a rear plate, 3 needy, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 25);
   const count = d => g.Modules.list.filter(m => m.difficulty === d).length;
-  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 10, 7]);
-  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 16);
+  assert.deepEqual([count('easy'), count('medium'), count('hard')], [7, 10, 8]);
+  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 17);
   assert.deepEqual([...g.Modules.list.filter(m => m.needy).map(m => m.id)].sort(), ['breaker', 'coolant', 'knob']);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
@@ -82,7 +82,7 @@ test('module configuration: switched-off modules are never dealt, and optional r
     for (const id of Object.keys(off)) assert.ok(!ids.includes(id), `${id} is switched off`);
   }
   const optional = [...g.Modules.list.filter(m => m.rearOptional).map(m => m.id)].sort();
-  assert.deepEqual(optional, ['breaker', 'dip', 'glyphs', 'meter', 'safe', 'semaphore', 'simon', 'switches', 'wires']);
+  assert.deepEqual(optional, ['breaker', 'dip', 'glyphs', 'meter', 'safe', 'semaphore', 'simon', 'switches', 'tiles', 'wires']);
   const wires = g.Modules.list.find(m => m.id === 'wires'), fuses = g.Modules.list.find(m => m.id === 'fuses'), button = g.Modules.list.find(m => m.id === 'button');
   const outcomes = new Set();
   for (let seed = 1; seed <= 200; seed++) {
@@ -184,6 +184,15 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...g.safeCombo(bomb)], [a, b, c]);
         assert.ok(a !== b && b !== c, 'neighbouring numbers differ, so none needs a full turn');
         assert.ok(Number.isInteger(s.start) && s.start >= 0 && s.start < 40 && s.start !== a);
+      }
+      if (def.id === 'tiles') {
+        const want = [...g.TILE_TARGETS[Number(bomb.serial.slice(-1))]], start = [...s.start];
+        assert.deepEqual([...g.tilesTarget(bomb)], want);
+        assert.deepEqual([...start].sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        const inv = a => { const t = a.filter(x => x); let n = 0; for (let i = 0; i < 8; i++) for (let j = i + 1; j < 8; j++) n += t[i] > t[j]; return n % 2; };
+        assert.equal(inv(start), inv(want), 'the scramble can be solved');
+        const man = start.reduce((d, n, i) => n ? d + Math.abs(i % 3 - want.indexOf(n) % 3) + Math.abs((i / 3 | 0) - (want.indexOf(n) / 3 | 0)) : d, 0);
+        assert.ok(man >= 12, `at least 12 moves from the target (Manhattan ${man})`);
       }
       if (def.id === 'dip') {
         const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1))) % 16;
@@ -326,6 +335,12 @@ test('safe: numbers are entered where the dial changes direction; a full turn cl
   assert.ok(!g.safeOpens(lock, combo), 'an extra direction change does not open');
   lock = dial(20); turn(lock, 1, (12 - 20 + 40) % 40); turn(lock, -1, (12 - 38 + 40) % 40);
   assert.ok(!g.safeOpens(lock, [12, 38, 38]), 'the third number is entered clockwise');
+});
+
+test('tiles: ten different targets, each eight tiles and a gap', () => {
+  assert.equal(g.TILE_TARGETS.length, 10);
+  assert.equal(new Set(g.TILE_TARGETS.map(t => t.join())).size, 10);
+  for (const t of g.TILE_TARGETS) assert.deepEqual([...t].sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
 });
 
 test('up to nine modules: a third row of bays only for 7 to 9, and every module gets a bay', () => {
