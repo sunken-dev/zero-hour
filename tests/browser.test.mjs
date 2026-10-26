@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,keyFor,meterPair,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,meterPair,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -314,9 +314,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       const mt = rear('meter', bomb);
       if (mt.querySelector('.pw-cells')?.textContent !== String(bomb.batteries) || mt.querySelector('.pw-coin')?.textContent !== bomb.coinVolts.toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-cells')?.textContent}/${mt.querySelector('.pw-coin')?.textContent}`);
       mt.remove();
-      const kl = rear('keylock', bomb), lit = bomb.indicators.filter(i => i.lit).length;
-      if (kl.querySelector('.tag-cells')?.textContent !== String(bomb.batteries) || kl.querySelector('.tag-lit')?.textContent !== String(lit)) out.push(`${bomb.serial}: key lock tag ${kl.querySelector('.tag-cells')?.textContent}/${kl.querySelector('.tag-lit')?.textContent}`);
-      kl.remove();
+      const dp = rear('dip', bomb);
+      if (dp.querySelector('.dip-base')?.textContent !== String(bomb.batteries + bomb.indicators.filter(x => x.lit).length)) out.push(`${bomb.serial}: DIP base ${dp.querySelector('.dip-base')?.textContent}`);
+      dp.remove();
       if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
       if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (bomb.coins.length ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
@@ -427,11 +427,13 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('bridging the wrong pair did not strike');
             click(pairs[want]); click(root.querySelector('.go')); if (!solved) fail('multimeter not solved');
             click(pairs[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
-          } else if (def.id === 'keylock') {
-            const keys = [...root.querySelectorAll('.lk-key')], want = T.keyFor(bomb), right = keys.find(k => k.dataset.key === want), wrong = keys.find(k => k.dataset.key !== want);
-            click(wrong); if (strikes !== 1 || solved) fail('a wrong key did not strike');
-            click(right); if (!solved) fail('key lock not solved');
-            click(wrong); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'dip') {
+            const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(bomb))];
+            const set = p => sw.forEach((e, k) => { if (e.classList.contains('on') !== p[k]) click(e); });
+            set(want.map((v, k) => k === 0 ? !v : v)); click(root.querySelector('.go'));
+            if (strikes !== 1 || solved) fail('a wrong pattern did not strike');
+            set(want); click(root.querySelector('.go')); if (!solved) fail('DIP switches not solved');
+            click(sw[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'throttle') {
             const notch = n => [...root.querySelectorAll('.notch')].find(e => e.textContent === String(n)), want = T.throttleWant(s, bomb);
             click(notch(want % 5 + 1)); click(root.querySelector('.go'));

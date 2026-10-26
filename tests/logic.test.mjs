@@ -82,7 +82,7 @@ test('module configuration: switched-off modules are never dealt, and optional r
     for (const id of Object.keys(off)) assert.ok(!ids.includes(id), `${id} is switched off`);
   }
   const optional = [...g.Modules.list.filter(m => m.rearOptional).map(m => m.id)].sort();
-  assert.deepEqual(optional, ['breaker', 'glyphs', 'keylock', 'meter', 'semaphore', 'simon', 'switches', 'wires']);
+  assert.deepEqual(optional, ['breaker', 'dip', 'glyphs', 'meter', 'semaphore', 'simon', 'switches', 'wires']);
   const wires = g.Modules.list.find(m => m.id === 'wires'), fuses = g.Modules.list.find(m => m.id === 'fuses'), button = g.Modules.list.find(m => m.id === 'button');
   const outcomes = new Set();
   for (let seed = 1; seed <= 200; seed++) {
@@ -171,10 +171,11 @@ test('every module can be made for many bombs, and the rules always give a real 
         const target = bomb.coinVolts > 0 ? bomb.coinVolts : bomb.batteries * 1.5, at = s.volts.indexOf(target);
         assert.equal(g.meterPair(s, bomb), target > 0 && at >= 0 ? at : s.volts.indexOf(Math.max(...s.volts)));
       }
-      if (def.id === 'keylock') {
-        assert.deepEqual([...s.order].sort(), [...g.KEY_NAMES].sort(), 'each key once');
-        const lit = bomb.indicators.some(i => i.lit);
-        assert.equal(g.keyFor(bomb), bomb.batteries === 0 ? 'steel' : lit ? 'red' : bomb.batteries > 2 ? 'blue' : 'brass');
+      if (def.id === 'dip') {
+        const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1))) % 16;
+        assert.equal(g.dipCode(bomb), code);
+        assert.deepEqual([...g.dipPattern(code)], [8, 4, 2, 1].map(v => !!(code & v)));
+        assert.notDeepEqual([...s.start], [...g.dipPattern(code)], 'the switches do not start at the answer');
       }
       if (def.id === 'throttle') {
         assert.ok(g.THROTTLE_GRIPS.includes(s.grip), 'a known grip');
