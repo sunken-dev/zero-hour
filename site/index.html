@@ -388,13 +388,19 @@ svg{display:block}
 .demand{min-width:26px;text-align:center;font-size:20px;color:var(--amber);background:#05090b;border:1px solid #ffb22444;padding:0 4px}
 .idle-lamp{position:absolute;right:0;top:2px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .valve{position:relative;width:150px;height:150px}
+.torus,.torus-seg{position:absolute;left:0;top:0;width:0;height:0}
+.vwheel3d{position:absolute;left:75px;top:75px;width:0;height:0;transform:rotateZ(var(--ang));transition:transform .3s}
+.vw-up{position:absolute;left:0;top:0;width:0;height:0;transform:translateZ(17px)}
+.vw-up .tube .fc,.vw-spoke .tube .fc{background:
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .7) * 1.6)),rgb(255 255 255 / calc((var(--b) - .7) * 1.6))),
+  color-mix(in srgb,#c0392b calc(18% + var(--b) * 82%),#000)}
+.vw-spoke{position:absolute;left:0;top:0;width:0;height:0}
+.vw-ptr{position:absolute;left:-3px;top:-49px;width:6px;height:12px;transform:translateZ(3px)}
+.vw-ptr .cb{--c:#11181c;--top:#1b262c}
+.v-dn,.v-up{transform:translateZ(40px)}
 .valve .dg{position:absolute;left:50%;top:50%;transform:rotate(var(--a)) translateY(-68px)}
 .valve .dg span{position:absolute;left:-5px;top:-8px;width:10px;text-align:center;font:600 12px var(--mono);color:#2b3b45;transform:rotate(calc(-1 * var(--a)))}
 .valve .dg i{position:absolute;left:-1px;top:8px;width:2px;height:6px;background:#2b3b45}
-.vwheel{position:absolute;left:25px;top:25px;width:100px;height:100px;border-radius:50%;border:9px solid #c0392b;box-sizing:border-box;box-shadow:0 3px 8px #0009,inset 0 0 0 2px #7a1d14;transform:rotate(var(--ang));transition:transform .3s}
-.vwheel i{position:absolute;left:calc(50% - 4px);top:0;width:8px;height:100%;background:#c0392b}
-.vwheel i:nth-child(2){transform:rotate(60deg)}.vwheel i:nth-child(3){transform:rotate(120deg)}
-.vwheel b{position:absolute;left:calc(50% - 3px);top:-16px;width:6px;height:16px;background:#1b262c;border-radius:3px}
 .v-dn,.v-up{position:absolute;top:0;width:50%;height:100%;cursor:pointer}
 .v-dn{left:0}.v-up{right:0}
 .relief{font:700 13px var(--mono);letter-spacing:.1em;color:#0b141a;background:linear-gradient(#ffd36b,#e09a00);padding:4px 10px;border-radius:3px}
@@ -2759,7 +2765,12 @@ Modules.register({
   },
   mountBack(root, s, ctl) {
     const dial = Array.from({ length: 10 }, (_, k) => h('div', { class: 'dg', style: `--a:${k * 36}deg` }, h('span', {}, String(k)), h('i')));
-    const wheel = h('div', { class: 'vwheel', style: `--ang:${s.valve * 36}deg` }, h('i'), h('i'), h('i'), h('b'));
+    // a red cast hand wheel: round rim, three spokes, a hub on a steel stem, and a black pointer on the rim
+    const spokes = [0, 60, 120].map(a => { const t = tube(3.6, 10, 0); t.style.cssText += ';position:absolute;left:-40px;top:-3.6px;width:80px'; return h('div', { class: 'vw-spoke', style: `transform:rotateZ(${a}deg)` }, t); });
+    const wheel = h('div', { class: 'vwheel3d', style: `--ang:${s.valve * 36}deg` },
+      cylZ(7, 14, 14, { color: '#aab8c0' }),
+      h('div', { class: 'vw-up' }, torus(40, 5.5, 30, '#c0392b'), spokes, cylZ(11, 7, 20, { z: -3.5, color: '#c0392b' }), cylZ(5, 2, 12, { z: 3.5, color: '#d3dce1' }),
+        h('div', { class: 'vw-ptr' }, cuboid(7, '', 'fill'))));
     coolantSlips.set(s, () => wheel.style.setProperty('--ang', s.valve * 36 + 'deg'));
     const turn = d => () => {
       const v = Math.max(0, Math.min(9, s.valve + d));
@@ -3324,6 +3335,17 @@ function cylZ(R, hgt, n, { z = 0, color = '#cfd8dd', knurl = false, hex = false 
     }));
   }
   e.append(h('i', { class: 'cz-top' + (hex ? ' hex' : ''), style: `width:${2 * R}px;height:${2 * R}px;left:${-R}px;top:${-R}px;transform:translateZ(${hgt}px)` }));
+  return e;
+}
+
+// A round ring (a torus) lying in the plane, built from short tube segments: radius R, tube radius r, centred on its anchor.
+function torus(R, r, segs, color, n = 12) {
+  const e = h('div', { class: 'torus', style: `--c:${color}` }), len = 2 * Math.PI * R / segs * 1.08;
+  for (let k = 0; k < segs; k++) {
+    const t = tube(r, n, 0);
+    t.style.cssText += `;position:absolute;left:${(-len / 2).toFixed(2)}px;top:${-r}px;width:${len.toFixed(2)}px`;
+    e.append(h('div', { class: 'torus-seg', style: `transform:rotateZ(${(k * 360 / segs).toFixed(2)}deg) translateY(${-R}px)` }, t));
+  }
   return e;
 }
 
