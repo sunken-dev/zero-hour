@@ -60,6 +60,17 @@ test('dealing respects max and is the same for the same seed and difficulty', ()
   }
 });
 
+test('every module describes itself for players, and the explorer lists them by difficulty, then title', () => {
+  for (const m of g.Modules.list) {
+    assert.equal(typeof m.description, 'string', m.id);
+    assert.ok(m.description.length >= 40 && m.description.length <= 400, `${m.id}: ${m.description.length} chars`);
+    assert.ok(!/[<>]/.test(m.description), `${m.id}: plain text`);
+  }
+  const order = [...g.sortModules(g.Modules.list)].map(m => m.id);
+  const want = [...g.Modules.list].sort((a, b) => g.DIFFICULTIES.indexOf(a.difficulty) - g.DIFFICULTIES.indexOf(b.difficulty) || a.title.localeCompare(b.title)).map(m => m.id);
+  assert.deepEqual(order, want);
+});
+
 test('every module can be made for many bombs, and the rules always give a real answer', () => {
   for (let seed = 1; seed <= 500; seed++) {
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000);

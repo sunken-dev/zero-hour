@@ -41,7 +41,7 @@ const fresh = async page => {                               // empty storage, ma
 const clickText = (page, sel, text) => page.evaluate((sel, text) => [...document.querySelectorAll(sel)].find(b => b.textContent.trim() === text).click(), sel, text);
 const T = { timeout: 90000 };
 
-test('main screen: tagline, intro, and Settings and Manual side by side', T, () => withPage(home(), async page => {
+test('main screen: tagline, intro, and Settings, Manual and Modules side by side', T, () => withPage(home(), async page => {
   await page.waitForSelector('.arm');
   const r = await page.evaluate(() => ({
     tag: document.querySelector('.tagline').textContent,
@@ -52,7 +52,7 @@ test('main screen: tagline, intro, and Settings and Manual side by side', T, () 
   assert.equal(r.tag, 'One team. One bomb. One manual.');
   assert.match(r.intro, /Inspect the case\./);
   assert.ok(!/three strikes/i.test(r.intro));
-  assert.deepEqual(r.row, ['ARM THE BOMB', 'Settings', 'Manual']);
+  assert.deepEqual(r.row, ['ARM THE BOMB', 'Settings', 'Manual', 'Modules']);
   assert.ok(!r.link);
 }));
 
@@ -136,19 +136,29 @@ test('Abort asks first, the clock keeps running behind the dialog, and a bomb th
   assert.deepEqual(btns, ['Arm another bomb', 'Replay this seed', 'Change settings']);
 }));
 
-test('module viewer: every module shows its front and its rear plate (or the blank panel)', T, () => withPage(home(), async page => {
+test('module explorer: opened from the main screen, sorted, steady when selecting, front and rear for every module', T, () => withPage(home(), async page => {
   await fresh(page);
-  await page.click('.setbtn'); await sleep(200);
-  await page.evaluate(() => [...document.querySelectorAll('.sp .srow')].find(r => r.textContent.startsWith('Module viewer')).querySelector('button').click());
-  await sleep(1500);
-  const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.firstChild.textContent, note: b.querySelector('small').textContent, rear: b.querySelector('small').textContent.includes('rear') })));
-  for (const it of items) assert.match(it.note, /^(easy|medium|hard) · (front only|front and rear plate)$/, it.title);
+  const diffClasses = await page.evaluate(() => [...document.querySelectorAll('.opt button')].filter(b => /^(Easy|Medium|Hard)$/.test(b.textContent)).map(b => b.className));
+  assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
+  await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
+  const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
   assert.equal(items.length, 15);
+  const rank = { easy: 0, medium: 1, hard: 2 };
+  const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
+  for (let i = 1; i < items.length; i++) {
+    const a = [rank[diffs[i - 1]], items[i - 1].title], b = [rank[diffs[i]], items[i].title];
+    assert.ok(a[0] < b[0] || (a[0] === b[0] && a[1].localeCompare(b[1]) < 0), `${a[1]} before ${b[1]}`);
+  }
+  assert.ok(!(await page.evaluate(() => !!document.querySelector('.bench pre, .bench .seedin, .bench-log'))), 'no debug details in the explorer');
+  const sizes = () => page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => Math.round(b.getBoundingClientRect().height)));
+  const before = await sizes();
   for (let i = 0; i < items.length; i++) {
     await page.evaluate(i => document.querySelectorAll('.bench-item')[i].click(), i); await sleep(400);
-    const r = await page.evaluate(() => ({ front: document.querySelector('.bench-stages .stage:nth-child(1) .mod h3')?.textContent, rear: !!document.querySelector('.bench-stages .stage:nth-child(2) .rear'), blank: !!document.querySelector('.bench-stages .stage:nth-child(2) .blank') }));
+    assert.deepEqual(await sizes(), before, 'selecting an item must not change any item size');
+    const r = await page.evaluate(() => ({ front: document.querySelector('.bench-stages .stage:nth-child(1) .mod h3')?.textContent, rear: !!document.querySelector('.bench-stages .stage:nth-child(2) .rear'), blank: !!document.querySelector('.bench-stages .stage:nth-child(2) .blank'), desc: document.querySelector('.bench-desc')?.textContent || '' }));
     assert.equal(r.front, items[i].title);
     assert.equal(items[i].rear ? r.rear : r.blank, true, items[i].title);
+    assert.ok(r.desc.length >= 40, 'a description for ' + items[i].title);
   }
   // linking the two views turns them together
   const yaws = () => page.evaluate(() => [...document.querySelectorAll('.bench-stage .bomb3d')].map(b => +/rotateY\((-?[\d.]+)deg/.exec(b.style.transform)[1]));

@@ -722,30 +722,35 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .bench-head small{flex:1;color:var(--mute);font-size:13px}
 .bench-body{display:grid;grid-template-columns:200px minmax(0,1fr) 350px;min-height:0}
 .bench-list{overflow:auto;padding:10px;border-right:1px solid #43dfff22;display:flex;flex-direction:column;gap:6px}
-.bench-item{text-align:left;padding:8px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:15px;color:var(--ice)}
-.bench-item small{display:block;opacity:.65;font-size:11.5px;margin-top:1px}
-.bench-item .diff-easy{color:var(--mint)}.bench-item .diff-medium{color:var(--amber)}.bench-item .diff-hard{color:var(--red)}
-.bench-item[aria-pressed=true] [class^=diff-]{color:inherit}
+.bench-item{text-align:left;padding:7px 12px;background:#43dfff10;border:1px solid #43dfff33;clip-path:var(--cut8);font-size:15px;color:var(--ice);display:flex;flex-direction:column;gap:3px}
+.bench-item .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{display:flex;gap:4px;flex-wrap:nowrap}
+.badge{font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border:1px solid currentColor;border-radius:2px;color:var(--mute);white-space:nowrap}
+.badge.diff-easy{color:var(--mint)}.badge.diff-medium{color:var(--amber)}.badge.diff-hard{color:var(--red)}
+.badge.rear{color:#b9c6ce}.badge.needy{color:#ff8a3d}.badge.off{color:var(--mute);border-style:dashed}
 .bench-item:hover{background:#43dfff22}
-.bench-item[aria-pressed=true]{background:var(--cyan);color:#021117;font-weight:600}
+.bench-item[aria-pressed=true]{background:#43dfff2e;border-color:var(--cyan)}
 .bench-main{display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0}
 .bench-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 12px}
 .bench-sp{flex:1}
 .bench-tools .tbtn[aria-pressed=true]{background:var(--cyan);color:#021117;border-color:var(--cyan);font-weight:600}
-.bench-lbl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
-.bench-lbl .seedin{width:120px;height:30px;font-size:14px;flex:none}
 .bench-stages{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 10px 10px;min-height:0}
 .bench-stage.stage{height:100%;min-height:0;border:1px solid #43dfff22}
 .bench-cap{position:absolute;left:10px;top:8px;z-index:3;font:600 12px var(--mono);letter-spacing:.08em;color:var(--cyan);pointer-events:none}
+.bench-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 0;font-size:20px}
+.bench-desc{margin:0;line-height:1.5;color:var(--ice)}
+.bench-feedback{margin:0;padding:6px 10px;border-left:3px solid #43dfff55;color:var(--mute);font-size:13.5px}
+.bench-feedback.ok{border-color:var(--mint);color:var(--mint)}.bench-feedback.bad{border-color:var(--red);color:#ff8fa3}
+.bench-box{border:1px solid #43dfff2a;background:#08121a;padding:6px 10px}
+.bench-box summary{cursor:pointer;font-weight:600;letter-spacing:.05em}
+.bench-box h4{margin:2px 0 6px;font-size:13px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.bench-fact{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:13.5px}
+.bench-fact>span:first-child{color:var(--mute)}
+.seg-ctl button.diff-easy{color:var(--mint)}.seg-ctl button.diff-medium{color:var(--amber)}.seg-ctl button.diff-hard{color:var(--red)}
+.seg-ctl button.diff-easy[aria-pressed=true]{background:var(--mint);color:#021117}.seg-ctl button.diff-medium[aria-pressed=true]{background:var(--amber);color:#021117}.seg-ctl button.diff-hard[aria-pressed=true]{background:var(--red);color:#fff}
 .bench-side{overflow:auto;padding:10px;border-left:1px solid #43dfff22;display:flex;flex-direction:column;gap:8px;font-size:14px;min-height:0}
-.bench-side details{border:1px solid #43dfff2a;background:#08121a;padding:6px 10px}
-.bench-side summary{cursor:pointer;font-weight:600;letter-spacing:.05em}
-.bench-side pre{margin:8px 0 4px;font:12px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;color:#a9c3cd;max-height:230px;overflow:auto;-webkit-user-select:text;user-select:text}
-.bench-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;font-size:13px;color:var(--mute)}
-.bench-ctl b{font-family:var(--mono);color:var(--ice)}
 .bench-enc{display:inline-flex;align-items:center;gap:4px}
 .bench-enc .tbtn{padding:2px 9px}
-.bench-log{font:12px/1.5 var(--mono);color:#a9c3cd;max-height:150px;overflow:auto;margin-top:6px}
 .bench .manual{padding:0;max-width:none;font-size:14px}
 @media(max-width:1000px){.bench-body{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;overflow:auto}.bench-list{flex-direction:row;overflow-x:auto;border-right:0}.bench-stages{grid-template-columns:1fr;height:70vh}.bench-side{border-left:0}}
 
@@ -1410,6 +1415,7 @@ const music = {
      id:     'unique-id',
      title:  'Shown on the bomb and in the manual',
      difficulty: 'easy',               // 'easy', 'medium' or 'hard'
+     description: 'For players: what it looks like and what to do.',
      max:    1,                        // optional: at most N per bomb
      needs:  ['lever'],                // optional: parts the bomb must have ('lever', 'encoders')
      create(bomb, r) { return {...} }, // roll the random puzzle data
@@ -1437,6 +1443,7 @@ const Modules = {
   list: [],
   register(def) { this.list.push(def); }
 };
+const sortModules = list => [...list].sort((a, b) => DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty) || a.title.localeCompare(b.title));
 
 /* ---------------------------------------------------------------------
    MODULE: Wires
@@ -1485,6 +1492,7 @@ Modules.register({
   id: 'wires',
   title: 'Wires',
   difficulty: 'easy',
+  description: 'Three to six coloured wires run across the module. Cut exactly one: which one depends on the colours, their order and a few facts about the bomb.',
   create(bomb, r) {
     const wires = Array.from({ length: 3 + r.int(4) }, () => r.pick(Object.keys(WIRE_HEX)));
     return { wires, answer: wireAnswer(wires, bomb) };
@@ -1542,6 +1550,7 @@ Modules.register({
   id: 'button',
   title: 'Button',
   difficulty: 'easy',
+  description: 'One big button with a label. The expert decides whether to tap it or hold it, and when to let go, by watching the colour of the light bar that appears.',
   create(bomb, r) {
     return {
       color: r.pick(Object.keys(BTN_HEX)),
@@ -1634,6 +1643,7 @@ Modules.register({
   id: 'glyphs',
   title: 'Glyphs',
   difficulty: 'easy',
+  description: 'Four keys with strange symbols. Press them in the right order: the manual lists the symbols in four columns, and exactly one column holds all four.',
   create(bomb, r) {
     const colIdx = r.int(4), col = GLYPH_COLS[colIdx];
     const chosen = r.shuffle(col).slice(0, 4);
@@ -1690,6 +1700,7 @@ Modules.register({
   id: 'simon',
   title: 'Simon',
   difficulty: 'medium',
+  description: 'A ring of four coloured pads flashes a growing sequence. The defuser answers with translated colours, not the ones that flash; the translation depends on the serial number and the strikes.',
   max: 1,
   create(bomb, r) {
     return { seq: Array.from({ length: 3 + r.int(3) }, () => r.int(4)) };
@@ -1784,6 +1795,7 @@ Modules.register({
   id: 'password',
   title: 'Password',
   difficulty: 'medium',
+  description: 'Five columns of letters to cycle through. Exactly one word from the list in the manual can be spelled with one letter from each column.',
   create(bomb, r) {
     for (;;) {
       const ans = r.pick(WORDS);
@@ -1841,6 +1853,7 @@ Modules.register({
   id: 'switches',
   title: 'Switches',
   difficulty: 'medium',
+  description: 'Five toggle switches under five lamps. Each switch belongs up when its lamp is lit, unless a fact about the bomb flips it.',
   create(bomb, r) {
     return { lamps: Array.from({ length: 5 }, () => r() < .5), pos: Array.from({ length: 5 }, () => r() < .5) };
   },
@@ -1892,6 +1905,7 @@ Modules.register({
   id: 'morse',
   title: 'Morse',
   difficulty: 'medium',
+  description: 'A lamp blinks a word in Morse code. Decode it, look up its frequency and tune the radio to it.',
   create(bomb, r) {
     return { word: r.pick(MORSE_WORDS), start: r.int(MORSE_CHANNELS.length) };
   },
@@ -1952,6 +1966,7 @@ Modules.register({
   id: 'memory',
   title: 'Memory',
   difficulty: 'hard',
+  description: 'Five stages of pressing keys, where later stages refer back to earlier ones. Keep notes: one wrong press sends the module back to the start.',
   create(bomb, r) { return { seed: r.int(1e9) }; },
   mount(root, s, ctl) {
     const rr = rng(s.seed);
@@ -2003,6 +2018,7 @@ Modules.register({
   id: 'knob',
   title: 'Knob',
   difficulty: 'easy',
+  description: 'Six lamps show a pattern. Turn the knob so its notch points in the direction the manual gives for that pattern, then lock it.',
   create(bomb, r) {
     const e = r.pick(KNOB_TABLE), dir = KNOB_DIRS.indexOf(e[1]), start = r.int(4);
     return { pattern: e[0], dir, start: start === dir ? (start + 1) % 4 : start };
@@ -2051,6 +2067,7 @@ Modules.register({
   id: 'breaker',
   title: 'Breaker',
   difficulty: 'medium',
+  description: 'Linked to the knife switch on the side of the bomb. A number and a lamp decide whether the switch belongs on or off; throw it and latch.',
   needs: ['lever'],
   create(bomb, r) { return { n: 10 + r.int(90), lamp: r.pick(['red', 'green']) }; },
   mount(root, s, ctl) {
@@ -2091,6 +2108,7 @@ Modules.register({
   id: 'combination',
   title: 'Combination',
   difficulty: 'medium',
+  description: 'Three digits on a display are a code for the rotary encoders on the sides of the bomb. Work out each reading and turn the encoders to it.',
   needs: ['encoders'],
   create(bomb, r) { return { digits: [r.int(10), r.int(10), r.int(10)] }; },
   mount(root, s, ctl) {
@@ -2127,6 +2145,7 @@ Modules.register({
   id: 'fuses',
   title: 'Fuses',
   difficulty: 'easy',
+  description: 'Five cartridge fuses side by side. Pull the one that feeds the right circuit. Which fuse feeds which circuit is only written on the back of the bomb.',
   create(bomb, r) {
     return { amps: r.shuffle(FUSE_AMPS), circuits: r.shuffle(FUSE_CIRCUITS) };   // circuits[i] feeds fuse i, counted from the left
   },
@@ -2195,6 +2214,7 @@ Modules.register({
   id: 'gears',
   title: 'Gears',
   difficulty: 'medium',
+  description: 'A crank on the front and a gear train on the back. Count the gears to know which way the crank must turn, and the red dots to know how often.',
   create(bomb, r) {
     const gears = 3 + r.int(4);
     return { gears, dots: r.shuffle(Array.from({ length: gears }, (_, k) => k)).slice(0, 1 + r.int(3)), load: r.pick(['LIFT', 'DROP']) };
@@ -2282,6 +2302,7 @@ Modules.register({
   id: 'relay',
   title: 'Relay logic',
   difficulty: 'medium',
+  description: 'Three jumpers feed two logic gates drawn on the back of the bomb. Identify the gates and set the one combination of jumpers that gives the target.',
   create(bomb, r) {
     const names = Object.keys(GATES), puzzles = [];
     for (const g1 of names) for (const g2 of names) for (const want of [0, 1]) for (let n = 0; n < 8; n++) {
@@ -2339,6 +2360,7 @@ Modules.register({
   id: 'coolant',
   title: 'Coolant',
   difficulty: 'hard',
+  description: 'A pressure gauge on the front and the coolant valve on the back. Work out the target pressure, set the valve and seal when the needle gets there.',
   create(bomb, r) {
     return { valve: 0, pressure: 0, relief: 4 + r.int(5) };
   },
@@ -2404,6 +2426,7 @@ Modules.register({
      id: 'example',
      title: 'Example',
      difficulty: 'easy',
+     description: 'A single button that defuses the module when pressed.',
      create(bomb, r) { return { target: r.int(10) }; },
      mount(root, s, ctl) {
        root.append(activate(h('div', { class: 'go' }, button3d('PRESS ME')), () => ctl.solve()));
@@ -3258,27 +3281,29 @@ function askAbort() {
 }
 
 /* ---- module viewer (debug): every module on its own, the front and the rear plate side by side, each one rotatable ---- */
-function openBench() {
+// The module explorer: every module on its own, front and rear, with what it is and how to try it.
+function openExplorer() {
   if ($('.bench')) return;
   sfx.init();
-  const defs = Modules.list;
+  const defs = sortModules(Modules.list);
   const base = layoutFor(1360), P = base.P, SW = base.SW, SH = base.SH;
   const SLAB = { W: SW + 2 * P + 10, H: SH + 2 * P + 10, D: 46, cols: 3, rows: 2 };
-  let def = defs[0], seedNum = randomSeed(), rigs = [], cleanup = null, bench = null, clockLeft = 300000;
+  let def = defs[0], seedNum = randomSeed(), rigs = [], cleanup = null;
 
+  const badges = d => [
+    h('span', { class: 'badge diff-' + d.difficulty }, d.difficulty),
+    d.mountBack ? h('span', { class: 'badge rear' }, d.rearOptional ? 'rear optional' : 'rear') : null,
+    d.needy ? h('span', { class: 'badge needy' }, 'needy') : null];
   const list = h('div', { class: 'bench-list' });
   const itemBtns = defs.map(d => {
-    const b = h('button', { class: 'bench-item', type: 'button', 'aria-pressed': 'false' }, d.title, h('small', {}, h('span', { class: 'diff-' + d.difficulty }, d.difficulty), ` · ${d.mountBack ? 'front and rear plate' : 'front only'}`));
+    const b = h('button', { class: 'bench-item', type: 'button', 'aria-pressed': 'false' }, h('span', { class: 'ttl' }, d.title), h('span', { class: 'badges' }, badges(d)));
     b.addEventListener('click', () => { def = d; load(); });
     list.append(b); return b;
   });
   const stagesEl = h('div', { class: 'bench-stages' });
-  const clockOut = h('b', {}, fmt(clockLeft));
-  const strikesOut = h('b', {}, '0');
-  const seedIn = h('input', { class: 'seedin', type: 'text', value: String(seedNum), maxlength: '24', spellcheck: 'false', autocomplete: 'off', 'aria-label': 'Seed for this module' });
   const side = h('div', { class: 'bench-side' });
-  const logEl = h('div', { class: 'bench-log' });
-  const log = msg => { logEl.prepend(h('div', {}, `${fmt(clockLeft)}  ${msg}`)); };
+  const feedback = h('p', { class: 'bench-feedback', 'aria-live': 'polite' });
+  const say = (msg, cls = '') => { feedback.textContent = msg; feedback.className = 'bench-feedback ' + cls; };
 
   const slab = card => {
     const bomb3d = h('div', { class: 'bomb3d', style: `--W:${SLAB.W}px;--H:${SLAB.H}px;--D:${SLAB.D}px;--P:${P}px` });
@@ -3293,53 +3318,43 @@ function openBench() {
     return { stage, s };
   };
 
-  function renderSide(state, bomb) {
-    const json = JSON.stringify(state, (k, v) => typeof v === 'function' ? undefined : v, 1);
-    const info = [
-      `serial ${bomb.serial}  (last digit ${bomb.serialOdd ? 'odd' : 'even'}, ${bomb.serialVowel ? 'has' : 'no'} vowel)`,
-      `batteries ${bomb.batteries}`,
-      `coin cells ${bomb.coins.length ? bomb.coins.map(c => c.model).join(', ') : 'none'}  (${bomb.coinVolts} V)`,
-      `indicators ${bomb.indicators.length ? bomb.indicators.map(i => i.label + (i.lit ? '*' : '')).join(' ') : 'none'}  (* = lit)`
-    ].join('\n');
-    const encRow = bomb.encoders.length
-      ? h('div', { class: 'bench-ctl' }, 'Encoders', bomb.encoders.map(e => {
-          const out = h('b', {}, `${e.label}=${e.value}`);
-          const step = d => () => { e.value = (e.value + d + 10) % 10; out.textContent = `${e.label}=${e.value}`; };
-          return h('span', { class: 'bench-enc' }, h('button', { class: 'tbtn', type: 'button', onclick: step(-1) }, '\u2212'), out, h('button', { class: 'tbtn', type: 'button', onclick: step(1) }, '+'));
-        }))
-      : h('div', { class: 'bench-ctl' }, 'Encoders: none');
-    let leverRow;
+  // The parts of the practice bomb a module may ask about, in plain words. Encoders and the knife switch live on the
+  // sides of a real bomb, so they get controls here.
+  function practiceBomb(bomb) {
+    const facts = [
+      ['Serial number', bomb.serial],
+      ['Batteries', String(bomb.batteries)],
+      ['Coin cells', bomb.coins.length ? bomb.coins.map(c => c.model).join(', ') : 'none'],
+      ['Indicators', bomb.indicators.length ? bomb.indicators.map(i => i.label + (i.lit ? ' (lit)' : '')).join(', ') : 'none']];
+    const rows = facts.map(([k, v]) => h('div', { class: 'bench-fact' }, h('span', {}, k), h('b', {}, v)));
+    if (bomb.encoders.length) rows.push(h('div', { class: 'bench-fact' }, h('span', {}, 'Encoders'), h('span', {}, bomb.encoders.map(e => {
+      const out = h('b', {}, `${e.label} ${e.value}`);
+      const step = d => () => { e.value = (e.value + d + 10) % 10; out.textContent = `${e.label} ${e.value}`; };
+      return h('span', { class: 'bench-enc' }, h('button', { class: 'tbtn', type: 'button', 'aria-label': `Turn encoder ${e.label} down`, onclick: step(-1) }, '−'), out, h('button', { class: 'tbtn', type: 'button', 'aria-label': `Turn encoder ${e.label} up`, onclick: step(1) }, '+'));
+    }))));
     if (bomb.lever) {
-      const lb = h('button', { class: 'tbtn', type: 'button' }, bomb.lever.up ? 'Switch is ON (up)' : 'Switch is OFF (down)');
-      lb.addEventListener('click', () => { bomb.lever.up = !bomb.lever.up; lb.textContent = bomb.lever.up ? 'Switch is ON (up)' : 'Switch is OFF (down)'; });
-      leverRow = h('div', { class: 'bench-ctl' }, 'Knife switch', lb);
-    } else leverRow = h('div', { class: 'bench-ctl' }, 'Knife switch: none');
-    const man = h('div', { class: 'manual' });
-    man.innerHTML = def.manual() + (def.manualBack ? '<h3>Rear plate</h3>' + def.manualBack() : '');
-    side.replaceChildren(
-      h('div', { class: 'bench-ctl' }, 'Clock ', clockOut, '  Strikes ', strikesOut,
-        h('button', { class: 'tbtn', type: 'button', onclick: () => { bomb.strikes = 0; strikesOut.textContent = '0'; clockLeft = 300000; log('strikes and clock reset'); } }, 'Reset')),
-      h('details', { open: true }, h('summary', {}, 'Bomb the module was made for'), h('pre', {}, info), encRow, leverRow),
-      h('details', { open: true }, h('summary', {}, 'Module state'), h('pre', {}, json)),
-      h('details', { open: true }, h('summary', {}, 'Events'), logEl),
-      h('details', {}, h('summary', {}, 'Manual text'), man));
+      const lb = h('button', { class: 'tbtn', type: 'button' });
+      const paint = () => { lb.textContent = bomb.lever.up ? 'ON (thrown up)' : 'OFF (thrown down)'; };
+      lb.addEventListener('click', () => { bomb.lever.up = !bomb.lever.up; paint(); });
+      paint();
+      rows.push(h('div', { class: 'bench-fact' }, h('span', {}, 'Knife switch'), lb));
+    }
+    return rows;
   }
 
   function load() {
     rigs.forEach(r => r.destroy()); rigs = []; cleanup && cleanup(); cleanup = null;
     itemBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(defs[i] === def)));
-    logEl.replaceChildren();
     const r = rng(seedNum), bomb = makeBomb(r, 300000);
     ensureNeeds(bomb, [def], r);
-    clockLeft = 300000; strikesOut.textContent = '0';
     const state = def.create(bomb, r);
     const card = moduleCard(def), rear = def.mountBack ? rearCard(def) : null;
     let solved = false;
     const mark = (cls, on = true) => { [card.el, rear && rear.el].forEach(e => e && e.classList.toggle(cls, on)); };
     const ctl = {
-      bomb, sfx, isSolved: () => solved, timeText: () => fmt(clockLeft),
-      solve() { if (solved) return; solved = true; mark('solved'); sfx.solve(); log('SOLVED'); },
-      strike(why) { bomb.strikes++; strikesOut.textContent = String(bomb.strikes); mark('err'); setTimeout(() => mark('err', false), 600); sfx.strike(); log(`strike ${bomb.strikes}: ${why}`); }
+      bomb, sfx, isSolved: () => solved, timeText: () => '04:12',
+      solve() { if (solved) return; solved = true; mark('solved'); sfx.solve(); say('Defused. Well done.', 'ok'); },
+      strike(why) { mark('err'); setTimeout(() => mark('err', false), 600); sfx.strike(); say('Strike: ' + why, 'bad'); }
     };
     const c1 = def.mount(card.body, state, ctl) || null;
     const c2 = rear ? (def.mountBack(rear.body, state, ctl) || null) : null;
@@ -3349,8 +3364,15 @@ function openBench() {
     stagesEl.replaceChildren(a.stage, b.stage);
     rigs = [a, b].map(x => createRig(x.stage, x.s.bomb3d, x.s.faces, SLAB, { yaw: -18, pitch: -8, zoom: 1.25 }));
     rigs.forEach((r, i) => { r.onTurn = (yaw, pitch) => { if (settings.benchLink) rigs[1 - i].turnTo(yaw, pitch); }; });   // linked: turning one turns the other
-    renderSide(state, bomb);
-    log(`seed ${seedNum}, module ${def.id}`);
+    say('Try it: the controls work as on a real bomb.');
+    const man = h('div', { class: 'manual' });
+    man.innerHTML = def.manual() + (def.manualBack ? '<h3>Rear plate</h3>' + def.manualBack() : '');
+    side.replaceChildren(
+      h('h3', { class: 'bench-title' }, def.title, h('span', { class: 'badges' }, badges(def))),
+      h('p', { class: 'bench-desc' }, def.description),
+      feedback,
+      h('section', { class: 'bench-box' }, h('h4', {}, 'Practice bomb'), practiceBomb(bomb)),
+      h('details', { class: 'bench-box' }, h('summary', {}, 'Manual page'), man));
   }
 
   const view = (yaw, pitch) => () => rigs.forEach(r => r.animateTo({ yaw, pitch, zoom: 1.25 }, 600));
@@ -3367,19 +3389,15 @@ function openBench() {
     h('button', { class: 'tbtn', type: 'button', onclick: view(-18, -8) }, 'Angled'),
     h('button', { class: 'tbtn', type: 'button', onclick: view(-62, -8) }, 'Side'),
     h('button', { class: 'tbtn', type: 'button', onclick: view(-18, -62) }, 'From above'),
-    h('button', { class: 'tbtn', type: 'button', 'aria-label': 'Zoom out', onclick: () => rigs.forEach(r => r.zoomBy(-.15)) }, '\u2212'),
+    h('button', { class: 'tbtn', type: 'button', 'aria-label': 'Zoom out', onclick: () => rigs.forEach(r => r.zoomBy(-.15)) }, '−'),
     h('button', { class: 'tbtn', type: 'button', 'aria-label': 'Zoom in', onclick: () => rigs.forEach(r => r.zoomBy(.15)) }, '+'),
     h('span', { class: 'bench-sp' }),
-    h('label', { class: 'bench-lbl' }, 'Seed ', seedIn),
-    h('button', { class: 'tbtn', type: 'button', onclick: () => { const v = seedFrom(seedIn.value); seedNum = v === null ? randomSeed() : v; seedIn.value = seedIn.value.trim() || String(seedNum); load(); } }, 'Make it'),
-    h('button', { class: 'tbtn', type: 'button', onclick: () => { seedNum = randomSeed(); seedIn.value = String(seedNum); load(); } }, 'Roll'));
-  seedIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const v = seedFrom(seedIn.value); seedNum = v === null ? randomSeed() : v; load(); } e.stopPropagation(); });
+    h('button', { class: 'tbtn', type: 'button', onclick: () => { seedNum = randomSeed(); load(); } }, 'Another one'));
 
-  const clock = setInterval(() => { clockLeft = Math.max(0, clockLeft - 100); clockOut.textContent = fmt(clockLeft); }, 100);
-  const close = () => { clearInterval(clock); rigs.forEach(r => r.destroy()); cleanup && cleanup(); wrap.remove(); window.removeEventListener('keydown', onKey, true); };
+  const close = () => { rigs.forEach(r => r.destroy()); cleanup && cleanup(); wrap.remove(); window.removeEventListener('keydown', onKey, true); };
   const onKey = e => { if (e.key === 'Escape' && !$('.confirm')) { e.stopPropagation(); close(); } };
-  const wrap = h('div', { class: 'bench', role: 'dialog', 'aria-label': 'Module viewer' },
-    h('div', { class: 'bench-head' }, h('b', {}, 'MODULE VIEWER'), h('small', {}, 'every module on its own, for inspection. Drag a view to turn it.'), h('button', { class: 'tbtn', type: 'button', onclick: close }, 'Close')),
+  const wrap = h('div', { class: 'bench', role: 'dialog', 'aria-label': 'Modules' },
+    h('div', { class: 'bench-head' }, h('b', {}, 'MODULES'), h('small', {}, 'Every module on its own. Drag a view to turn it, and try the controls.'), h('button', { class: 'tbtn', type: 'button', onclick: close }, 'Close')),
     h('div', { class: 'bench-body' }, list, h('div', { class: 'bench-main' }, tools, stagesEl), side));
   document.body.append(wrap);
   window.addEventListener('keydown', onKey, true);
@@ -3426,8 +3444,6 @@ function openSettings() {
     row('Momentum when you let go', toggle(settings.momentum, v => { settings.momentum = v; save(); })),
     row('Start zoom', seg([[1, 'Closer'], [.85, 'Default'], [.7, 'Farther']], settings.startZoom, v => { settings.startZoom = v; save(); })),
     row('Spin-in when a game starts', toggle(settings.intro, v => { settings.intro = v; save(); })),
-    !G && h('h4', {}, 'Debug'),
-    !G && row('Module viewer', h('button', { class: 'tbtn', type: 'button', onclick: () => { close(); openBench(); } }, 'Open')),
     h('div', { class: 'sp-foot' }, h('small', {}, 'Saved automatically in this browser.'), h('button', { class: 'tbtn', type: 'button', onclick: reset }, 'Reset sound and controls')));
   const wrap = h('div', { class: 'settings', onclick: e => { if (e.target === wrap) close(); } }, panel);
   document.body.append(wrap);
@@ -3475,12 +3491,13 @@ function showStart() {
       h('div', { class: 'opts' },
         h('div', { class: 'opt' }, h('b', {}, 'Time on the clock'), seg([[3, '3 min'], [5, '5 min'], [8, '8 min'], [12, '12 min']], opts.minutes, v => { opts.minutes = v; save(); remount(); })),
         h('div', { class: 'opt' }, h('b', {}, 'Modules on the bomb'), seg([[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], opts.count, v => { opts.count = v; save(); remount(); })),
-        h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; save(); remount(); })),
+        h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), (w => { [...w.children].forEach((b, i) => b.classList.add('diff-' + DIFFICULTIES[i])); return w; })(seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; save(); remount(); }))),
         h('div', { class: 'opt' }, h('b', {}, 'Seed'), seedRow,
           h('small', { class: 'seedhint' }, 'The same seed with the same time, module count, difficulty and screen size gives the same bomb. Numbers and words both work.'), last)),
       h('div', { class: 'startrow' }, arm,
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: openSettings }, 'Settings'),
-        h('button', { class: 'tbtn setbtn', type: 'button', onclick: () => drawer.classList.add('open') }, 'Manual'))),
+        h('button', { class: 'tbtn setbtn', type: 'button', onclick: () => drawer.classList.add('open') }, 'Manual'),
+        h('button', { class: 'tbtn setbtn', type: 'button', onclick: openExplorer }, 'Modules'))),
     host));
   mountDemo(host, { yaw: -70, pitch: -24, zoom: .8 });
   demo.rig.animateTo({ yaw: -20, pitch: -12, zoom: 1 }, 1600);
@@ -3674,7 +3691,7 @@ window.__zh = { manualHTML, manualFingerprint };   // used by build-manual-pdf.m
 // Belt and braces: block selecting and dragging text or pictures anywhere except the stand-alone manual page.
 ['selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => {
   const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
-  if (el && el.closest('input,textarea,.bench-side pre')) return;        // text fields (and the viewer's JSON) stay selectable
+  if (el && el.closest('input,textarea')) return;                       // text fields stay selectable
   if (!document.body.classList.contains('manual-page')) e.preventDefault();
 }));
 sfx.muted = !settings.fxOn; sfx.musicMuted = !settings.musicOn;

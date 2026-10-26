@@ -63,8 +63,8 @@ test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
 A module is one `Modules.register({ ... })` block in `site/index.html`: `id`, `title`, `difficulty`, `create(bomb, r)`,
 `mount(root, state, ctl)` and `manual()`, plus optional `mountBack` and `manualBack` for a rear plate, `max` and `needs`. The
 front and the rear plate get the same `state` object, so a rear plate can be a working part of the puzzle. The comment above the module
-registry describes each field, and there is a template just before the "ADD YOUR OWN MODULE" comment. The module viewer
-(Settings, then Debug, then Module viewer) shows any module on its own, front and rear, with its state and a log.
+registry describes each field, and there is a template just before the "ADD YOUR OWN MODULE" comment. The module explorer
+(the Modules button on the main screen) shows any module on its own, front and rear, with its description.
 
 ## Deploy to GitHub Pages on zero-hour.sunken.dev
 
