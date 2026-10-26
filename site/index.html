@@ -2461,10 +2461,10 @@ function ensureNeeds(bomb, defs, r) {
   }
 }
 
-// Deals `count` modules at random. Modules of the chosen difficulty are three times as likely as the others; each module
-// is dealt once before any repeats, and `max` caps repeats.
+// Deals `count` modules at random, weighted by how close each module's difficulty is to the chosen one: the same 3,
+// one step away 1, two steps away 0.3. Nothing is excluded. Each module is dealt once before any repeats; `max` caps repeats.
 function pickModules(r, count, difficulty = 'medium') {
-  const weight = d => d.difficulty === difficulty ? 3 : 1;
+  const weight = d => [3, 1, .3][Math.abs(DIFFICULTIES.indexOf(d.difficulty) - DIFFICULTIES.indexOf(difficulty))];
   const draw = pool => {
     let x = r() * pool.reduce((a, d) => a + weight(d), 0);
     return pool.find(d => (x -= weight(d)) < 0) || pool[pool.length - 1];

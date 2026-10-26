@@ -109,8 +109,9 @@ They stay optional shortcuts; the rules do not change.
 ## Difficulty choice on the main screen
 
 - The main screen has a selector with Easy, Medium and Hard, remembered with the other settings; the default is Medium.
-- The bomb's modules are still dealt at random, but modules of the chosen difficulty are three times as likely to be
-  drawn as the others (weight 3 against 1). Nothing is excluded.
+- The bomb's modules are still dealt at random, weighted by how close each module's difficulty is to the chosen one:
+  the same difficulty 3, one step away 1, two steps away 0.3. Nothing is excluded. (A flat 3 against 1 made Hard deal
+  more easy modules than Medium, because there are only two hard modules.)
 - The difficulty is part of the bomb: the same seed with the same settings gives the same bomb.
 
 ## Manual and PDF
@@ -144,7 +145,7 @@ CI on a temporary branch before anything is pushed to main. Every commit that ch
 
 - Relay logic uses three jumpers and guarantees one working setting, so guessing costs strikes.
 - Relay logic's lamp only lights on a correct Test, and the front shows TARGET ON or TARGET OFF.
-- Difficulty weighting: 3 for the chosen difficulty, 1 for the others; default Medium.
+- Difficulty weighting: 3 for the chosen difficulty, 1 one step away, 0.3 two steps away; default Medium.
 - The Gears rear drawing is static.
 - The Switches backup plate is a printed status flag, not a coin cell.
 - The preview seed is picked to show new modules.

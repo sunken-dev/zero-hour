@@ -46,6 +46,8 @@ test('the chosen difficulty deals more modules of that difficulty, without exclu
     for (const other of g.DIFFICULTIES) if (other !== d) assert.ok(share[d][d] > share[other][d], `${d} deals more ${d} modules than ${other} does`);
     for (const any of g.DIFFICULTIES) assert.ok(share[d][any] > 0, `${d} still deals ${any} modules`);
   }
+  assert.ok(share.hard.easy < share.medium.easy, 'hard deals fewer easy modules than medium does');
+  assert.ok(share.easy.hard < share.medium.hard, 'easy deals fewer hard modules than medium does');
 });
 
 test('dealing respects max and is the same for the same seed and difficulty', () => {
