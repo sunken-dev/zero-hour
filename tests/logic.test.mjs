@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are sixteen modules, at least half with a rear plate, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 16);
+test('there are seventeen modules, at least half with a rear plate, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 17);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
@@ -192,6 +192,53 @@ test('coolant: the target starts from the demand, stays between 1 and 9 and neve
   const quiet = g.makeBomb(g.rng(7), 300000);
   Object.assign(quiet, { indicators: [], batteries: 2 });
   assert.equal(g.coolantTarget({ relief: 6, demand: 1 }, quiet), 1, 'a low demand still gives a reachable target');
+});
+
+test('maze: nine perfect 6x6 mazes with unique markers, and every rotation can be walked from the front', () => {
+  assert.equal(g.MAZES.length, 9);
+  const key = m => m.markers.map(p => p.join(',')).sort().join(' ');
+  assert.equal(new Set(g.MAZES.map(key)).size, 9, 'marker pairs tell the mazes apart');
+  const D = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  for (const m of g.MAZES) {
+    assert.equal(m.cells.length, 36);
+    let passages = 0;
+    m.cells.forEach((bits, i) => { for (let d = 0; d < 4; d++) if (bits & (1 << d)) {
+      passages++;
+      const x = i % 6 + D[d][0], y = Math.floor(i / 6) + D[d][1];
+      assert.ok(x >= 0 && x < 6 && y >= 0 && y < 6, 'no passage out of the grid');
+      assert.ok(m.cells[y * 6 + x] & (1 << ((d + 2) % 4)), 'passages go both ways');
+    } });
+    assert.equal(passages / 2, 35, 'a perfect maze: 35 passages for 36 cells');
+    for (const p of m.markers) assert.ok(p.every(v => v >= 0 && v < 6));
+  }
+  const walk = (s, from, to) => {
+    const seen = new Set([from.join()]), queue = [[from, []]];
+    while (queue.length) {
+      const [p, path] = queue.shift();
+      if (p.join() === to.join()) return path;
+      for (let d = 0; d < 4; d++) if (g.mazeCanMove(s, p, d)) {
+        const q = [p[0] + D[d][0], p[1] + D[d][1]];
+        if (!seen.has(q.join())) { seen.add(q.join()); queue.push([q, [...path, d]]); }
+      }
+    }
+    return null;
+  };
+  for (let maze = 0; maze < 9; maze++) for (let rot = 0; rot < 4; rot++) {
+    const s = { maze, rot };
+    assert.ok(walk(s, [0, 0], [5, 5]), `maze ${maze} rotated ${rot * 90}: corner to corner`);
+    for (let x = 0; x < 6; x++) for (let y = 0; y < 6; y++) for (let d = 0; d < 4; d++) {
+      const nx = x + D[d][0], ny = y + D[d][1];
+      if (nx < 0 || nx > 5 || ny < 0 || ny > 5) assert.equal(g.mazeCanMove(s, [x, y], d), false, 'the edge is a wall');
+      else assert.equal(g.mazeCanMove(s, [x, y], d), g.mazeCanMove(s, [nx, ny], (d + 2) % 4), 'walls look the same from both sides');
+    }
+  }
+  const def = g.Modules.list.find(m => m.id === 'maze');
+  for (let seed = 1; seed <= 300; seed++) {
+    const r = g.rng(seed), s = def.create(g.makeBomb(r, 300000), r);
+    assert.ok(s.maze >= 0 && s.maze < 9 && s.rot >= 0 && s.rot < 4);
+    assert.notEqual(s.start.join(), s.goal.join());
+    assert.ok(walk(s, s.start, s.goal).length >= 4, 'the goal is a few moves away');
+  }
 });
 
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {

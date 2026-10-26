@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,fuseCircuit,gearsWant,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,fuseCircuit,gearsWant,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -77,7 +77,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 17);
+  assert.equal(shown.n, 18);
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -150,7 +150,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
   await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
-  assert.equal(items.length, 16);
+  assert.equal(items.length, 17);
   const rank = { easy: 0, medium: 1, hard: 2 };
   const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
   for (let i = 1; i < items.length; i++) {
@@ -305,6 +305,19 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (root.querySelector('.out .led:not(.off)')) fail('the lamp lit after a wrong test');
             set(ans); click(root.querySelector('.go')); if (!solved) fail('relay not solved');
             click(jp[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'maze') {
+            const D = [[0, -1], [1, 0], [0, 1], [-1, 0]], btn = ['.mz-up', '.mz-right', '.mz-down', '.mz-left'];
+            const me = () => { const e = root.querySelector('.mz-me'); return [+e.dataset.x, +e.dataset.y]; };
+            const from = me(), wall = [0, 1, 2, 3].find(d => !T.mazeCanMove(s, from, d));
+            click(root.querySelector(btn[wall]));
+            if (strikes !== 1 || me().join() !== from.join()) fail('walking into a wall did not strike, or moved');
+            const goal = [+root.querySelector('.mz-goal').dataset.x, +root.querySelector('.mz-goal').dataset.y];
+            const seen = new Set([from.join()]), queue = [[from, []]]; let path = null;
+            while (queue.length && !path) { const [p, steps] = queue.shift(); if (p.join() === goal.join()) { path = steps; break; }
+              for (let d = 0; d < 4; d++) if (T.mazeCanMove(s, p, d)) { const q = [p[0] + D[d][0], p[1] + D[d][1]]; if (!seen.has(q.join())) { seen.add(q.join()); queue.push([q, [...steps, d]]); } } }
+            if (!path) fail('no way to the goal');
+            else { path.forEach(d => click(root.querySelector(btn[d]))); if (!solved || strikes !== 1) fail(`maze solved=${solved} strikes=${strikes}`); }
+            click(root.querySelector(btn[0])); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'throttle') {
             const notch = n => [...root.querySelectorAll('.notch')].find(e => e.textContent === String(n)), want = T.throttleWant(s, bomb);
             click(notch(want % 5 + 1)); click(root.querySelector('.go'));
