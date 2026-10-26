@@ -2601,21 +2601,20 @@ function gear3d(R, { drum = false } = {}) {
 }
 // The gear train behind the crank, crank gear on the right (it is seen from behind) and the drum on the left. It does not move.
 function gearTrain3d(s) {
-  const R = [20, 13], el = h('div', { class: 'train3d' });
-  let x = 204;
-  for (let k = 0; k < s.gears; k++) {
-    const r = R[k % 2];
-    if (k) x -= r + R[(k - 1) % 2] + 1;
-    const g = gear3d(r, { drum: k === s.gears - 1 });
-    const anchor = h('div', { class: 'gear' + (s.dots.includes(k) ? ' dot' : ''), style: `left:${x}px;top:${76 + (k % 2 ? 7 : 0)}px` }, g);
+  const R = [20, 13], el = h('div', { class: 'train3d' }), xs = [];
+  let x = 0;
+  for (let k = 0; k < s.gears; k++) { if (k) x -= R[k % 2] + R[(k - 1) % 2] + 1; xs.push(x); }
+  const left = xs[xs.length - 1] - R[(s.gears - 1) % 2], shift = 115 - (left + R[0]) / 2;   // centre the chain on the plate
+  xs.forEach((x0, k) => {
+    const r = R[k % 2], g = gear3d(r, { drum: k === s.gears - 1 });
     if (s.dots.includes(k)) {
       const d = cylZ(3.8, 2, 14, { z: 5, color: '#e5412d' });
-      d.style.cssText += `;left:${(r * .5).toFixed(1)}px;top:${(-r * .45).toFixed(1)}px`;   // offset so it sits on the gear face, not the hub
+      d.style.cssText += `;left:${(r * .5).toFixed(1)}px;top:${(-r * .45).toFixed(1)}px`;   // on the gear face, not the hub
       g.append(d);
     }
-    el.append(anchor);
-  }
-  el.append(h('b', { class: 'train-lbl', style: 'left:204px' }, 'crank'), h('b', { class: 'train-lbl', style: `left:${x}px` }, 'drum'));
+    el.append(h('div', { class: 'gear' + (s.dots.includes(k) ? ' dot' : ''), style: `left:${x0 + shift}px;top:${76 + (k % 2 ? 7 : 0)}px` }, g));
+  });
+  el.append(h('b', { class: 'train-lbl', style: `left:${xs[0] + shift}px` }, 'crank'), h('b', { class: 'train-lbl', style: `left:${xs[xs.length - 1] + shift}px` }, 'drum'));
   return el;
 }
 
