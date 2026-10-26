@@ -161,6 +161,29 @@ test('module viewer: every module shows its front and its rear plate (or the bla
   assert.ok(await page.evaluate(() => !document.querySelector('.bench')));
 }));
 
+test('rear plates show what their module needs', T, () => withPage(pathToFileURL(testCopy).href, async page => {
+  const problems = await page.evaluate(() => {
+    const T = window.__t, out = [];
+    const rear = (id, bomb) => {
+      const def = T.Modules.list.find(m => m.id === id), root = document.createElement('div');
+      document.body.append(root); def.mountBack(root, def.create(bomb, T.rng(1)), { bomb, sfx: T.sfx }); return root;
+    };
+    const bombs = Array.from({ length: 40 }, (_, k) => T.makeBomb(T.rng(k + 1), 300000));
+    const zero = T.makeBomb(T.rng(99), 300000); zero.serial = 'AB1CD0'; zero.serialOdd = false; zero.serialVowel = true;
+    for (const bomb of [...bombs, zero]) {
+      const last = Number(bomb.serial.slice(-1)), vowels = [...bomb.serial].filter(c => 'AEIOU'.includes(c)).join('');
+      const w = rear('wires', bomb), si = rear('simon', bomb), sw = rear('switches', bomb), br = rear('breaker', bomb);
+      if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
+      if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
+      if (sw.querySelector('.backup')?.textContent !== (bomb.coins.length ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
+      if (br.querySelector('.trip')?.textContent !== String(last)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
+      [w, si, sw, br].forEach(e => e.remove());
+    }
+    return out;
+  });
+  assert.deepEqual(problems, []);
+}));
+
 test('every module can be solved through its real controls, and a wrong answer is a strike', T, () => withPage(pathToFileURL(testCopy).href, async page => {
   const problems = await page.evaluate(async () => {
     const T = window.__t, out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
