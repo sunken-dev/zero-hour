@@ -92,20 +92,26 @@ test('every module can be made for many bombs, and the rules always give a real 
   }
 });
 
-test('relay logic: every dealt puzzle has exactly one jumper setting, and every such puzzle gets dealt', () => {
-  const names = Object.keys(g.GATES), possible = new Set(), seen = new Set();
-  for (const g1 of names) for (const g2 of names) for (const want of [0, 1]) if (g.relaySolutions(g1, g2, want).length === 1) possible.add(`${g1} ${g2} ${want}`);
-  const def = g.Modules.list.find(m => m.id === 'relay');
-  for (let seed = 1; seed <= 500; seed++) {
+test('relay logic: every dealt puzzle has exactly one jumper setting, both gates matter, and all eight answers occur', () => {
+  const names = Object.keys(g.GATES), invs = [0, 1, 2, 3, 4, 5, 6, 7].map(n => [n >> 2 & 1, n >> 1 & 1, n & 1]), possible = new Set(), seen = new Set();
+  for (const g1 of names) for (const g2 of names) for (const want of [0, 1]) for (const inv of invs)
+    if (g.relaySolutions(g1, g2, want, inv).length === 1) possible.add(`${g1} ${g2} ${want} ${inv.join('')}`);
+  const def = g.Modules.list.find(m => m.id === 'relay'), answers = new Set(), asG1 = new Set(), asG2 = new Set(), byG1 = {};
+  for (let seed = 1; seed <= 3000; seed++) {
     const r = g.rng(seed), s = def.create(g.makeBomb(r, 300000), r);
-    const sols = g.relaySolutions(s.g1, s.g2, s.want);
-    assert.equal(sols.length, 1, `${s.g1} ${s.g2} ${s.want}`);
+    const sols = g.relaySolutions(s.g1, s.g2, s.want, s.inv);
+    assert.equal(sols.length, 1, `${s.g1} ${s.g2} ${s.want} ${s.inv}`);
+    const [a, b, c] = sols[0];
+    assert.equal(g.GATES[s.g2](g.GATES[s.g1](a ^ s.inv[0], b ^ s.inv[1]), c ^ s.inv[2]), s.want);
     assert.deepEqual([...g.relayAnswer(s)], [...sols[0]]);
-    assert.equal(g.GATES[s.g2](g.GATES[s.g1](sols[0][0], sols[0][1]), sols[0][2]), s.want);
-    seen.add(`${s.g1} ${s.g2} ${s.want}`);
+    seen.add(`${s.g1} ${s.g2} ${s.want} ${s.inv.join('')}`); answers.add(sols[0].join('')); asG1.add(s.g1); asG2.add(s.g2);
+    (byG1[s.g1] ||= new Set()).add(sols[0].join(''));
   }
-  assert.deepEqual([...seen].sort(), [...possible].sort());
-  assert.equal(possible.size, 8);
+  assert.deepEqual([...seen].sort(), [...possible].sort(), 'every puzzle with one answer gets dealt');
+  assert.equal(answers.size, 8, 'all eight jumper settings occur as answers');
+  assert.deepEqual([...asG1].sort(), [...names].sort(), 'every gate appears as gate 1');
+  assert.deepEqual([...asG2].sort(), [...names].sort(), 'every gate appears as gate 2');
+  for (const n of names) assert.ok(byG1[n].size > 1, `gate 1 alone (${n}) does not give the answer away`);
 });
 
 test('coolant: the target pressure is between 1 and 9 and never above the relief valve', () => {
