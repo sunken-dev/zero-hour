@@ -1,8 +1,8 @@
 // Typesets the PDF manual. tools/build-manual-pdf.mjs reads manualHTML() from the game page as a tree of elements
 // and writes it to manual.json next to this file: a string is text, { t, c, k } is an element with its tag, class and
 // children, and { t: "svg", svg } is an SVG image. The `revision` input is the manual's fingerprint.
-// The layout is a technical manual: a cover, a contents page and one numbered section per page. The colours follow
-// the manual's print stylesheet in site/index.html.
+// The layout is a technical manual: a cover, a contents page, then numbered sections one after another.
+// The colours follow the manual's print stylesheet in site/index.html.
 // An element this template does not know stops the build, so new markup in a module's manual cannot silently vanish.
 
 #let ink = rgb("#14191c")
@@ -62,7 +62,8 @@
 
 #set heading(numbering: "1.1")
 #show heading: set text(fill: navy)
-#show heading.where(level: 1): it => block(width: 100%, below: 16pt, {
+// sticky: a section title never ends a page on its own; it moves to the next page with its first content
+#show heading.where(level: 1): it => block(width: 100%, above: 30pt, below: 16pt, sticky: true, {
   let title = text(22pt, weight: "bold", upper(it.body))
   if it.numbering == none { title } else {
     let number = box(fill: teal, inset: (x: 9pt, y: 6pt), text(18pt, fill: white, weight: "bold", counter(heading).display(it.numbering)))
@@ -178,7 +179,7 @@
     let width = float(svg.svg.match(regex("viewBox=\"0 0 ([0-9.]+)")).captures.first())
     figure(svg-image(svg, calc.min(100%, width / 520 * 100%), ink), caption: caption.k.map(render).join())
   }
-  else if t == "section" { pagebreak(weak: true); inner() }
+  else if t == "section" { inner() }
   else if t == "div" and n.c == "" { block(width: 100%, inner()) }
   else if t == "h2" { heading(level: 1, inner()) }
   else if t == "h3" { heading(level: 2, inner()) }
