@@ -71,6 +71,28 @@ test('every module describes itself for players, and the explorer lists them by 
   assert.deepEqual(order, want);
 });
 
+test('module configuration: switched-off modules are never dealt, and optional rear plates follow their setting', () => {
+  const off = { wires: { off: true }, memory: { off: true }, gears: { off: true } };
+  for (let seed = 1; seed <= 500; seed++) for (const d of g.DIFFICULTIES) {
+    const ids = [...g.pickModules(g.rng(seed), 6, d, off)].map(m => m.id);
+    for (const id of Object.keys(off)) assert.ok(!ids.includes(id), `${id} is switched off`);
+  }
+  const optional = [...g.Modules.list.filter(m => m.rearOptional).map(m => m.id)].sort();
+  assert.deepEqual(optional, ['breaker', 'glyphs', 'simon', 'switches', 'wires']);
+  const wires = g.Modules.list.find(m => m.id === 'wires'), fuses = g.Modules.list.find(m => m.id === 'fuses'), button = g.Modules.list.find(m => m.id === 'button');
+  const outcomes = new Set();
+  for (let seed = 1; seed <= 200; seed++) {
+    assert.equal(g.rearFor(g.rng(seed), wires, {}), true, 'always by default');
+    assert.equal(g.rearFor(g.rng(seed), wires, { wires: { rear: 'never' } }), false);
+    assert.equal(g.rearFor(g.rng(seed), fuses, { fuses: { rear: 'never' } }), true, 'a required rear plate ignores the setting');
+    assert.equal(g.rearFor(g.rng(seed), button, {}), false, 'no rear plate, no rear');
+    const a = g.rearFor(g.rng(seed), wires, { wires: { rear: 'sometimes' } });
+    assert.equal(g.rearFor(g.rng(seed), wires, { wires: { rear: 'sometimes' } }), a, 'same seed, same outcome');
+    outcomes.add(a);
+  }
+  assert.equal(outcomes.size, 2, 'sometimes means both happen');
+});
+
 test('every module can be made for many bombs, and the rules always give a real answer', () => {
   for (let seed = 1; seed <= 500; seed++) {
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000);
