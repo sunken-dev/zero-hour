@@ -27,16 +27,19 @@ class FakeAudioContext {
 }
 
 test('every sound effect and every music intensity sends only valid values to WebAudio', () => {
-  const { sfx, music } = loadGame({ AudioContext: FakeAudioContext });
+  const { sfx, music, settings } = loadGame({ AudioContext: FakeAudioContext });
   sfx.muted = false; sfx.musicMuted = false;
   sfx.init();
   for (const k of ['click', 'press', 'release', 'turn', 'snip', 'detent', 'lever', 'solve', 'strike', 'win', 'boom']) sfx[k]();
   [0, 1, 2].forEach(l => sfx.tick(l));
   sfx.step(3); sfx.bell(500); sfx.beep(660, .2);
   music.start();
-  for (const target of [.04, .2, .3, .4, .5, .65, .75, .85, 1]) {
-    music.target = music.I = target;
-    for (let i = 0; i < 200; i++) { sfx.ctx.currentTime += .02; music.pump(); }
+  for (const track of [1, 2, 3]) {
+    settings.musicTrack = track;
+    for (const target of [.04, .2, .3, .4, .5, .65, .75, .85, 1]) {
+      music.target = music.I = target;
+      for (let i = 0; i < 200; i++) { sfx.ctx.currentTime += .02; music.pump(); }
+    }
   }
   music.update(11000, 300000, 2); music.update(5000, 300000, 2); music.hit();
   music.stop(1.6);
@@ -54,4 +57,17 @@ test('muting the music silences its reverb tail as well as the main music bus', 
   sfx.setMusicMuted(true); music.start();                    // starting while muted must stay silent too
   assert.equal(music.send.gain.value, 0);
   music.stop(.1);                                            // stops the scheduler's timer so the test run can finish
+});
+
+test('three music tracks, each speeding up as the intensity rises', () => {
+  const { music, settings, MUSIC_TRACKS } = loadGame({ AudioContext: FakeAudioContext });
+  assert.equal(MUSIC_TRACKS.length, 3);
+  assert.equal(new Set(MUSIC_TRACKS.map(t => t.name)).size, 3, 'distinct names');
+  assert.equal(settings.musicTrack, 1);
+  for (const track of [1, 2, 3]) {
+    settings.musicTrack = track;
+    const calm = music.bpm(0), mid = music.bpm(.5), end = music.bpm(1);
+    assert.ok(calm < mid && mid < end, `track ${track}: ${calm} < ${mid} < ${end}`);
+    assert.ok(end >= 150 && calm <= 100, `track ${track} ranges ${calm} to ${end} bpm`);
+  }
 });

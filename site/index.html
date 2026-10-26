@@ -1092,10 +1092,11 @@ const DEFAULTS = {
   sens: 1, momentum: true, startZoom: .85, intro: true,           // controls
   minutes: 5, count: 4, difficulty: 'medium', seed: '', lastSeed: '',   // the game on the main screen
   beep: 'off',                                                    // warning beep: 'off', '60', '30' or 'dynamic'
+  musicTrack: 1,                                                  // 1, 2 or 3 (MUSIC_TRACKS)
   benchLink: false,                                               // module explorer: turn the front and the rear plate together
   modules: {}                                                     // per module id: { off: true, rear: 'always' | 'sometimes' | 'never' }
 };
-const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'beep', 'sens', 'momentum', 'startZoom', 'intro'];
+const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'beep', 'musicTrack', 'sens', 'momentum', 'startZoom', 'intro'];
 const settings = (() => {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) { /* storage may be blocked */ }
@@ -1109,6 +1110,7 @@ const settings = (() => {
   s.count = Math.round(clamp(s.count, 2, 6));
   if (!DIFFICULTIES.includes(s.difficulty)) s.difficulty = DEFAULTS.difficulty;
   if (!['off', '60', '30', 'dynamic'].includes(s.beep)) s.beep = DEFAULTS.beep;
+  if (![1, 2, 3].includes(s.musicTrack)) s.musicTrack = DEFAULTS.musicTrack;
   s.modules = Object.fromEntries(Object.entries(s.modules || {}).filter(([, c]) => c && typeof c === 'object').map(([id, c]) => [id, {
     ...(c.off === true ? { off: true } : {}), ...(['always', 'sometimes', 'never'].includes(c.rear) ? { rear: c.rear } : {}) }]));
   s.seed = String(s.seed).slice(0, 24);
@@ -1378,12 +1380,6 @@ const sfx = {
 const music = {
   on: false, timer: 0, step: 0, next: 0, I: 0, target: 0, riser: false,
   bus: null, duck: null, send: null,
-  PROG: [
-    { root: 45, ch: [57, 60, 64] },   // Am
-    { root: 41, ch: [53, 57, 60] },   // F
-    { root: 38, ch: [50, 53, 57] },   // Dm
-    { root: 40, ch: [52, 56, 59] }    // E
-  ],
   level() { return sfx.musicMuted ? 0 : settings.music; },
 
   start() {
@@ -1433,77 +1429,159 @@ const music = {
     if (this.next < c.currentTime - .1) this.next = c.currentTime + .05;   // tab was throttled: skip, don't burst
     while (this.next < c.currentTime + .14) {
       if (!sfx.musicMuted) this.play(this.step, this.next);
-      this.next += 60 / (78 + 72 * this.I) / 4;
+      this.next += 60 / this.bpm() / 4;
       this.step++;
     }
   },
 
-  play(n, t) {
-    const I = this.I, s = n % 16, ch = this.PROG[Math.floor(n / 16) % 4];
-    const sd = 60 / (78 + 72 * I) / 4, barDur = sd * 16;
-    const bus = this.bus, duck = this.duck, send = this.send;
+  bpm(I = this.I) { const [lo, hi] = this.track().bpm; return lo + (hi - lo) * I; },
+  track() { return MUSIC_TRACKS[settings.musicTrack - 1] || MUSIC_TRACKS[0]; },
+  play(n, t) { this.track().play(this, n, t); }
+};
 
-    if (s === 0) {                                                     // pad + sub drone
-      const cut = 450 + 2600 * I, att = Math.min(.9, barDur * .4);
-      [...ch.ch, ch.ch[0] + 12].forEach(m => [-7, 7].forEach(det =>
-        sfx.note(mtof(m), t, barDur * 1.05, { type: 'sawtooth', vol: .028 + .008 * I, attack: att, hold: barDur * .35, lp: cut, lpEnd: cut * .6, detune: det, dest: duck, send: .5, sendDest: send })));
-      sfx.note(mtof(ch.root - 12), t, barDur * 1.05, { vol: .13, attack: att, hold: barDur * .35, dest: bus });
-    }
+/* ---- the music tracks ----
+   Each plays one 16th step at a time from music.I (0 calm, 1 the last seconds): layers come in as I rises, and
+   music.bpm() speeds it up within the track's range. m is the music object (its buses and intensity). */
+const COUNTDOWN_PROG = [
+  { root: 45, ch: [57, 60, 64] },   // Am
+  { root: 41, ch: [53, 57, 60] },   // F
+  { root: 38, ch: [50, 53, 57] },   // Dm
+  { root: 40, ch: [52, 56, 59] }    // E
+];
+const kickPump = (m, t, f = 150, end = 42) => {
+  sfx.note(f, t, .3, { vol: .6, slideTo: end, slideTime: .14, dest: m.bus });
+  sfx.burst(t, .02, { type: 'lowpass', f: 2000, vol: .15, dest: m.bus });
+  if (m.I > .5) { const g = m.duck.gain; g.cancelScheduledValues(t); g.setValueAtTime(.35, t); g.linearRampToValueAtTime(1, t + .22); }
+};
+const MUSIC_TRACKS = [
+  {
+    name: 'Countdown',                 // synth pads, bells and a pulsing arpeggio in A minor
+    bpm: [78, 150],
+    play(m, n, t) {
+      const I = m.I, s = n % 16, ch = COUNTDOWN_PROG[Math.floor(n / 16) % 4];
+      const sd = 60 / m.bpm() / 4, barDur = sd * 16;
+      const bus = m.bus, duck = m.duck, send = m.send;
 
-    const w = clamp01(1 - (I - .25) / .35);                             // sparse bells fade out as it builds
-    if (w > .05) {
-      const chance = { 0: 1, 6: .5, 10: .6, 14: .3 }[s];
-      if (chance && Math.random() < chance) {
-        const m = ch.ch[Math.floor(Math.random() * 3)] + (Math.random() < .5 ? 12 : 24);
-        sfx.note(mtof(m), t, 1.4, { vol: .07 * w, send: .7, sendDest: send, dest: duck });
-        sfx.note(mtof(m) * 2.76, t, .5, { vol: .02 * w, dest: duck });
+      if (s === 0) {                                                     // pad + sub drone
+        const cut = 450 + 2600 * I, att = Math.min(.9, barDur * .4);
+        [...ch.ch, ch.ch[0] + 12].forEach(m => [-7, 7].forEach(det =>
+          sfx.note(mtof(m), t, barDur * 1.05, { type: 'sawtooth', vol: .028 + .008 * I, attack: att, hold: barDur * .35, lp: cut, lpEnd: cut * .6, detune: det, dest: duck, send: .5, sendDest: send })));
+        sfx.note(mtof(ch.root - 12), t, barDur * 1.05, { vol: .13, attack: att, hold: barDur * .35, dest: bus });
+      }
+
+      const w = clamp01(1 - (I - .25) / .35);                             // sparse bells fade out as it builds
+      if (w > .05) {
+        const chance = { 0: 1, 6: .5, 10: .6, 14: .3 }[s];
+        if (chance && Math.random() < chance) {
+          const m = ch.ch[Math.floor(Math.random() * 3)] + (Math.random() < .5 ? 12 : 24);
+          sfx.note(mtof(m), t, 1.4, { vol: .07 * w, send: .7, sendDest: send, dest: duck });
+          sfx.note(mtof(m) * 2.76, t, .5, { vol: .02 * w, dest: duck });
+        }
+      }
+
+      if (I > .15) {                                                      // bass
+        const lvl = I < .4 ? 0 : I < .65 ? 1 : 2;
+        let on, oct = 0;
+        if (lvl === 0) on = s === 0 || s === 8;
+        else if (lvl === 1) on = s % 2 === 0;
+        else { on = true; if (s % 4 === 3) oct = 12; }
+        if (on) sfx.note(mtof(ch.root + oct), t, lvl === 0 ? sd * 7 : sd * (lvl === 1 ? 1.6 : .9),
+          { type: lvl ? 'sawtooth' : 'triangle', vol: lvl ? .11 : .16, lp: 200 + I * 1400, lpEnd: 140, dest: bus });
+      }
+
+      if (I > .35) {                                                      // kick (with pad pump)
+        const kicks = [0, 4, 8, 12]; if (I > .72) kicks.push(10); if (I > .85) kicks.push(14);
+        if (kicks.includes(s)) {
+          sfx.note(150, t, .3, { vol: .6, slideTo: 42, slideTime: .14, dest: bus });
+          sfx.burst(t, .02, { type: 'lowpass', f: 2000, vol: .15, dest: bus });
+          if (I > .5) { const g = duck.gain; g.cancelScheduledValues(t); g.setValueAtTime(.35, t); g.linearRampToValueAtTime(1, t + .22); }
+        }
+      }
+
+      if (I > .45) {                                                      // hats
+        const off = s % 4 === 2, on = I > .7 || off;
+        if (on) sfx.burst(t, s === 14 && I > .6 ? .18 : .04, { type: 'highpass', f: 7500, vol: off ? .07 : .04, dest: bus });
+      }
+
+      if (I > .6 && (s === 4 || s === 12)) {                              // snare
+        sfx.burst(t, .16, { type: 'bandpass', f: 1900, q: .8, vol: .2, dest: bus, send: .2, sendDest: send });
+        sfx.note(190, t, .1, { type: 'triangle', vol: .14, slideTo: 120, dest: bus });
+      }
+
+      if (I > .28) {                                                      // arpeggio
+        const fast = I > .55;
+        if (fast || s % 2 === 0) {
+          const pat = [0, 1, 2, 1, 0, 2, 1, 2];
+          const m = ch.ch[pat[(fast ? s : s / 2) % 8]] + 12 + (I > .78 && s % 8 >= 4 ? 12 : 0);
+          sfx.note(mtof(m), t, sd * (fast ? 1.2 : 2.2),
+            { type: I > .5 ? 'sawtooth' : 'triangle', vol: .055, lp: 900 + I * 4200, lpEnd: 500, dest: duck, send: .25, sendDest: send });
+        }
+      }
+
+      if (I > .8 && [0, 3, 6, 10, 12].includes(s)) {                      // lead stabs
+        sfx.note(mtof(ch.ch[0] + 24), t, sd * 1.4, { type: 'square', vol: .035, lp: 3200, dest: bus });
       }
     }
-
-    if (I > .15) {                                                      // bass
-      const lvl = I < .4 ? 0 : I < .65 ? 1 : 2;
-      let on, oct = 0;
-      if (lvl === 0) on = s === 0 || s === 8;
-      else if (lvl === 1) on = s % 2 === 0;
-      else { on = true; if (s % 4 === 3) oct = 12; }
-      if (on) sfx.note(mtof(ch.root + oct), t, lvl === 0 ? sd * 7 : sd * (lvl === 1 ? 1.6 : .9),
-        { type: lvl ? 'sawtooth' : 'triangle', vol: lvl ? .11 : .16, lp: 200 + I * 1400, lpEnd: 140, dest: bus });
-    }
-
-    if (I > .35) {                                                      // kick (with pad pump)
-      const kicks = [0, 4, 8, 12]; if (I > .72) kicks.push(10); if (I > .85) kicks.push(14);
-      if (kicks.includes(s)) {
-        sfx.note(150, t, .3, { vol: .6, slideTo: 42, slideTime: .14, dest: bus });
-        sfx.burst(t, .02, { type: 'lowpass', f: 2000, vol: .15, dest: bus });
-        if (I > .5) { const g = duck.gain; g.cancelScheduledValues(t); g.setValueAtTime(.35, t); g.linearRampToValueAtTime(1, t + .22); }
+  },
+  {
+    name: 'Reactor',                   // industrial acid: drone, metallic pings, a squelching bassline in D Phrygian
+    bpm: [96, 172],
+    play(m, n, t) {
+      const I = m.I, s = n % 16, root = [38, 38, 39, 36][Math.floor(n / 16) % 4];   // D D Eb C
+      const sd = 60 / m.bpm() / 4, barDur = sd * 16, bus = m.bus, duck = m.duck, send = m.send;
+      if (s === 0) {                                                     // drone and a cold, detuned pad
+        sfx.note(mtof(root - 12), t, barDur * 1.02, { type: 'sawtooth', vol: .05, attack: barDur * .3, lp: 160 + 500 * I, dest: bus });
+        [0, 7, 13].forEach(iv => sfx.note(mtof(root + 24 + iv), t, barDur, { type: 'triangle', vol: .018, attack: barDur * .4, detune: iv === 13 ? 9 : -6, dest: duck, send: .6, sendDest: send }));
       }
-    }
-
-    if (I > .45) {                                                      // hats
-      const off = s % 4 === 2, on = I > .7 || off;
-      if (on) sfx.burst(t, s === 14 && I > .6 ? .18 : .04, { type: 'highpass', f: 7500, vol: off ? .07 : .04, dest: bus });
-    }
-
-    if (I > .6 && (s === 4 || s === 12)) {                              // snare
-      sfx.burst(t, .16, { type: 'bandpass', f: 1900, q: .8, vol: .2, dest: bus, send: .2, sendDest: send });
-      sfx.note(190, t, .1, { type: 'triangle', vol: .14, slideTo: 120, dest: bus });
-    }
-
-    if (I > .28) {                                                      // arpeggio
-      const fast = I > .55;
-      if (fast || s % 2 === 0) {
-        const pat = [0, 1, 2, 1, 0, 2, 1, 2];
-        const m = ch.ch[pat[(fast ? s : s / 2) % 8]] + 12 + (I > .78 && s % 8 >= 4 ? 12 : 0);
-        sfx.note(mtof(m), t, sd * (fast ? 1.2 : 2.2),
-          { type: I > .5 ? 'sawtooth' : 'triangle', vol: .055, lp: 900 + I * 4200, lpEnd: 500, dest: duck, send: .25, sendDest: send });
+      if (s === 0 || s === 10) {                                         // metallic ping: two inharmonic partials
+        const f = mtof(root + 36), w = 1 - .5 * I;
+        sfx.note(f, t, .9, { vol: .05 * w, dest: duck, send: .8, sendDest: send });
+        sfx.note(f * 1.414, t, .5, { vol: .025 * w, dest: duck });
       }
+      if (I > .2) {                                                      // acid bass, accents open the filter
+        const pat = [0, 0, 12, 0, 1, 0, 0, 7, 0, 12, 0, 1, 0, 0, 3, 0], acc = [1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0];
+        if (I > .45 || s % 2 === 0) sfx.note(mtof(root + pat[s]), t, sd * .9,
+          { type: 'sawtooth', vol: .07 + .03 * acc[s], lp: 280 + 2600 * I * (acc[s] ? 1 : .55), lpEnd: 160, q: 6 + 8 * I, dest: duck });
+      }
+      if (I > .35 && s % 4 === 0) kickPump(m, t, 120, 38);              // four on the floor
+      if (I > .5 && (s === 4 || s === 12))                               // clap: three tight bursts
+        [0, .012, .024].forEach(d => sfx.burst(t + d, .1, { type: 'bandpass', f: 1100, q: 1.2, vol: .12, dest: bus, send: .3, sendDest: send }));
+      if (I > .6 && s % 4 === 2) sfx.burst(t, .12, { type: 'highpass', f: 6500, vol: .06, dest: bus });
+      if (I > .75) sfx.burst(t, .03, { type: 'highpass', f: 9000, vol: s % 2 ? .02 : .035, dest: bus });
+      if (I > .85 && (s === 0 || s === 8))                               // siren
+        sfx.note(mtof(root + 31), t, sd * 6, { type: 'square', vol: .03, slideTo: mtof(root + 36), slideTime: sd * 6, lp: 2400, dest: bus, send: .3, sendDest: send });
     }
-
-    if (I > .8 && [0, 3, 6, 10, 12].includes(s)) {                      // lead stabs
-      sfx.note(mtof(ch.ch[0] + 24), t, sd * 1.4, { type: 'square', vol: .035, lp: 3200, dest: bus });
+  },
+  {
+    name: 'Night shift',               // spy noir: walking bass, ride, a tremolo guitar motif and horn stabs in E minor
+    bpm: [88, 176],
+    play(m, n, t) {
+      const I = m.I, s = n % 16, root = [40, 36, 45, 35][Math.floor(n / 16) % 4];   // Em C Am B
+      const sd = 60 / m.bpm() / 4, barDur = sd * 16, bus = m.bus, duck = m.duck, send = m.send;
+      const at = s % 2 ? t + sd * .33 * (1 - I * .6) : t;               // swung 16ths that straighten as it speeds up
+      if (s % 2 === 0 || (s % 4 === 3 && I > .3))                        // ride cymbal
+        sfx.burst(at, s % 4 === 0 ? .3 : .14, { type: 'highpass', f: 7200, vol: s % 4 === 0 ? .04 : .025, dest: bus, send: .2, sendDest: send });
+      if (s === 0 && I < .7)                                             // soft organ, fading out as it builds
+        [0, 7, 10, 15].forEach(iv => sfx.note(mtof(root + 12 + iv), t, barDur * 1.02, { vol: .022 * (1 - I), attack: barDur * .3, dest: duck, send: .5, sendDest: send }));
+      if (s % 4 === 0) {                                                 // walking bass: root, minor third, fifth, chromatic approach
+        const walk = [0, 3, 7, 6][s / 4];
+        sfx.note(mtof(root - 12 + walk), t, sd * 3.4, { type: 'triangle', vol: .17, lp: 700 + 600 * I, dest: bus });
+      }
+      if (I > .25 && s % 2 === 0 && Math.floor(n / 16) % 2 === 0) {     // tremolo guitar motif, every other bar
+        const motif = [0, 2, 3, 2, 0, 2, 3, 7][s / 2];
+        for (let k = 0; k < 3; k++) sfx.note(mtof(root + 24 + motif), at + k * sd * .3, sd * .28, { type: 'square', vol: .03, lp: 1800 + 1200 * I, dest: duck, send: .5, sendDest: send });
+      }
+      if (I > .5) {                                                      // backbeat
+        if (s === 0 || s === 10) kickPump(m, t, 140, 45);
+        if (s === 4 || s === 12) sfx.burst(t, I > .7 ? .14 : .22, { type: 'bandpass', f: I > .7 ? 1800 : 3200, q: .7, vol: .15, dest: bus, send: .25, sendDest: send });
+      }
+      if (I > .7 && (s === 0 || s === 6))                                // horn stabs, minor with a major seventh
+        [0, 3, 7, 11].forEach(iv => sfx.note(mtof(root + 24 + iv), t, sd * 1.6, { type: 'sawtooth', vol: .026, lp: 1800, lpEnd: 900, dest: duck, send: .3, sendDest: send }));
+      if (I > .85 && s >= 13)                                            // tom fill into the next bar
+        sfx.note([180, 150, 120][s - 13], t, .18, { type: 'triangle', vol: .16, slideTo: [140, 115, 90][s - 13], dest: bus });
     }
   }
-};
+];
 
 /* =====================================================================
    2. MODULE REGISTRY
@@ -3977,6 +4055,15 @@ function openExplorer() {
 }
 
 /* ---- settings panel ---- */
+// The music preview runs a track from calm to its climax in about 20 seconds, then holds there.
+let previewTimer = 0;
+function startPreview() {
+  stopPreview();
+  music.start(); music.step = 0; music.I = music.target = .05;
+  previewTimer = setInterval(() => { music.target = Math.min(1, music.target + .02); }, 400);
+}
+function stopPreview() { clearInterval(previewTimer); previewTimer = 0; if (music.on) music.stop(.4); }
+
 function openSettings() {
   if ($('.settings')) return;
   const pct = v => Math.round(v * 100) + '%', mult = v => v.toFixed(1) + '\u00d7';
@@ -3996,14 +4083,18 @@ function openSettings() {
     close(); openSettings();
   };
   let preview = null;
-  if (!G) {                                                         // on the main screen you can hear the music while you set its volume
+  if (!G) {                                                         // on the main screen you can hear the music while you set it up
     preview = h('button', { class: 'tbtn', type: 'button' }, music.on ? 'Stop preview' : 'Play preview');
     preview.addEventListener('click', () => {
       sfx.init(); if (!sfx.ctx) return;
-      if (music.on) { music.stop(.4); preview.textContent = 'Play preview'; }
-      else { music.start(); music.I = music.target = .5; preview.textContent = 'Stop preview'; }
+      if (music.on) { stopPreview(); preview.textContent = 'Play preview'; }
+      else { startPreview(); preview.textContent = 'Stop preview'; }
     });
   }
+  const trackRow = seg(MUSIC_TRACKS.map((tr, k) => [k + 1, `${k + 1} ${tr.name}`]), settings.musicTrack, v => {
+    settings.musicTrack = v; save();
+    if (music.on && !G) startPreview();                             // hear the new track from its calm start
+  });
   const panel = h('div', { class: 'sp', role: 'dialog', 'aria-label': 'Settings' },
     h('div', { class: 'sp-head' }, h('b', {}, 'SETTINGS'), h('button', { class: 'tbtn', type: 'button', onclick: close }, 'Close')),
     h('h4', {}, 'Sound'),
@@ -4011,6 +4102,7 @@ function openSettings() {
     row('Music', toggle(settings.musicOn, v => setSound('music', v)), slider('music', 0, 1, .01, pct, () => sfx.applyVolumes())),
     row('Effects', toggle(settings.fxOn, v => setSound('fx', v)), slider('fx', 0, 1, .01, pct, () => { sfx.init(); sfx.applyVolumes(); sfx.click(); })),
     row('Warning beep', seg([['off', 'Off'], ['60', 'Every minute'], ['30', 'Every 30 s'], ['dynamic', 'Speeds up']], settings.beep, v => { settings.beep = v; save(); if (v !== 'off') { sfx.init(); sfx.warn(); } })),
+    row('Music track', trackRow),
     preview && row('Music preview', preview),
     h('h4', {}, 'Controls'),
     row('Turning speed', slider('sens', .4, 2.5, .1, mult)),
@@ -4081,6 +4173,7 @@ function showStart() {
 
 /* ---- the game ---- */
 function endGame() {
+  clearInterval(previewTimer);                             // a music preview from the settings must not steer the game's music
   music.stop(.4);
   if (!G) return;
   cancelAnimationFrame(G.raf);

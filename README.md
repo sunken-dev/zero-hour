@@ -17,7 +17,7 @@ Live at **https://zero-hour.sunken.dev/**
 - a 3D case you turn with the mouse, with hints hidden on all sides
 - seeds: the same seed with the same settings gives the same bomb
 - a manual built from the same source as the game, also as a PDF
-- synthesised sound and adaptive music (no audio files)
+- synthesised sound and three adaptive music tracks that speed up as the clock runs down (no audio files)
 
 The whole game is a single page, `site/index.html`, with no build step and no dependencies at run time.
 
