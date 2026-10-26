@@ -16,8 +16,8 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are twelve modules and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 12);
+test('there are thirteen modules and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 13);
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
     assert.match(m.manual(), /\S/, `${m.id} manual`);
@@ -72,6 +72,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'gears') {
+        assert.ok(s.gears >= 3 && s.gears <= 6, 'three to six gears');
+        assert.ok(s.dots.length >= 1 && s.dots.length <= 3 && new Set(s.dots).size === s.dots.length, 'one to three distinct red dots');
+        assert.ok(s.dots.every(k => k >= 0 && k < s.gears), 'dots on real gears');
+        const drum = s.load === 'LIFT' ? 'cw' : 'ccw', flip = { cw: 'ccw', ccw: 'cw' };
+        assert.deepEqual({ ...g.gearsWant(s) }, { dir: s.gears % 2 ? drum : flip[drum], turns: s.dots.length });
+      }
       if (def.id === 'fuses') {
         assert.deepEqual([...s.circuits].sort(), [...g.FUSE_CIRCUITS].sort(), 'each circuit once');
         assert.deepEqual([...s.amps].sort((x, y) => x - y), [...g.FUSE_AMPS], 'each rating once');
