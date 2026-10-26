@@ -16,8 +16,12 @@ function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
 }
 const snapshot = seed => { const w = world(seed); return JSON.stringify({ b: w.bomb, d: w.defs.map(d => d.id), p: w.plan, s: w.states }); };
 
-test('there are nineteen modules, at least half with a rear plate, and each explains itself', () => {
-  assert.equal(g.Modules.list.length, 19);
+test('twenty modules: 6 easy, 8 medium, 6 hard, 12 with a rear plate, 3 needy, and each explains itself', () => {
+  assert.equal(g.Modules.list.length, 20);
+  const count = d => g.Modules.list.filter(m => m.difficulty === d).length;
+  assert.deepEqual([count('easy'), count('medium'), count('hard')], [6, 8, 6]);
+  assert.equal(g.Modules.list.filter(m => m.mountBack).length, 12);
+  assert.deepEqual([...g.Modules.list.filter(m => m.needy).map(m => m.id)].sort(), ['breaker', 'coolant', 'knob']);
   assert.ok(g.Modules.list.filter(m => m.mountBack).length * 2 >= g.Modules.list.length, 'at least half have a rear plate');
   for (const m of g.Modules.list) {
     assert.ok(m.id && m.title, 'id and title');
@@ -129,6 +133,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
       if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'signal') {
+        assert.ok(g.SIGNAL_WAVES.includes(s.wave) && s.peaks >= 1 && s.peaks <= 4);
+        const w = g.signalWant(s, bomb), lit = bomb.indicators.filter(i => i.lit).length;
+        assert.equal(w.freq, Math.min(5, s.peaks + lit));
+        assert.equal(w.amp, { sine: 3, square: 5, saw: 2, triangle: 4 }[s.wave]);
+        assert.equal(w.phase, [[0, 90], [180, 270]][bomb.serialOdd ? 1 : 0][bomb.coins.length ? 1 : 0]);
+      }
       if (def.id === 'resistors') {
         assert.equal(s.r.length, 3); assert.ok(s.r.every(v => g.RES_VALUES.includes(v)), 'known values');
         assert.ok(['series', 'mixed'].includes(s.wiring));
