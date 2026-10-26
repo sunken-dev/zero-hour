@@ -343,6 +343,7 @@ test('warning beep: intervals per mode, and one beep each time the shown clock p
 });
 
 test('settings start from sane defaults', () => {
+  assert.deepEqual([g.DEFAULTS.minutes, g.DEFAULTS.count, g.DEFAULTS.difficulty], [8, 2, 'easy'], 'a first game: 8 minutes, 2 modules, easy');
   const s = g.settings;
   assert.ok(s.master >= 0 && s.master <= 1 && s.music >= 0 && s.music <= 1 && s.fx >= 0 && s.fx <= 1);
   assert.ok([3, 5, 8, 12].includes(s.minutes));

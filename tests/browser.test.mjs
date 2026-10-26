@@ -83,13 +83,13 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
   await fresh(page);
   await page.click('.seedin'); await page.keyboard.type('hello world');
-  await clickText(page, '.opt:nth-child(1) button', '8 min');
+  await clickText(page, '.opt:nth-child(1) button', '12 min');
   await page.click('.setbtn'); await sleep(200);
   await page.evaluate(() => { const i = document.querySelectorAll('.sp input[type=range]')[1]; i.value = .3; i.dispatchEvent(new Event('input', { bubbles: true })); });
   await page.keyboard.press('Escape'); await sleep(200);
   await page.goto(home(), { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.arm'); await sleep(300);
   const back = await page.evaluate(() => ({ seed: document.querySelector('.seedin').value, min: document.querySelector('.opt:nth-child(1) button[aria-pressed=true]').textContent }));
-  assert.deepEqual(back, { seed: 'hello world', min: '8 min' });
+  assert.deepEqual(back, { seed: 'hello world', min: '12 min' });
   await page.click('.setbtn'); await sleep(200);
   assert.equal(await page.evaluate(() => document.querySelectorAll('.sp input[type=range]')[1].value), '0.3');
   await page.keyboard.press('Escape');
@@ -123,7 +123,8 @@ test('the case shows the chosen difficulty', T, () => withPage(home(), async pag
 
 test('Abort asks first, the clock keeps running behind the dialog, and a bomb that ends closes it', T, () => withPage(home(), async page => {
   await fresh(page);
-  // seed 94 deals Throttle and Gears: their first press always strikes, so the bomb can be detonated on purpose
+  // with 4 modules on Medium, seed 94 deals Throttle and Gears: their first press always strikes, so the bomb can be detonated on purpose
+  await clickText(page, '.opt button', '4'); await clickText(page, '.opt button', 'Medium');
   await page.click('.seedin'); await page.keyboard.type('94');
   await page.click('.arm'); await sleep(2200);
   const clock = () => page.evaluate(() => document.querySelector('.hud .t').textContent);
