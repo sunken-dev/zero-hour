@@ -16,7 +16,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,keyFor,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -77,7 +77,7 @@ test('a stale PDF is never offered: the buttons print a fresh copy of the live m
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, 21);
+  assert.equal(shown.n, 22);
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {
@@ -155,7 +155,7 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   assert.deepEqual(diffClasses.map(c => c.match(/diff-\w+/)?.[0]), ['diff-easy', 'diff-medium', 'diff-hard']);
   await clickText(page, '.startrow button', 'Modules'); await sleep(1500);
   const items = await page.evaluate(() => [...document.querySelectorAll('.bench-item')].map(b => ({ title: b.querySelector('.ttl').textContent, badges: [...b.querySelectorAll('.badge')].map(x => x.textContent), rear: !!b.querySelector('.badge.rear') })));
-  assert.equal(items.length, 20);
+  assert.equal(items.length, 21);
   const rank = { easy: 0, medium: 1, hard: 2 };
   const diffs = items.map(it => it.badges.find(t => rank[t] !== undefined));
   for (let i = 1; i < items.length; i++) {
@@ -304,6 +304,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
     for (const bomb of [...bombs, zero]) {
       const last = Number(bomb.serial.slice(-1)), vowels = [...bomb.serial].filter(c => 'AEIOU'.includes(c)).join('');
       const w = rear('wires', bomb), si = rear('simon', bomb), sw = rear('switches', bomb), br = rear('breaker', bomb);
+      const kl = rear('keylock', bomb), lit = bomb.indicators.filter(i => i.lit).length;
+      if (kl.querySelector('.tag-cells')?.textContent !== String(bomb.batteries) || kl.querySelector('.tag-lit')?.textContent !== String(lit)) out.push(`${bomb.serial}: key lock tag ${kl.querySelector('.tag-cells')?.textContent}/${kl.querySelector('.tag-lit')?.textContent}`);
+      kl.remove();
       if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
       if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (bomb.coins.length ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
@@ -400,6 +403,11 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (!path) fail('no way to the goal');
             else { path.forEach(d => click(root.querySelector(btn[d]))); if (!solved || strikes !== 1) fail(`maze solved=${solved} strikes=${strikes}`); }
             click(root.querySelector(btn[0])); if (strikes !== 1) fail('a click after solving struck');
+          } else if (def.id === 'keylock') {
+            const keys = [...root.querySelectorAll('.lk-key')], want = T.keyFor(bomb), right = keys.find(k => k.dataset.key === want), wrong = keys.find(k => k.dataset.key !== want);
+            click(wrong); if (strikes !== 1 || solved) fail('a wrong key did not strike');
+            click(right); if (!solved) fail('key lock not solved');
+            click(wrong); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'throttle') {
             const notch = n => [...root.querySelectorAll('.notch')].find(e => e.textContent === String(n)), want = T.throttleWant(s, bomb);
             click(notch(want % 5 + 1)); click(root.querySelector('.go'));
