@@ -9,7 +9,7 @@ other reads the manual and cannot see the bomb. Describe what you see, find the 
 
 Live at **https://zero-hour.sunken.dev/**
 
-- 20 modules, each rated easy, medium or hard, with a front and, for most, a rear plate on the back of the bomb
+- 25 modules, each rated easy, medium or hard, with a front and, for most, a rear plate on the back of the bomb
 - needy modules that keep waking up and need attention until the bomb is defused
 - choose a difficulty: modules of that rating come up more often, and the case shows it
 - a module explorer to read about every module, try it, and switch modules or optional rear plates on and off
