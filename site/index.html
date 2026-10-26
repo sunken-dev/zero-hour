@@ -417,9 +417,17 @@ svg{display:block}
 .mz-pad svg{width:14px;height:14px}
 .gyro3d{display:flex;flex-direction:column;align-items:center;gap:10px}
 .gyro3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
-.gyro{position:relative;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#eef3f5,#8d9ca4 70%,#56656e);box-shadow:0 3px 8px #0009,inset 0 0 0 6px #6f7d86}
-.gyro i{position:absolute;inset:26px;border-radius:50%;border:2px solid #2b3b45}
-.gyro i+i{inset:46px;background:#2b3b45}
+.gyro{position:relative;width:120px;height:120px}
+.gy{position:absolute;left:60px;top:60px;width:0;height:0}
+.gy .torus .tube .fc{background:
+  linear-gradient(rgb(255 255 255 / calc((var(--b) - .66) * 1.5)),rgb(255 255 255 / calc((var(--b) - .66) * 1.5))),
+  color-mix(in srgb,var(--c) calc(18% + var(--b) * 82%),#000)}
+.gy-outer,.gy-inner,.gy-rotor{position:absolute;left:0;top:0;width:0;height:0}
+.gy-outer{transform:translateZ(38px) rotateX(68deg)}
+.gy-inner{transform:translateZ(38px) rotateY(62deg) rotateX(18deg)}
+.gy-rotor{transform:translateZ(38px);animation:gy-spin 2.4s linear infinite}
+@keyframes gy-spin{to{transform:translateZ(38px) rotateZ(360deg)}}
+@media(prefers-reduced-motion:reduce){.gy-rotor{animation:none}}
 .gyro-lbl{font:700 14px var(--mono);letter-spacing:.08em;color:#0b141a;background:linear-gradient(#ffd36b,#e09a00);padding:4px 10px;border-radius:3px}
 .cph-enc{height:46px;font-size:30px;letter-spacing:.32em;padding-left:.3em}
 .wheels{display:flex;justify-content:space-between;gap:4px}
@@ -2930,7 +2938,14 @@ Modules.register({
       arrow('mz-up', ARROW_UP, 0, 'Up'), arrow('mz-left', ARROW_L, 3, 'Left'), arrow('mz-right', ARROW_R, 1, 'Right'), arrow('mz-down', ARROW_DN, 2, 'Down'))));
   },
   mountBack(root, s) {
-    root.append(h('div', { class: 'gyro3d' }, h('small', {}, 'gyro'), h('div', { class: 'gyro' }, h('i'), h('i')), h('b', { class: 'gyro-lbl' }, MAZE_ROT[s.rot])));
+    // a gyroscope: a steel pedestal, two brass gimbal rings at angles, and a spinning steel rotor in the middle
+    root.append(h('div', { class: 'gyro3d' }, h('small', {}, 'gyro'),
+      h('div', { class: 'gyro' }, h('div', { class: 'gy' },
+        cylZ(16, 4, 24, { color: '#3a464d' }), cylZ(3.5, 34, 10, { z: 4, color: '#aab8c0' }),
+        h('div', { class: 'gy-outer' }, torus(46, 3, 32, '#c9a36a')),
+        h('div', { class: 'gy-inner' }, torus(34, 2.6, 28, '#d8b67a')),
+        h('div', { class: 'gy-rotor' }, cylZ(19, 7, 32, { z: -3.5, color: '#d3dce1', knurl: true }), cylZ(4, 9, 10, { z: -4.5, color: '#4a5860' })))),
+      h('b', { class: 'gyro-lbl' }, MAZE_ROT[s.rot])));
   },
   manual() {
     return `<p>The module shows a 6×6 grid with two green rings, the defuser's white square and a red goal. The walls are invisible. Guide the square to the goal with the four arrows; walking into a wall is a strike and the square stays put.</p>
