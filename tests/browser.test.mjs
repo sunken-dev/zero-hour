@@ -320,7 +320,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (sf.querySelector('.sf-sum')?.textContent !== String([...bomb.serial].filter(c => /\d/.test(c)).reduce((a, c) => a + +c, 0))) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-sum')?.textContent}`);
       sf.remove();
       const tl = rear('tiles', bomb);
-      if (tl.querySelector('.tl-no')?.textContent !== String(last)) out.push(`${bomb.serial}: tiles pattern ${tl.querySelector('.tl-no')?.textContent}`);
+      if (tl.querySelector('.tl-no')?.textContent !== String(tl.state.pattern)) out.push(`${bomb.serial}: tiles pattern ${tl.querySelector('.tl-no')?.textContent}`);
       tl.remove();
       const dp = rear('dip', bomb);
       if (dp.querySelector('.dip-off')?.textContent !== 'OFFSET ' + dp.state.offset) out.push(`${bomb.serial}: DIP offset ${dp.querySelector('.dip-off')?.textContent}`);
@@ -469,7 +469,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(cw); click(pull); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'tiles') {
             const tiles = () => [...root.querySelectorAll('.tl-tile')], order = () => { const o = Array(9).fill(0); tiles().forEach(t => { o[+t.dataset.at] = +t.dataset.n; }); return o; };
-            const want = T.tilesTarget(bomb).join();
+            const want = T.tilesTarget(s, bomb).join();
             if (order().join() !== [...s.start].join()) fail('the tray does not show the scramble');
             if (!tiles().every(t => t.querySelector('svg') && !/\d/.test(t.textContent))) fail('the tiles show digits instead of symbols');
             const far = tiles().find(t => { const a = +t.dataset.at, gp = order().indexOf(0); return Math.abs(a % 3 - gp % 3) + Math.abs((a / 3 | 0) - (gp / 3 | 0)) > 1; });

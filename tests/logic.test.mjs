@@ -187,8 +187,9 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.ok(Number.isInteger(s.start) && s.start >= 0 && s.start < 40 && s.start !== a);
       }
       if (def.id === 'tiles') {
-        const want = [...g.TILE_TARGETS[Number(bomb.serial.slice(-1))]], start = [...s.start];
-        assert.deepEqual([...g.tilesTarget(bomb)], want);
+        assert.ok(Number.isInteger(s.pattern) && s.pattern >= 0 && s.pattern <= 9, 'the plate has its own pattern number');
+        const want = [...g.TILE_TARGETS[s.fitted ? s.pattern : Number(bomb.serial.slice(-1))]], start = [...s.start];
+        assert.deepEqual([...g.tilesTarget(s, bomb)], want);
         assert.deepEqual([...start].sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
         const inv = a => { const t = a.filter(x => x); let n = 0; for (let i = 0; i < 8; i++) for (let j = i + 1; j < 8; j++) n += t[i] > t[j]; return n % 2; };
         assert.equal(inv(start), inv(want), 'the scramble can be solved');
