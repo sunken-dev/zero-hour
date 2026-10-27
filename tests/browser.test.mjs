@@ -308,7 +308,6 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
     const bombs = Array.from({ length: 40 }, (_, k) => T.makeBomb(T.rng(k + 1), 300000));
     const zero = T.makeBomb(T.rng(99), 300000); zero.serial = 'AB1CD0'; zero.serialOdd = false; zero.serialVowel = true;
     for (const bomb of [...bombs, zero]) {
-      const last = Number(bomb.serial.slice(-1)), vowels = [...bomb.serial].filter(c => 'AEIOU'.includes(c)).join('');
       const w = rear('wires', bomb), si = rear('simon', bomb), sw = rear('switches', bomb), br = rear('breaker', bomb);
       const sm = rear('semaphore', bomb), letters = sm.state.call.join('');
       if (sm.querySelector('.cs-letters')?.textContent !== letters) out.push(`${bomb.serial}: call sign ${sm.querySelector('.cs-letters')?.textContent}`);
@@ -329,7 +328,9 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (si.querySelector('.cone-lbl')?.textContent !== 'CH ' + 'ABC'[si.state.channel]) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (sw.state.backup ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
       if (br.querySelector('.trip')?.textContent !== String(br.state.coil)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
-      [w, si, sw, br].forEach(e => e.remove());
+      const gl = rear('glyphs', bomb);
+      if (gl.querySelector('.ser-dir')?.textContent !== gl.state.direction) out.push(`${bomb.serial}: glyphs plate ${gl.querySelector('.ser-dir')?.textContent}`);
+      [w, si, sw, br, gl].forEach(e => e.remove());
     }
     return out;
   });

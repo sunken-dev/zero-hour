@@ -136,7 +136,12 @@ test('every module can be made for many bombs, and the rules always give a real 
         const fits = g.WORDS.filter(w => [...w].every((c, i) => s.cols[i].includes(c)));
         assert.deepEqual([...fits], [s.ans], 'exactly one word fits');
       }
-      if (def.id === 'glyphs') assert.equal(new Set(s.order).size, 4);
+      if (def.id === 'glyphs') {
+        assert.equal(new Set(s.order).size, 4);
+        assert.ok(['TOP-DOWN', 'BOTTOM-UP'].includes(s.direction), 'the series plate has its own direction');
+        const col = g.GLYPH_COLS[s.colIdx], down = [...s.shown].sort((a, b) => col.indexOf(a) - col.indexOf(b));
+        assert.deepEqual([...s.order], s.fitted && s.direction === 'BOTTOM-UP' ? down.reverse() : down, 'BOTTOM-UP on a fitted plate reverses the order');
+      }
       if (def.id === 'signal') {
         assert.ok(g.SIGNAL_WAVES.includes(s.wave) && s.peaks >= 1 && s.peaks <= 4);
         const w = g.signalWant(s, bomb), lit = bomb.indicators.filter(i => i.lit).length;
