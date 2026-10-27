@@ -442,6 +442,9 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(root.querySelector('.go')); if (strikes) fail('patching with no probes placed struck');
             click(ports[a]); click(root.querySelector('.go')); if (strikes) fail('patching with one probe placed struck');
             click(ports[b]);
+            if (!ports[a].classList.contains('red') || !ports[b].classList.contains('black') || ports.filter(p => p.classList.contains('red') || p.classList.contains('black')).length !== 2) fail('the probed jacks are not marked red and black');
+            if (!ports[a].querySelector('.mt-banana') || !ports[b].querySelector('.mt-banana')) fail('no plugs in the probed jacks');
+            if (root.querySelector('.mt-pairlbl').textContent !== 'ABCDEF'[a] + '\u2013' + 'ABCDEF'[b]) fail('the meter does not name the probed pair');
             if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== Math.abs(s.volts[a] - s.volts[b])) fail('the needle does not show the voltage between the probes');
             click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('patching the wrong pair did not strike');
             click(ports[want[0]]); click(ports[want[1]]);

@@ -592,11 +592,14 @@ svg{display:block}
 .mt-port:hover small{color:var(--cyan)}
 .mt-jack{position:relative;width:0;height:0;top:9px;transform-style:preserve-3d}
 .mt-hole{position:absolute;left:-2.6px;top:-2.6px;width:5.2px;height:5.2px;border-radius:50%;background:radial-gradient(#000 40%,#3a4248);transform:translateZ(10.6px)}
-.mt-probe{position:absolute;top:21px;width:0;height:0;transform-style:preserve-3d;pointer-events:none;transition:left .35s cubic-bezier(.4,0,.2,1),opacity .4s}
-.mt-probe-body{transform-style:preserve-3d;transform:translateZ(11px) rotateZ(calc(-128deg + var(--k) * 76deg)) rotateY(-38deg)}   /* tip in the hole, handle leaning out and up */
-.mt-probe.drop .mt-probe-body{animation:probe-drop .45s cubic-bezier(.3,1.3,.5,1)}
-.mt-probe.away{opacity:0}
-@keyframes probe-drop{from{transform:translateZ(30px) rotateZ(calc(-128deg + var(--k) * 76deg)) rotateY(-38deg)}}
+.mt-banana{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.mt-banana.drop{animation:plug-in .35s cubic-bezier(.3,1.3,.5,1)}
+.mt-banana.away{display:none}
+@keyframes plug-in{from{transform:translateZ(24px)}}
+.mt-port .led{margin-bottom:-6px}
+.mt-port.red small{color:#ff6b6b}
+.mt-port.black small{color:#fff}
+.mt-pairlbl{font:700 9px var(--mono);letter-spacing:.12em;color:#ffb224}
 .mt-cable{position:absolute;left:0;top:9px;transform:translateZ(10px);transform-style:preserve-3d;pointer-events:none;transition:transform .6s cubic-bezier(.5,0,.8,.4),opacity .6s}
 .mt-cable svg{position:absolute;left:0;top:0;overflow:visible}
 .mt-cable path{fill:none;stroke-linecap:round;stroke-dasharray:400;animation:cable-in .5s ease-out}
@@ -3507,23 +3510,30 @@ Modules.register({
     const needle = h('div', { class: 'mt-needle', style: '--v:0' },
       h('div', { class: 'mt-blade' }, cuboid(1, '', 'fill')), h('div', { class: 'mt-tip' }, cuboid(1, '', 'fill')));
     const shade = h('i', { class: 'mt-shade', style: '--v:0' });
-    const cover = h('div', { class: 'mt-cover' }, cuboid(5, [h('span', {}, 'V DC'), h('div', { class: 'mt-zero' }, cylZ(4, 1.5, 14, { color: '#9aa7ae' }), h('i'))], 'fill'));
+    const pairLbl = h('b', { class: 'mt-pairlbl' }, '?\u2013?');
+    const cover = h('div', { class: 'mt-cover' }, cuboid(5, [h('span', {}, 'V DC'), pairLbl, h('div', { class: 'mt-zero' }, cylZ(4, 1.5, 14, { color: '#9aa7ae' }), h('i'))], 'fill'));
     dial.append(shade, needle, cover, h('i', { class: 'mt-glass' }));
     const meter = h('div', { class: 'mt-meter' }, cuboid(8, h('div', { class: 'mt-bezel' }, dial), 'fill'));
     const read = v => { needle.style.setProperty('--v', String(v)); shade.style.setProperty('--v', String(v)); };
 
     const row = h('div', { class: 'mt-row' });
-    const probes = ['#e5412d', '#3a4148'].map((c, k) => h('div', { class: 'mt-probe', style: `--k:${k}` },
-      h('div', { class: 'mt-probe-body' }, lathe([[9, 1.2, '#d3dce1'], [6, 3.2, c], [28, 4.4, c, 'rib'], [4, 5, '#2b3438']], 14))));
-    const jacks = s.volts.map((v, i) => activate(h('div', { class: 'mt-port' },
+    // the probe leads end in banana plugs that push straight into the jacks; a lamp above each jack shows which lead is in it
+    const plugs = ['#e5412d', '#2b3136'].map(c => h('div', { class: 'mt-banana' },
+      cylZ(6.5, 2, 18, { z: 10.5, color: '#c9d3d8' }), cylZ(6, 9, 18, { z: 12.5, color: c, knurl: true }), cylZ(4.2, 7, 14, { z: 21.5, color: c }), cylZ(2, 6, 10, { z: 28.5, color: '#1b1f22' })));
+    const lamps = s.volts.map(() => led('#ff3b5c', false));
+    const show = () => {
+      jacks.forEach((j, k) => { j.classList.toggle('red', at[0] === k); j.classList.toggle('black', at[1] === k); });
+      lamps.forEach((l, k) => { l.classList.toggle('off', !at.includes(k)); l.style.setProperty('--lc', at[0] === k ? '#ff3b5c' : '#e9eef0'); });
+      pairLbl.textContent = at.map(k => k < 0 ? '?' : 'ABCDEF'[k]).join('\u2013');
+    };
+    const jacks = s.volts.map((v, i) => activate(h('div', { class: 'mt-port' }, lamps[i],
       h('div', { class: 'mt-jack' }, cylZ(10, 2.5, 6, { color: '#aebcc4', hex: true }), cylZ(7.5, 8, 18, { z: 2.5, color: METER_JACKS[i] }), h('i', { class: 'mt-hole' })),
       h('small', {}, 'ABCDEF'[i])), () => {
       if (ctl.isSolved() || at.includes(i)) return;
-      const p = probes[next];
+      const p = plugs[next];
       at[next] = i; next ^= 1;
-      p.style.left = xOf(i) + 'px'; p.classList.remove('drop'); void p.offsetWidth; p.classList.add('drop');
-      if (!p.isConnected) row.append(p);
-      read(at.includes(-1) ? 0 : Math.abs(s.volts[at[0]] - s.volts[at[1]])); ctl.sfx.click();
+      jacks[i].querySelector('.mt-jack').append(p); p.classList.remove('drop'); void p.offsetWidth; p.classList.add('drop');
+      show(); read(at.includes(-1) ? 0 : Math.abs(s.volts[at[0]] - s.volts[at[1]])); ctl.sfx.click();
     }, `Jack ${'ABCDEF'[i]}`));
     row.append(...jacks);
     const xOf = i => jacks[i].offsetLeft + jacks[i].offsetWidth / 2;
@@ -3542,7 +3552,7 @@ Modules.register({
       if (ctl.isSolved() || at.includes(-1)) return;
       const want = meterPair(s, ctl.bomb), ok = at.includes(want[0]) && at.includes(want[1]);
       patch(at[0], at[1], ok);
-      if (ok) { probes.forEach(p => p.classList.add('away')); ctl.solve(); }
+      if (ok) { plugs.forEach(p => p.classList.add('away')); ctl.solve(); }
       else ctl.strike(`Patched jacks ${'ABCDEF'[at[0]]} and ${'ABCDEF'[at[1]]}.`);
     }, 'Patch a cable across the probed jacks');
     root.append(h('div', { class: 'stack mt' }, meter, row, go));
