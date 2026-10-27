@@ -310,7 +310,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
     for (const bomb of [...bombs, zero]) {
       const last = Number(bomb.serial.slice(-1)), vowels = [...bomb.serial].filter(c => 'AEIOU'.includes(c)).join('');
       const w = rear('wires', bomb), si = rear('simon', bomb), sw = rear('switches', bomb), br = rear('breaker', bomb);
-      const sm = rear('semaphore', bomb), letters = [...bomb.serial].filter(c => /[A-Z]/.test(c)).join('');
+      const sm = rear('semaphore', bomb), letters = sm.state.call.join('');
       if (sm.querySelector('.cs-letters')?.textContent !== letters) out.push(`${bomb.serial}: call sign ${sm.querySelector('.cs-letters')?.textContent}`);
       sm.remove();
       const mt = rear('meter', bomb);

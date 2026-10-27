@@ -161,7 +161,9 @@ test('every module can be made for many bombs, and the rules always give a real 
       }
       if (def.id === 'semaphore') {
         assert.equal(s.seq.length, 4);
-        const letters = [...bomb.serial].filter(c => /[A-Z]/.test(c)), outside = s.seq.map((c, i) => [c, i]).filter(([c]) => !letters.includes(c));
+        assert.equal(new Set(s.call).size, 3, 'the call-sign plate has three different letters');
+        assert.ok(s.call.every(c => g.SEMAPHORE[c]));
+        const letters = s.fitted ? [...s.call] : [...bomb.serial].filter(c => /[A-Z]/.test(c)), outside = s.seq.map((c, i) => [c, i]).filter(([c]) => !letters.includes(c));
         assert.equal(outside.length, 1, 'exactly one signal is not in the serial number');
         assert.equal(g.semaphoreOdd(s, bomb), outside[0][1]);
         assert.ok(s.seq.every(c => g.SEMAPHORE[c]), 'every signal is a letter');
