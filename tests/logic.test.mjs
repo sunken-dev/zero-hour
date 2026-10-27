@@ -490,6 +490,7 @@ test('the manual: Bomb basics comes first, with its schematics, no duplicate ent
   for (const m of g.Modules.list) assert.ok(html.includes(`id="man-${m.id}"`), `section for ${m.id}`);
   assert.ok(html.indexOf('<section') === html.indexOf('<section id="man-basics">'), 'Bomb basics is the first section');
   assert.ok(/<nav><a href="#man-basics">Bomb basics<\/a>/.test(html), 'and first in the contents');
+  assert.ok(basics.includes('2 × 2 bays for up to four modules') && basics.includes('3 × 3 for seven to nine'), 'Bomb basics names the three case sizes');
   assert.equal((basics.match(/<figure class="schem"><svg /g) || []).length, 5, 'one schematic each for the case, side parts, encoder, knife switch and module');
   assert.equal(g.manualFingerprint(), g.manualFingerprint());
 });
