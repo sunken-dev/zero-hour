@@ -452,7 +452,6 @@ svg{display:block}
 .wheel{display:flex;flex-direction:column;align-items:center;gap:4px;width:36px}
 .wheel .sk{width:100%;height:24px}
 .wheel svg{width:12px;height:12px}
-.wheel .ltr{font:700 20px var(--mono);color:var(--ice);width:100%;text-align:center;background:#05090b;border:1px solid #43dfff33}
 .rotor3d{display:flex;flex-direction:column;align-items:center;gap:12px}
 .rotor3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .rotors{display:flex;gap:6px}
@@ -472,7 +471,6 @@ svg{display:block}
 .digit{display:flex;flex-direction:column;align-items:center;gap:3px;width:40px}
 .digit .sk{width:100%;height:22px}
 .digit svg{width:12px;height:12px}
-.digit b{font:700 22px var(--mono);color:var(--cyan);width:100%;text-align:center;background:#05090b;border:1px solid #43dfff33}
 .ohm{font:700 22px var(--mono);color:var(--mute)}
 .wiring{display:flex;justify-content:center}
 .wiring svg{width:230px;height:140px;font-family:var(--mono)}
@@ -535,6 +533,10 @@ svg{display:block}
   color-mix(in srgb,var(--c) calc(16% + var(--b) * 84%),#000)}
 .notches{display:flex;flex-direction:column;justify-content:space-between;padding:1px 0}
 .notch{width:38px;height:28px;cursor:pointer}
+.thr .notch .cap{--c:#2b3136}
+.thr .notch .cap>.t{background:#1b1f22}
+.thr .notch .cap2>.t{font:700 15px var(--mono);color:#d3dce1;background:linear-gradient(#5e6b73,#2b3136);text-shadow:0 -1px 0 #000;box-shadow:inset 0 1px 0 #ffffff2e}
+.thr .notch:hover .cap2>.t{background:linear-gradient(#73828b,#3a4248)}
 .crank-wheel{position:relative;width:76px;height:76px;cursor:grab}
 .crank-rot{position:absolute;left:38px;top:38px;width:0;height:0;transform:rotateZ(var(--ang,0deg));transition:transform .45s cubic-bezier(.3,.7,.3,1)}
 .crank-arm{position:absolute;left:-5px;top:-34px;width:10px;height:34px;transform:translateZ(6px)}
@@ -650,9 +652,7 @@ svg{display:block}
 .dip-slider .cb{--c:#b8c4cb;--top:linear-gradient(#ffffff,#d3dce1)}
 .dip-sw:hover .dip-slider .cb{--top:linear-gradient(#ffffff,#eef3f5)}
 .dipb3d{display:flex;justify-content:center}
-.dipb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 18px;border:2px solid #2b3b45;border-radius:4px;color:#2b3b45;font-family:var(--mono)}
-.dipb small{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
-.dip-off{font-size:24px;letter-spacing:.06em;color:#0b141a}
+.dip-off{font:700 20px var(--mono);letter-spacing:.16em;color:#f4f4ef;background:#0b0e10;padding:6px 14px;border-radius:3px;box-shadow:0 2px 4px #0008,inset 0 1px 0 #ffffff26;text-shadow:0 -1px 0 #000,0 1px 0 #ffffff55}
 .sf{position:relative;width:206px;height:206px;margin:auto}
 .sf>.cb{--c:#3a4248;--top:linear-gradient(160deg,#8d9ca4,#5e6b73 55%,#4b5860)}
 .sf>.cb>.t{border-radius:6px;box-shadow:inset 0 1px 0 #ffffff40,inset 0 0 0 2px #0003}
@@ -843,7 +843,7 @@ svg{display:block}
 .sl .dot.done{fill:var(--cyan);filter:drop-shadow(0 0 4px var(--cyan))}
 .sl.solved .dot{fill:var(--mint);filter:drop-shadow(0 0 4px var(--mint))}
 
-/* password: LCD windows stay flat, the keys are real keys */
+/* password: thumbwheels between real keys */
 .pw{display:flex;gap:7px}
 .pw .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
 .arr{position:relative;height:30px;cursor:pointer;--bp:3px}
@@ -853,10 +853,6 @@ svg{display:block}
 .arr .cap2>.t{color:var(--cyan);background:linear-gradient(#1e5870,#0c2833)}
 .arr svg{width:16px;height:16px}
 .arr:hover .cap2>.t{background:linear-gradient(#276f8c,#0e303d)}
-.lcd{height:62px;overflow:hidden;display:grid;place-items:center;color:var(--cyan);font:34px var(--mono);
-  background:linear-gradient(#04141a,#0a212a);border:1px solid #43dfff55;box-shadow:inset 0 0 18px #000;text-shadow:0 0 12px #43dfff}
-.lcd .roll{animation:roll .16s ease-out}
-@keyframes roll{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
 .go{position:relative;height:46px;margin-top:12px;cursor:pointer}
 .go .bz{--c:#4a3a14}
 .go .bz>.t{background:linear-gradient(160deg,#8d7a4a,#3b2e10)}
@@ -866,8 +862,50 @@ svg{display:block}
 .go:hover .cap2>.t{background:linear-gradient(#ffdc8c,#eaa512)}
 
 /* ================= new modules ================= */
-.mini-lcd{height:62px;display:grid;place-items:center;color:var(--cyan);font:700 44px var(--mono);
-  background:linear-gradient(#04141a,#0a212a);border:1px solid #43dfff55;box-shadow:inset 0 0 18px #000;text-shadow:0 0 12px #43dfff}
+/* thumbwheels: a drum behind a window, knurled edges either side */
+.tw{position:relative;height:56px;border-radius:4px;background:linear-gradient(#000,#161d21 28%,#161d21 72%,#000);box-shadow:inset 0 3px 7px #000,0 0 0 1px #43dfff2e,0 0 0 3px #12181c;transform-style:preserve-3d}
+.tw-drum{position:absolute;inset:0 7px;transform-style:preserve-3d}
+.tw-drum>b,.tw-drum>i{position:absolute;left:0;right:0;display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-weight:700;color:#eef3f5;border-radius:2px}
+.tw-drum>b{top:50%;height:26px;margin-top:-13px;font-size:20px;background:linear-gradient(#11171b,#3a444b 50%,#11171b);box-shadow:0 0 0 1px #000;transform:translateZ(5px);text-shadow:0 1px 0 #000}
+.tw-drum>i{height:14px;font-size:12px;color:#b8c4cb;background:linear-gradient(#141a1e,#2b3338)}
+.tw-n.up{top:2px;transform-origin:50% 100%;transform:translateZ(2px) rotateX(36deg)}
+.tw-n.dn{bottom:2px;transform-origin:50% 0;transform:translateZ(2px) rotateX(-36deg)}
+.tw-rib{position:absolute;top:4px;bottom:4px;width:5px;border-radius:2px;background:repeating-linear-gradient(180deg,#8d9ca4 0 2px,#2b3136 2px 4px);transform:translateZ(3px)}
+.tw-rib.l{left:1px}.tw-rib.r{right:1px}
+.tw-drum.roll-up{animation:tw-up .16s ease-out}
+.tw-drum.roll-dn{animation:tw-dn .16s ease-out}
+@keyframes tw-up{from{transform:translateY(-7px)}}
+@keyframes tw-dn{from{transform:translateY(7px)}}
+.pw .tw{height:62px}
+.pw .tw-drum>b{font-size:26px;height:30px;margin-top:-15px}
+.wheel .tw{width:100%;height:48px}
+.digit .tw{width:100%;height:50px}
+/* simon: black housing, domed sheen over the pads, a raised centre cap carrying the stage dots */
+.simon-base,.simon-cap{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+/* morse: the lamp sits in a chrome bezel under a wire cage */
+.m-cage{position:relative;width:0;height:0;transform-style:preserve-3d}
+.m-bulb{position:absolute;left:0;top:0;transform:translate(-50%,-50%) translateZ(4px) scale(1.25)}
+.m-bar{position:absolute;left:-29px;top:-1px;width:58px;height:2px}
+.m-bar .cb{--c:#8d9ca4;--top:#d3dce1}
+.m-cage>.torus{transform:translateZ(21px)}
+/* button: the hold strip in a frame, labelled */
+.strip-box{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 4px;border-radius:4px;background:#0a1013;box-shadow:inset 0 0 0 1px #43dfff2a}
+.strip-box small{font:700 8px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+/* fuses rear: screw terminals with the wire ends running into them */
+.fusemap{background:linear-gradient(#20292f,#11171b);border-color:#0b1014;box-shadow:0 3px 6px #0006}
+.fusemap .wire-end{width:6px;height:16px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,#7a2a1c,#c0392b,#7a2a1c);margin-bottom:-10px}
+.fusemap b{color:#e9eef0}
+/* dip rear: embossed label tape */
+.dipb3d{flex-direction:column;align-items:center;gap:6px}
+.dipb-cap{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#2b3b45}
+/* tiles rear: a round riveted tag */
+.tl-plate{position:relative;width:96px;height:96px;padding:0;justify-content:center;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e9eef0,#aebcc4 70%,#8d9ca4);border:2px solid #5e6b73;box-shadow:0 3px 6px #0006,inset 0 1px 0 #fff}
+.tl-rivet{position:absolute;top:7px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7f8d96)}
+
+.mini-lcd{position:relative;height:62px;display:grid;place-items:center;color:var(--cyan);font:700 44px var(--mono);border-radius:3px;
+  background:repeating-linear-gradient(0deg,#ffffff05 0 1px,#0000 1px 3px),radial-gradient(ellipse at 50% 40%,#0a2530,#03090c 75%);
+  box-shadow:inset 0 3px 10px #000,inset 0 0 0 1px #43dfff2a,0 0 0 3px #161c20,0 0 0 4px #2c363c,0 3px 0 4px #0009;text-shadow:0 0 12px #43dfff}
+.mini-lcd::after{content:"";position:absolute;inset:0;border-radius:3px;pointer-events:none;background:linear-gradient(160deg,#ffffff14 0 22%,#0000 40%)}
 .mini-lcd.sm{height:40px;font-size:24px}
 .stack{display:flex;flex-direction:column;gap:12px;align-items:stretch}
 /* An action button (Lock, Latch, Submit, Measure ...) always sits at the bottom of its module; the rest is centred above it */
@@ -888,7 +926,7 @@ svg{display:block}
 .tg.up{--tilt:34deg}
 .tg.dn{--tilt:-34deg}
 .morse{display:flex;flex-direction:column;gap:10px;align-items:stretch}
-.morse .lampwrap{display:grid;place-items:center;height:60px}
+.morse .lampwrap{display:grid;place-items:center;height:72px}
 .freqrow{display:grid;grid-template-columns:34px 1fr 34px;gap:8px;align-items:center}
 .sk{position:relative;height:36px;cursor:pointer;--bp:3px}
 .sk .cap{--c:#0c2029}
@@ -901,7 +939,7 @@ svg{display:block}
 .mk{position:relative;height:56px;cursor:pointer}
 .mk .cap{--c:#0e2832}
 .mk .cap>.t{background:#0c222b}
-.mk .cap2>.t{font:700 26px var(--mono);color:#8fe9ff;background:linear-gradient(165deg,#24607a,#0f2c3a 72%)}
+.mk .cap2>.t{font:700 26px var(--mono);color:#8fe9ff;border-radius:5px;background:radial-gradient(ellipse at 50% 38%,#1a4659,#0d2733 70%,#163b4b);box-shadow:inset 0 1px 0 #ffffff2e,inset 0 -2px 0 #0007}
 .mk:hover .cap2>.t{background:linear-gradient(165deg,#2c7391,#123446 72%)}
 .knobmod{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
 .pat{display:grid;grid-template-columns:repeat(3,auto);gap:9px 8px;justify-items:center}
@@ -1297,6 +1335,19 @@ function dragTurn(hit, { center = hit, detent, show, commit }) {
   hit.addEventListener('click', e => { if (dragged) { dragged = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 }
 const mod = (n, m) => ((n % m) + m) % m;
+// A thumbwheel: a drum seen through a window in the panel, between knurled edges. The current symbol faces out (in a
+// <b> with class cls), its neighbours curve away above and below; set() rolls it one step up (dir 1) or down (dir -1).
+function thumbwheel(cls = '') {
+  const cur = h('b', { class: cls }), prev = h('i', { class: 'tw-n up', 'aria-hidden': 'true' }), next = h('i', { class: 'tw-n dn', 'aria-hidden': 'true' });
+  const drum = h('div', { class: 'tw-drum' }, prev, cur, next);
+  return {
+    el: h('div', { class: 'tw' }, h('i', { class: 'tw-rib l' }), drum, h('i', { class: 'tw-rib r' })),
+    set(p, c, n, dir) {
+      prev.textContent = p; cur.textContent = c; next.textContent = n;
+      if (dir) { drum.classList.remove('roll-up', 'roll-dn'); void drum.offsetWidth; drum.classList.add(dir > 0 ? 'roll-up' : 'roll-dn'); }
+    }
+  };
+}
 // A 3D indicator lamp. size: '' (small), 'lg' or 'xl'.
 const led = (color, on = true, size = '') => html('span', { class: 'led ' + size + (on ? '' : ' off'), style: `--lc:${color}` }, '<i></i><i></i><i></i><i></i><i></i>');
 
@@ -2104,6 +2155,7 @@ Modules.register({
     const dark = s.color === 'white' || s.color === 'yellow';
     const strip = cuboid(5, '', 'strip');
     strip.style.setProperty('--sc', BTN_HEX[s.strip]);
+    const stripBox = h('div', { class: 'strip-box' }, h('small', {}, 'hold'), strip);
     const cap = h('div', { class: 'cap3' },
       Array.from({ length: 15 }, (_, k) => h('i', { style: `--k:${k}` })),
       h('i', { class: 'top', style: '--k:15' }, s.label));
@@ -2137,7 +2189,7 @@ Modules.register({
     btn.addEventListener('contextmenu', e => e.preventDefault());
     btn.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(); } });
     btn.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); release(); } });
-    root.append(h('div', { class: 'btnmod' }, h('div', { class: 'socket' }, h('div', { class: 'well' }), h('i', { class: 'ring r1' }), h('i', { class: 'ring r2' }), btn), strip));
+    root.append(h('div', { class: 'btnmod' }, h('div', { class: 'socket' }, h('div', { class: 'well' }), h('i', { class: 'ring r1' }), h('i', { class: 'ring r2' }), btn), stripBox));
     return () => clearTimeout(timer);
   },
   manual() {
@@ -2228,6 +2280,7 @@ Modules.register({
 /* ---------------------------------------------------------------------
    MODULE: Simon
    --------------------------------------------------------------------- */
+let simonSeq = 0;                                  // unique gradient ids for each Simon on the page
 const SIMON_NAMES = ['red', 'blue', 'green', 'yellow'];
 const SIMON_HEX = ['#e5412d', '#2f6bff', '#2fbf63', '#f2c230'];
 const SIMON_FREQ = [392, 330, 262, 494];
@@ -2267,12 +2320,17 @@ Modules.register({
     const wrap = h('div', { class: 'simon3d' });
     const layers = [];
     for (let k = 0; k < LAYERS; k++) {
-      const base = k === 0 ? `<circle class="sring" cx="100" cy="100" r="98"/><circle class="core" cx="100" cy="100" r="40"/>${dots}` : '';
-      const el = html('div', {}, `<svg class="sl${k === TOP ? ' top' : ''}" viewBox="0 0 200 200" style="--k:${k}">${base}${pads(k)}</svg>`).firstElementChild;
+      const el = html('div', {}, `<svg class="sl${k === TOP ? ' top' : ''}" viewBox="0 0 200 200" style="--k:${k}">${pads(k)}</svg>`).firstElementChild;
       layers.push(el); wrap.append(el);
     }
+    const sheen = 'simon-sheen-' + (++simonSeq);
+    wrap.prepend(h('div', { class: 'simon-base' }, cylZ(100, 4, 56, { z: -4, color: '#0b1014' })));
+    wrap.append(html('div', {}, `<svg class="sl sheen" viewBox="0 0 200 200" style="--k:10"><defs><radialGradient id="${sheen}" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs><circle class="sring" cx="100" cy="100" r="98"/>${SIMON_ARC.map(a => `<path d="${arc(...a)}" fill="url(#${sheen})"/>`).join('')}</svg>`).firstElementChild,
+      h('div', { class: 'simon-cap' }, cylZ(40, 16, 40, { color: '#0e1a20' })),
+      html('div', {}, `<svg class="sl cap" viewBox="0 0 200 200" style="--k:11.5"><circle class="core" cx="100" cy="100" r="40"/>${dots}</svg>`).firstElementChild);
+    const capSvg = wrap.querySelector('.sl.cap');
     const padSets = layers.map(l => [...l.querySelectorAll('.pad')]);
-    const dotEls = [...layers[0].querySelectorAll('.dot')];
+    const dotEls = [...capSvg.querySelectorAll('.dot')];
 
     const flash = (i, ms = 380) => {
       padSets.forEach(ps => ps[i].classList.add('lit'));
@@ -2296,7 +2354,7 @@ Modules.register({
       if (i === expected(s.seq[pos])) {
         pos++;
         if (pos === stage) {
-          if (stage === s.seq.length) { clear(); dotEls.forEach(d => d.classList.add('done')); layers[0].classList.add('solved'); ctl.solve(); return; }
+          if (stage === s.seq.length) { clear(); dotEls.forEach(d => d.classList.add('done')); capSvg.classList.add('solved'); ctl.solve(); return; }
           stage++; mark(); idle(1400);
         } else idle(5000);
       } else {
@@ -2366,11 +2424,13 @@ Modules.register({
     const idx = s.cols.map(() => 0);
     const wrap = h('div', { class: 'pw' });
     s.cols.forEach((c, i) => {
-      const lcd = h('div', { class: 'lcd' }, h('span', {}, c[0].toUpperCase()));
+      const tw = thumbwheel('pw-ltr'), at = k => c[mod(k, c.length)].toUpperCase();
+      const show = d => tw.set(at(idx[i] - 1), at(idx[i]), at(idx[i] + 1), d);
+      const lcd = tw.el; show(0);
       const move = d => () => {
         if (ctl.isSolved()) return;
         idx[i] = (idx[i] + d + c.length) % c.length;
-        lcd.replaceChildren(h('span', { class: 'roll' }, c[idx[i]].toUpperCase())); ctl.sfx.click();
+        show(-d); ctl.sfx.click();
       };
       const up = activate(h('div', { class: 'arr' }, button3d(html('span', {}, ARROW_UP), '', 6)), move(-1), 'Previous letter');
       const dn = activate(h('div', { class: 'arr' }, button3d(html('span', {}, ARROW_DN), '', 6)), move(1), 'Next letter');
@@ -2491,7 +2551,9 @@ Modules.register({
       if (ctl.isSolved()) return;
       MORSE_CHANNELS[ci] === s.word[1] ? ctl.solve() : ctl.strike(`Transmitted on ${MORSE_CHANNELS[ci]} MHz.`);
     }, 'Transmit');
-    root.append(h('div', { class: 'morse' }, h('div', { class: 'lampwrap' }, lamp), h('div', { class: 'freqrow' }, left, lcd, right), tx));
+    const cage = h('div', { class: 'm-cage' }, cylZ(30, 4, 36, { color: '#aebcc4' }), h('div', { class: 'm-bulb' }, lamp),
+      [0, 60, 120].map(a => h('div', { class: 'm-bar', style: `transform:translateZ(21px) rotateZ(${a}deg)` }, cuboid(1.6, '', 'fill'))), torus(29, 1.6, 28, '#c9d3d8', 6));
+    root.append(h('div', { class: 'morse' }, h('div', { class: 'lampwrap' }, cage), h('div', { class: 'freqrow' }, left, lcd, right), tx));
     return () => { dead = true; clearTimeout(timer); };
   },
   manual() {
@@ -2751,7 +2813,7 @@ Modules.register({
   },
   mountBack(root, s) {
     root.append(h('div', { class: 'fusemap3d' }, h('small', {}, 'wiring'),
-      h('div', { class: 'fusemap' }, s.circuits.slice().reverse().map(c => h('div', { class: 'term' }, h('i', { class: 'screw' }), h('b', { class: 'fuse-lbl' }, c))))));
+      h('div', { class: 'fusemap' }, s.circuits.slice().reverse().map(c => h('div', { class: 'term' }, h('i', { class: 'wire-end' }), h('i', { class: 'screw' }), h('b', { class: 'fuse-lbl' }, c))))));
   },
   manual() {
     return `<p>Five fuses sit side by side. Pull exactly one: the one that feeds the circuit named by the first rule that applies. A wrong fuse is a strike.</p>
@@ -2790,7 +2852,7 @@ function gear3d(R, { drum = false } = {}) {
 }
 // The gear train behind the crank, crank gear on the right (it is seen from behind) and the drum on the left. It does not move.
 function gearTrain3d(s) {
-  const R = [20, 13], el = h('div', { class: 'train3d' }), xs = [];
+  const R = s.gears >= 6 ? [21, 14] : s.gears === 5 ? [24, 16] : [26, 17], el = h('div', { class: 'train3d' }), xs = [];   // as big as the 230px plate allows
   let x = 0;
   for (let k = 0; k < s.gears; k++) { if (k) x -= R[k % 2] + R[(k - 1) % 2] + 1; xs.push(x); }
   const left = xs[xs.length - 1] - R[(s.gears - 1) % 2], shift = 115 - (left + R[0]) / 2;   // centre the chain on the plate
@@ -2801,7 +2863,7 @@ function gearTrain3d(s) {
       d.style.cssText += `;left:${(r * .5).toFixed(1)}px;top:${(-r * .45).toFixed(1)}px`;   // on the gear face, not the hub
       g.append(d);
     }
-    el.append(h('div', { class: 'gear' + (s.dots.includes(k) ? ' dot' : ''), style: `left:${x0 + shift}px;top:${76 + (k % 2 ? 7 : 0)}px` }, g));
+    el.append(h('div', { class: 'gear' + (s.dots.includes(k) ? ' dot' : ''), 'data-r': String(r), style: `left:${x0 + shift}px;top:${70 + (k % 2 ? 9 : 0)}px` }, g));
   });
   el.append(h('b', { class: 'train-lbl', style: `left:${xs[0] + shift}px` }, 'crank'), h('b', { class: 'train-lbl', style: `left:${xs[xs.length - 1] + shift}px` }, 'drum'));
   return el;
@@ -3259,8 +3321,10 @@ Modules.register({
   mount(root, s, ctl) {
     const at = s.start.slice();
     const wheels = at.map((v, i) => {
-      const ltr = h('b', { class: 'ltr' }, String.fromCharCode(65 + v));
-      const step = d => () => { if (ctl.isSolved()) return; at[i] = (at[i] + d + 26) % 26; ltr.textContent = String.fromCharCode(65 + at[i]); ctl.sfx.click(); };
+      const tw = thumbwheel('ltr'), L = k => String.fromCharCode(65 + mod(k, 26));
+      const show = d => tw.set(L(at[i] + 1), L(at[i]), L(at[i] - 1), d);   // the next letter up shows on top
+      const ltr = tw.el; show(0);
+      const step = d => () => { if (ctl.isSolved()) return; at[i] = (at[i] + d + 26) % 26; show(d); ctl.sfx.click(); };
       return h('div', { class: 'wheel' },
         activate(h('div', { class: 'sk up' }, button3d(html('span', {}, ARROW_UP), '', 5)), step(1), `Wheel ${i + 1} up`),
         ltr,
@@ -3337,8 +3401,10 @@ Modules.register({
       return h('div', { class: 'res' }, h('small', {}, 'R' + (k + 1)), h('div', { class: 'res-mount' }, wrap));
     };
     const digits = at.map((v, i) => {
-      const out = h('b', {}, String(v));
-      const step = d => () => { if (ctl.isSolved()) return; at[i] = (at[i] + d + 10) % 10; out.textContent = String(at[i]); ctl.sfx.click(); };
+      const tw = thumbwheel(), D = k => String(mod(k, 10));
+      const show = d => tw.set(D(at[i] + 1), D(at[i]), D(at[i] - 1), d);
+      const out = tw.el; show(0);
+      const step = d => () => { if (ctl.isSolved()) return; at[i] = (at[i] + d + 10) % 10; show(d); ctl.sfx.click(); };
       return h('div', { class: 'digit' },
         activate(h('div', { class: 'sk up' }, button3d(html('span', {}, ARROW_UP), '', 5)), step(1), `Digit ${i + 1} up`), out,
         activate(h('div', { class: 'sk dn' }, button3d(html('span', {}, ARROW_DN), '', 5)), step(-1), `Digit ${i + 1} down`));
@@ -3715,8 +3781,7 @@ Modules.register({
     root.append(h('div', { class: 'stack' }, h('div', { class: 'dip' }, block), apply));
   },
   mountBack(root, s, ctl) {
-    root.append(h('div', { class: 'dipb3d' }, h('div', { class: 'dipb' }, h('small', {}, 'code plate'),
-      h('b', { class: 'dip-off' }, 'OFFSET ' + s.offset))));
+    root.append(h('div', { class: 'dipb3d' }, h('small', { class: 'dipb-cap' }, 'code'), h('b', { class: 'dip-off' }, 'OFFSET ' + s.offset)));
   },
   manual() {
     const arrow = on => on ? '▲' : '▼';
@@ -3897,7 +3962,7 @@ Modules.register({
     root.append(h('div', { class: 'stack tl' }, tray, check));
   },
   mountBack(root, s, ctl) {
-    root.append(h('div', { class: 'tl-plate3d' }, h('div', { class: 'tl-plate' }, h('small', {}, 'pattern'), h('b', { class: 'tl-no' }, String(s.pattern)))));
+    root.append(h('div', { class: 'tl-plate3d' }, h('div', { class: 'tl-plate' }, h('i', { class: 'tl-rivet' }), h('small', {}, 'pattern'), h('b', { class: 'tl-no' }, String(s.pattern)))));
   },
   manual() {
     const grid = t => `<svg class="tile-grid" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="${t.map(n => n ? tileGlyph(n).name : 'gap').join(' ')}">${t.map((n, i) =>

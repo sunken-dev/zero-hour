@@ -514,6 +514,9 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(notch(want)); click(root.querySelector('.go')); if (!solved) fail('throttle not solved');
             click(notch(1)); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'gears') {
+            const gb = document.createElement('div'); def.mountBack(gb, s, ctl);
+            const out = [...gb.querySelectorAll('.train3d .gear')].filter(e => { const x = parseFloat(e.style.left), r = +e.dataset.r; return !(r > 0 && x - r >= 0 && x + r <= 230); });
+            if (out.length) fail(`${out.length} of ${s.gears} gears reach past the rear plate`);
             const want = T.gearsCount(s), shown = () => +root.querySelector('.turns').textContent.replace('\u2212', '-'), turn = d => click(root.querySelector(d > 0 ? '.crank-cw' : '.crank-ccw'));
             turn(-Math.sign(want)); turn(-Math.sign(want));
             if (strikes) fail('turning the crank the other way struck straight away');
