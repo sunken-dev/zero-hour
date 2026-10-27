@@ -185,6 +185,8 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.deepEqual([...g.safeCombo(bomb)], [a, b, c]);
         assert.ok(a !== b && b !== c, 'neighbouring numbers differ, so none needs a full turn');
         assert.ok(Number.isInteger(s.start) && s.start >= 0 && s.start < 40 && s.start !== a);
+        assert.ok(['R-L-R', 'L-R-L'].includes(s.order), 'the plate names the turning order');
+        assert.equal(g.safeFirst(s), s.fitted && s.order === 'L-R-L' ? -1 : 1);
       }
       if (def.id === 'tiles') {
         assert.ok(Number.isInteger(s.pattern) && s.pattern >= 0 && s.pattern <= 9, 'the plate has its own pattern number');
@@ -339,6 +341,12 @@ test('safe: numbers are entered where the dial changes direction; a full turn cl
   assert.ok(!g.safeOpens(lock, combo), 'an extra direction change does not open');
   lock = dial(20); turn(lock, 1, (12 - 20 + 40) % 40); turn(lock, -1, (12 - 38 + 40) % 40);
   assert.ok(!g.safeOpens(lock, [12, 38, 38]), 'the third number is entered clockwise');
+  const left = start => ({ ...dial(start), first: -1 });               // a plate stamped DIAL L-R-L reverses every direction
+  lock = left(20); turn(lock, -1, (20 - 12 + 40) % 40); turn(lock, 1, (38 - 12 + 40) % 40); turn(lock, -1, (38 - 5 + 40) % 40);
+  assert.ok(g.safeOpens(lock, combo), 'left, right, left opens an L-R-L safe');
+  assert.ok(!g.safeOpens(enter(left(20), combo), combo), 'right, left, right does not');
+  lock = left(20); turn(lock, 1, 6); turn(lock, -1, 1);
+  assert.equal(lock.entries.length, 0, 'turning right before the first number is only positioning on an L-R-L safe');
 });
 
 test('tiles: ten different targets, each eight tiles and a gap, and eight symbols for the tiles', () => {

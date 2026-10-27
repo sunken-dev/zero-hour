@@ -18,7 +18,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,SEMAPHORE,tilesTarget,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,safeFirst,SEMAPHORE,tilesTarget,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -317,7 +317,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (mt.querySelector('.pw-cells')?.textContent !== String(bomb.batteries) || mt.querySelector('.pw-coin')?.textContent !== bomb.coinVolts.toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-cells')?.textContent}/${mt.querySelector('.pw-coin')?.textContent}`);
       mt.remove();
       const sf = rear('safe', bomb);
-      if (sf.querySelector('.sf-sum')?.textContent !== String([...bomb.serial].filter(c => /\d/.test(c)).reduce((a, c) => a + +c, 0))) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-sum')?.textContent}`);
+      if (sf.querySelector('.sf-order')?.textContent !== 'DIAL ' + sf.state.order) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-order')?.textContent}`);
       sf.remove();
       const tl = rear('tiles', bomb);
       if (tl.querySelector('.tl-no')?.textContent !== String(tl.state.pattern)) out.push(`${bomb.serial}: tiles pattern ${tl.querySelector('.tl-no')?.textContent}`);
@@ -449,7 +449,8 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (!root.querySelector('.mt-cable')) fail('no cable patched after solving');
             click(ports[a]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'safe') {
-            const [a, b, c] = T.safeCombo(bomb), cw = root.querySelector('.sf-cw'), ccw = root.querySelector('.sf-ccw'), pull = root.querySelector('.sf-handle');
+            const [a, b, c] = T.safeCombo(bomb), f = T.safeFirst(s), pull = root.querySelector('.sf-handle');
+            const [cw, ccw] = f > 0 ? [root.querySelector('.sf-cw'), root.querySelector('.sf-ccw')] : [root.querySelector('.sf-ccw'), root.querySelector('.sf-cw')];   // the plate's first direction, then back
             const at = () => +root.querySelector('.sf-dial').dataset.at, lit = () => root.querySelectorAll('.sf-lamps .led:not(.off)').length;
             const go = (el, to) => { let g = 0; while (at() !== to && g++ < 40) click(el); };
             if (at() !== s.start) fail('the dial does not start at its starting number');
@@ -459,8 +460,9 @@ test('every module can be solved through its real controls, and a wrong answer i
             go(ccw, (b + 1) % 40); click(pull); if (strikes !== 1 || solved || lit()) fail('pulling with a wrong combination did not strike and clear');
             const hit = root.querySelector('.sf-hit'), box = root.querySelector('.sf-dial').getBoundingClientRect(), from = at();
             const ptr = (type, deg) => { const t = deg * Math.PI / 180; hit.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 7, clientX: box.x + box.width / 2 + 50 * Math.cos(t), clientY: box.y + box.height / 2 + 50 * Math.sin(t) })); };
-            ptr('pointerdown', -90); [-80, -70, -63, -70, -72].forEach(d => ptr('pointermove', d)); ptr('pointerup', -72); click(hit);   // the click a browser sends after a drag, which the dial swallows
-            if (at() !== (from + 2) % 40 || lit() !== 1) fail(`dragging three steps clockwise and one back left the dial at ${at()} with ${lit()} lamps`);
+            const deg = d => f > 0 ? d : -180 - d;                       // drag the first direction's way round
+            ptr('pointerdown', -90); [-80, -70, -63, -70, -72].forEach(d => ptr('pointermove', deg(d))); ptr('pointerup', deg(-72)); click(hit);   // the click a browser sends after a drag, which the dial swallows
+            if (at() !== (from + 2 * f + 40) % 40 || lit() !== 1) fail(`dragging three steps and one back left the dial at ${at()} with ${lit()} lamps`);
             for (let k = 0; k < 39; k++) click(ccw);
             if (lit()) fail('a full turn did not clear the lamps');
             go(cw, a);
