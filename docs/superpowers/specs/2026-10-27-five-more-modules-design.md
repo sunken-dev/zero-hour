@@ -37,8 +37,9 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 
 ### Semaphore (medium)
 
-- Front: a small signaller with two flags and arrows to step through a sequence of four signals; the arms move
-  smoothly from one position to the next. An ACK button.
+- Front: a brass-rimmed signal dial with eight marks and two alike, flag-tipped hands on one pivot (the hands stand
+  where a flag signaller's arms would be), arrows to step through a sequence of four signals, and an ACK button. Each
+  change moves whichever hand is nearer to each new position, the short way round.
 - Letters follow the structure of real flag semaphore: arm angles in steps of 45 degrees from straight down; A to G one
   arm down; H, I, K, L, M, N one arm at 45; O to S one arm at 90; T, U, Y one arm at 135; J, V at 180; W, X at 225;
   Z at 270 (the other arm as in standard semaphore). The manual's chart is drawn from the same table as the module.

@@ -18,7 +18,7 @@ before(async () => {
   browser = await launch();
   // A copy of the page that exposes the game's internals and skips the interface, for driving modules directly.
   const html = fs.readFileSync(indexFile, 'utf8')
-    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,tilesTarget,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
+    .replace(BOOT, 'window.__t={Modules,makeBomb,rng,sfx,TOGGLE_RULES,MEM_TABLE,KNOB_TABLE,KNOB_DIRS,breakerWantUp,wireAnswer,ensureNeeds,COMBO_RULES,dipCode,dipPattern,safeCombo,SEMAPHORE,tilesTarget,meterPair,meterTarget,semaphoreOdd,throttleWant,mazeCanMove,resTotal,signalWant,fuseCircuit,gearsWant,gearsCount,relayAnswer,coolantTarget};\n' + BOOT)
     .replace('buildDrawer();\n  showStart();', '');
   testCopy = path.join(os.tmpdir(), 'zero-hour-test.html');
   fs.writeFileSync(testCopy, html);
@@ -424,10 +424,13 @@ test('every module can be solved through its real controls, and a wrong answer i
           } else if (def.id === 'semaphore') {
             const sem = root.querySelector('.sem'), at = () => +sem.dataset.i, goTo = n => { let g = 0; while (at() !== n && g++ < 8) click(root.querySelector('.sem-next')); };
             const odd = T.semaphoreOdd(s, bomb);
-            const arms = () => [...root.querySelectorAll('.sem-arm')].map(e => parseFloat(e.style.getPropertyValue('--a')) || 0);
+            const hands = () => [...root.querySelectorAll('.sem-ptr')].map(e => parseFloat(e.style.getPropertyValue('--a')) || 0);
+            const shows = () => hands().map(a => ((a % 360) + 360) % 360).sort((x, y) => x - y).join();
             for (let k = 0; k < 8; k++) {
-              const was = arms(); click(root.querySelector(k < 4 ? '.sem-next' : '.sem-prev'));
-              arms().forEach((a, j) => { if (Math.abs(a - was[j]) > 180) fail(`an arm swung ${a - was[j]} degrees`); });
+              const was = hands(); click(root.querySelector(k < 4 ? '.sem-next' : '.sem-prev'));
+              hands().forEach((a, j) => { if (Math.abs(a - was[j]) > 180) fail(`a hand swung ${a - was[j]} degrees`); });
+              const c = s.seq[+root.querySelector('.sem').dataset.i];
+              if (shows() !== [...T.SEMAPHORE[c]].sort((x, y) => x - y).join()) fail(`the hands show ${shows()} for ${c}`);
             }
             goTo((odd + 1) % 4); click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('acknowledging a serial letter did not strike');
             goTo(odd); click(root.querySelector('.go')); if (!solved) fail('semaphore not solved');
