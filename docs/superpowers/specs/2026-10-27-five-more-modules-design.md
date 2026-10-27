@@ -4,7 +4,7 @@
 
 Five modules inspired by what the Keep Talking community likes most in mods (real-world skills turned into talking
 puzzles: semaphore, probing with a multimeter, safe dials, sliding tiles), adapted to Zero Hour's industrial look. None
-is needy. Every one has an optional rear plate that repeats a clue found elsewhere on the case.
+is needy. Every one has an optional rear plate with its own value (see the independent rear plates spec).
 
 ## Decided by the user
 
@@ -23,7 +23,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
   start at the answer.
 - Number: batteries + lit indicators + the serial number's last digit, minus 16 if it is 16 or more. The manual's table
   gives the pattern (the number in binary, switch 1 the highest bit). Apply with any other pattern is a strike.
-- Optional rear plate: the code base, batteries + lit indicators.
+- Optional rear plate: see 2026-10-27-independent-rear-plates-design.md (its own value, which changes the rule when fitted).
 
 ### Multimeter (medium)
 
@@ -33,7 +33,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 - Target: the coin cells' total voltage; with no coin cells, 1.5 V per battery; with neither, 12 V.
 - The jacks sit on a half-volt grid from 0 to 12 V. Exactly one pair reads the target; every other pair reads at least
   1 V away from it. Patching any other pair is a strike.
-- Optional rear plate: a power label with the number of batteries and the coin cells' total voltage.
+- Optional rear plate: see 2026-10-27-independent-rear-plates-design.md (its own value, which changes the rule when fitted).
 
 ### Semaphore (medium)
 
@@ -46,7 +46,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 - Three of the four signals are letters in the serial number; one is not. ACK while that one shows. Anything else is a
   strike. The four signals are all different (a bomb with Semaphore always has three different serial letters), so how
   often a signal repeats never gives the answer away.
-- Optional rear plate: a call-sign plate repeating the serial number's letters.
+- Optional rear plate: see 2026-10-27-independent-rear-plates-design.md (its own value, which changes the rule when fitted).
 
 ### Safe (hard)
 
@@ -60,7 +60,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
   direction; turning anticlockwise before the first number is only positioning. The third is where the dial stands
   when the handle is pulled. The first two lamps light as the first two numbers are entered, the third when the safe opens (no hint whether a number is right). A full turn in one
   direction clears the entries. A wrong combination is a strike and clears the entries.
-- Optional rear plate: the maker's plate with the sum of the serial number's digits.
+- Optional rear plate: see 2026-10-27-independent-rear-plates-design.md (its own value, which changes the rule when fitted).
 
 ### Tiles (hard)
 
@@ -69,7 +69,7 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 - Ten target arrangements, one per last digit of the serial number, in the manual. The tiles start a scramble that can
   be solved (made by moving backwards from the target), at least 12 moves away. Check with the target: solved; Check
   with anything else: a strike.
-- Optional rear plate: a pattern plate with the serial number's last digit.
+- Optional rear plate: see 2026-10-27-independent-rear-plates-design.md (its own value, which changes the rule when fitted).
 
 ## Build order and tests
 
