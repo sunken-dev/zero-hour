@@ -123,7 +123,7 @@ test('every module can be made for many bombs, and the rules always give a real 
     const r = g.rng(seed), bomb = g.makeBomb(r, 300000);
     for (const def of g.Modules.list) {
       g.ensureNeeds(bomb, [def], r);
-      const s = def.create(bomb, r);
+      const s = def.create(bomb, r, seed % 2 === 0);                // the rear plate fitted on every other bomb
       if (def.id === 'wires') {
         const a = g.wireAnswer(s.wires, bomb);
         assert.ok(a >= 0 && a < s.wires.length, `wire answer ${a} of ${s.wires.length}`);
@@ -196,8 +196,10 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.ok(man >= 12, `at least 12 moves from the target (Manhattan ${man})`);
       }
       if (def.id === 'dip') {
-        const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1))) % 16;
-        assert.equal(g.dipCode(bomb), code);
+        assert.equal(s.fitted, seed % 2 === 0);
+        assert.ok(Number.isInteger(s.offset) && s.offset >= 0 && s.offset <= 9, 'the plate has its own offset');
+        const code = (bomb.batteries + bomb.indicators.filter(x => x.lit).length + Number(bomb.serial.slice(-1)) + (s.fitted ? s.offset : 0)) % 16;
+        assert.equal(g.dipCode(s, bomb), code);
         assert.deepEqual([...g.dipPattern(code)], [8, 4, 2, 1].map(v => !!(code & v)));
         assert.notDeepEqual([...s.start], [...g.dipPattern(code)], 'the switches do not start at the answer');
       }

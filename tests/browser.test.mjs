@@ -303,7 +303,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
     const T = window.__t, out = [];
     const rear = (id, bomb) => {
       const def = T.Modules.list.find(m => m.id === id), root = document.createElement('div');
-      document.body.append(root); def.mountBack(root, def.create(bomb, T.rng(1)), { bomb, sfx: T.sfx }); return root;
+      document.body.append(root); root.state = def.create(bomb, T.rng(1), true); def.mountBack(root, root.state, { bomb, sfx: T.sfx }); return root;
     };
     const bombs = Array.from({ length: 40 }, (_, k) => T.makeBomb(T.rng(k + 1), 300000));
     const zero = T.makeBomb(T.rng(99), 300000); zero.serial = 'AB1CD0'; zero.serialOdd = false; zero.serialVowel = true;
@@ -323,7 +323,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (tl.querySelector('.tl-no')?.textContent !== String(last)) out.push(`${bomb.serial}: tiles pattern ${tl.querySelector('.tl-no')?.textContent}`);
       tl.remove();
       const dp = rear('dip', bomb);
-      if (dp.querySelector('.dip-base')?.textContent !== String(bomb.batteries + bomb.indicators.filter(x => x.lit).length)) out.push(`${bomb.serial}: DIP base ${dp.querySelector('.dip-base')?.textContent}`);
+      if (dp.querySelector('.dip-off')?.textContent !== 'OFFSET ' + dp.state.offset) out.push(`${bomb.serial}: DIP offset ${dp.querySelector('.dip-off')?.textContent}`);
       dp.remove();
       if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
       if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
@@ -344,7 +344,7 @@ test('every module can be solved through its real controls, and a wrong answer i
       for (const def of T.Modules.list) {
         if (def.needy) continue;                                   // needy modules have their own test
         T.ensureNeeds(bomb, [def], r);
-        const s = def.create(bomb, r), root = document.createElement('div'); document.body.append(root);
+        const s = def.create(bomb, r, seed % 2 === 0), root = document.createElement('div'); document.body.append(root);   // the rear plate fitted on every other bomb
         let solved = false, strikes = 0;
         const ctl = { bomb, sfx: T.sfx, isSolved: () => solved, timeText: () => '04:12', solve() { solved = true; }, strike() { strikes++; } };
         const cleanup = def.mount(root, s, ctl) || null;
@@ -490,7 +490,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             click(root.querySelector('.go')); if (!solved) fail('tiles not solved');
             click(tiles()[0]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
           } else if (def.id === 'dip') {
-            const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(bomb))];
+            const sw = [...root.querySelectorAll('.dip-sw')], want = [...T.dipPattern(T.dipCode(s, bomb))];
             const set = p => sw.forEach((e, k) => { if (e.classList.contains('on') !== p[k]) click(e); });
             set(want.map((v, k) => k === 0 ? !v : v)); click(root.querySelector('.go'));
             if (strikes !== 1 || solved) fail('a wrong pattern did not strike');
