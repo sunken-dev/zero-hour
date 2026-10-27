@@ -1409,7 +1409,7 @@ const DEFAULTS = {
   minutes: 8, count: 2, difficulty: 'easy', seed: '', lastSeed: '',     // the game on the main screen
   beep: 'off',                                                    // warning beep: 'off', '60', '30' or 'dynamic'
   musicTrack: 1,                                                  // 1, 2 or 3 (MUSIC_TRACKS)
-  benchLink: false,                                               // module explorer: turn the front and the rear plate together
+  linkViews: true,                                                // module explorer: turn the front and the rear plate together
   modules: {}                                                     // per module id: { off: true, rear: 'always' | 'sometimes' | 'never' }
 };
 const RESETTABLE = ['master', 'music', 'fx', 'musicOn', 'fxOn', 'beep', 'musicTrack', 'sens', 'momentum', 'startZoom', 'intro'];
@@ -4905,8 +4905,8 @@ function openExplorer() {
     stagesEl.replaceChildren(a.stage, b.stage);
     rigs = [a, b].map(x => createRig(x.stage, x.s.bomb3d, x.s.faces, SLAB, { yaw: -18, pitch: -8, zoom: 1.25 }));
     rigs.forEach((r, i) => {                                // linked: turning or zooming one does the same to the other
-      r.onTurn = (yaw, pitch) => { if (settings.benchLink) rigs[1 - i].turnTo(yaw, pitch); };
-      r.onZoom = z => { if (settings.benchLink) rigs[1 - i].zoomTo(z); };
+      r.onTurn = (yaw, pitch) => { if (settings.linkViews) rigs[1 - i].turnTo(yaw, pitch); };
+      r.onZoom = z => { if (settings.linkViews) rigs[1 - i].zoomTo(z); };
     });
     say('Try it: the controls work as on a real bomb.');
     const man = h('div', { class: 'manual' });
@@ -4922,10 +4922,10 @@ function openExplorer() {
 
   const view = (yaw, pitch) => () => rigs.forEach(r => r.animateTo({ yaw, pitch, zoom: 1.25 }, 600));
   const linkBtn = h('button', { class: 'tbtn', type: 'button', title: 'When on, turning or zooming the front does the same to the rear plate, and the other way round' });
-  const paintLink = () => { linkBtn.textContent = 'Link views: ' + (settings.benchLink ? 'on' : 'off'); linkBtn.setAttribute('aria-pressed', String(settings.benchLink)); };
+  const paintLink = () => { linkBtn.textContent = 'Link views: ' + (settings.linkViews ? 'on' : 'off'); linkBtn.setAttribute('aria-pressed', String(settings.linkViews)); };
   linkBtn.addEventListener('click', () => {
-    settings.benchLink = !settings.benchLink; save(); paintLink();
-    if (settings.benchLink && rigs.length === 2) { const v = rigs[0].getView(); rigs[1].turnTo(v.yaw, v.pitch); rigs[1].zoomTo(v.zoom); }   // line the rear up with the front straight away
+    settings.linkViews = !settings.linkViews; save(); paintLink();
+    if (settings.linkViews && rigs.length === 2) { const v = rigs[0].getView(); rigs[1].turnTo(v.yaw, v.pitch); rigs[1].zoomTo(v.zoom); }   // line the rear up with the front straight away
   });
   paintLink();
   const tools = h('div', { class: 'bench-tools' },

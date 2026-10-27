@@ -185,9 +185,9 @@ test('module explorer: opened from the main screen, sorted, steady when selectin
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('zero-hour-settings-v1')).modules.wires);
   assert.deepEqual(saved, { off: true, rear: 'never' });
   assert.ok(await page.evaluate(() => [...document.querySelectorAll('.bench-item')].find(b => b.querySelector('.ttl').textContent === 'Wires').classList.contains('is-off')), 'a switched-off module is greyed out');
-  // linking the two views turns them together
+  // the two views are linked by default, so they turn together
   const yaws = () => page.evaluate(() => [...document.querySelectorAll('.bench-stage .bomb3d')].map(b => +/rotateY\((-?[\d.]+)deg/.exec(b.style.transform)[1]));
-  await clickText(page, '.bench-tools .tbtn', 'Link views: off'); await sleep(900);
+  assert.ok(await page.evaluate(() => [...document.querySelectorAll('.bench-tools .tbtn')].some(b => b.textContent === 'Link views: on')), 'views are linked by default');
   const stage = await page.evaluate(() => { const r = document.querySelector('.bench-stage').getBoundingClientRect(); return { x: r.x + 60, y: r.y + r.height - 40 }; });
   await page.mouse.move(stage.x, stage.y); await page.mouse.down(); await page.mouse.move(stage.x + 140, stage.y - 30, { steps: 10 }); await page.mouse.up(); await sleep(1800);
   const [a, b] = await yaws();
