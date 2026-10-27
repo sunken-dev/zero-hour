@@ -653,8 +653,11 @@ svg{display:block}
 .dipb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 18px;border:2px solid #2b3b45;border-radius:4px;color:#2b3b45;font-family:var(--mono)}
 .dipb small{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
 .dip-off{font-size:24px;letter-spacing:.06em;color:#0b141a}
-.sf{gap:8px}
-.sf-door{display:flex;align-items:center;justify-content:center;gap:16px}
+.sf{position:relative;width:206px;height:206px;margin:auto}
+.sf>.cb{--c:#3a4248;--top:linear-gradient(160deg,#8d9ca4,#5e6b73 55%,#4b5860)}
+.sf>.cb>.t{border-radius:6px;box-shadow:inset 0 1px 0 #ffffff40,inset 0 0 0 2px #0003}
+.sf-door{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 0 10px;transform-style:preserve-3d}
+.sf-bolt{position:absolute;width:0;height:0;transform-style:preserve-3d}
 .sf-dial{position:relative;width:128px;height:128px;transform-style:preserve-3d}
 .sf-dial>.cz{left:64px;top:64px;position:absolute}
 .sf-index{position:absolute;left:58px;top:-1px;width:0;height:0;border:6px solid transparent;border-top:9px solid #e5412d;transform:translateZ(3.2px)}
@@ -667,17 +670,17 @@ svg{display:block}
 .sf-hit{position:absolute;inset:0;display:flex;border-radius:50%;transform:translateZ(22px);cursor:grab}
 .sf-hit.turning{cursor:grabbing}
 .sf-ccw,.sf-cw{flex:1}
-.sf-lamps{display:flex;flex-direction:column;gap:9px}
-.sf-lamps>div{display:flex;align-items:center;gap:6px}
-.sf-lamps small{font:700 10px var(--mono);color:var(--ice);width:16px}
-.sf-handle{position:relative;width:150px;height:30px;margin:0 auto;cursor:pointer;transform-style:preserve-3d;transform-origin:50% 0;transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
-.sf-post{position:absolute;top:2px;width:14px;height:22px}
-.sf-post .cb{--c:#5e6b73;--top:linear-gradient(#c9d3d8,#8a969d)}
-.sf-bar{position:absolute;left:15px;top:14px;transform:translateZ(14px);transform-style:preserve-3d}
-.sf-handle:hover .sf-bar .fc{filter:brightness(1.15)}
-.sf-handle.pull{animation:safe-pull .5s ease-out}
-.sf-handle.open{animation:none;transform:rotateX(-40deg)}
-@keyframes safe-pull{30%{transform:rotateX(-28deg)}60%{transform:rotateX(4deg)}}
+.sf-bottom{display:flex;align-items:center;justify-content:space-between;width:176px;transform-style:preserve-3d}
+.sf-handle{position:relative;width:96px;height:44px;cursor:pointer;transform-style:preserve-3d}
+.sf-hub{position:absolute;left:22px;top:22px;width:0;height:0;transform-style:preserve-3d}
+.sf-lever{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transform:translateZ(8px) rotate(var(--rot,0deg));transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
+.sf-handle:hover .sf-lever .fc{filter:brightness(1.15)}
+.sf-handle.pull .sf-lever{animation:safe-turn .55s ease-out}
+.sf-handle.open .sf-lever{animation:none;--rot:80deg}
+@keyframes safe-turn{35%{transform:translateZ(8px) rotate(50deg)}70%{transform:translateZ(8px) rotate(-4deg)}}
+.sf-lamps{display:flex;gap:10px;padding:6px 8px;background:#14181b;border-radius:4px;box-shadow:inset 0 2px 5px #000a}
+.sf-lamps>div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sf-lamps small{font:700 9px var(--mono);color:#c9d3d8}
 .sf-plate3d{display:flex;justify-content:center}
 .sf-plate{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 18px;background:linear-gradient(#e4c77c,#b8954a);border:2px solid #6a5226;border-radius:3px;color:#3a2c12;font-family:var(--mono);box-shadow:0 3px 6px #0006}
 .sf-plate small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
@@ -3791,19 +3794,23 @@ Modules.register({
       },
       commit: () => { applied = 0; show(); } });
     dial.append(hit);
+    // the lever handle: a chrome hub on a dark escutcheon, with an arm that turns down when pulled
+    const lever = h('div', { class: 'sf-lever' }, lathe([[12, 4.4, '#c9d3d8'], [24, 3.6, '#d3dce1'], [16, 5.4, '#1b1f22', 'rib'], [3, 5.8, '#2b3136']], 16));
     const handle = h('div', { class: 'sf-handle' },
-      h('div', { class: 'sf-post', style: 'left:0' }, cuboid(14, '', 'fill')), h('div', { class: 'sf-post', style: 'right:0' }, cuboid(14, '', 'fill')),
-      h('div', { class: 'sf-bar' }, lathe([[120, 5, '#c9d3d8']], 16)));
+      h('div', { class: 'sf-hub' }, cylZ(19, 2.5, 32, { color: '#3a4248' }), cylZ(12, 7, 24, { z: 2.5, color: '#c9d3d8' }), cylZ(6, 3, 16, { z: 9.5, color: '#8d9ca4' }), lever));
     activate(handle, () => {
       if (ctl.isSolved()) return;
-      handle.classList.remove('pull'); void handle.offsetWidth; handle.classList.add('pull');
+      handle.classList.remove('pull'); void handle.offsetWidth; handle.classList.add('pull'); ctl.sfx.click();
       if (safeOpens(lock, safeCombo(ctl.bomb))) { lamps.forEach(l => l.classList.remove('off')); handle.classList.add('open'); ctl.solve(); return; }
       Object.assign(lock, { dir: 0, run: 0, entries: [] }); show();
       ctl.strike('Pulled the handle with the wrong combination.');
     }, 'Pull the handle');
-    root.append(h('div', { class: 'stack sf' },
-      h('div', { class: 'sf-door' }, dial, h('div', { class: 'sf-lamps' }, lamps.map((l, k) => h('div', {}, l, h('small', {}, ['I', 'II', 'III'][k]))))),
-      handle));
+    const bolt = (x, y) => h('div', { class: 'sf-bolt', style: `left:${x};top:${y}` }, cylZ(4, 2, 6, { color: '#aebcc4', hex: true }));
+    root.append(h('div', { class: 'sf' }, cuboid(4, h('div', { class: 'sf-door' },
+      bolt('9px', '9px'), bolt('calc(100% - 9px)', '9px'), bolt('9px', 'calc(100% - 9px)'), bolt('calc(100% - 9px)', 'calc(100% - 9px)'),
+      dial,
+      h('div', { class: 'sf-bottom' }, handle,
+        h('div', { class: 'sf-lamps' }, lamps.map((l, k) => h('div', {}, l, h('small', {}, ['I', 'II', 'III'][k])))))), 'fill')));
   },
   mountBack(root, s, ctl) {
     root.append(h('div', { class: 'sf-plate3d' }, h('div', { class: 'sf-plate' }, h('small', {}, 'Zero Hour Safe Co.'),
