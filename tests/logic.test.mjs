@@ -213,6 +213,10 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.equal(typeof s.backup, 'boolean', 'the backup window has its own reading');
         assert.equal(g.TOGGLE_RULES[3][1](bomb, s), s.fitted ? s.backup : bomb.coins.length > 0, 'switch 4 follows the window when it is fitted');
       }
+      if (def.id === 'simon') {
+        assert.ok([0, 1, 2].includes(s.channel), 'the speaker label has its own channel');
+        assert.equal(g.simonTable(s, bomb), s.fitted ? ['vowel', 'none', 'channelC'][s.channel] : bomb.serialVowel ? 'vowel' : 'none');
+      }
       if (def.id === 'dip') {
         assert.equal(s.fitted, seed % 2 === 0);
         assert.ok(Number.isInteger(s.offset) && s.offset >= 0 && s.offset <= 9, 'the plate has its own offset');
