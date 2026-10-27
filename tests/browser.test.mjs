@@ -327,7 +327,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       dp.remove();
       if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
       if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
-      if (sw.querySelector('.backup')?.textContent !== (bomb.coins.length ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
+      if (sw.querySelector('.backup')?.textContent !== (sw.state.backup ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
       if (br.querySelector('.trip')?.textContent !== String(br.state.coil)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
       [w, si, sw, br].forEach(e => e.remove());
     }
@@ -352,7 +352,7 @@ test('every module can be solved through its real controls, and a wrong answer i
         const fail = m => out.push(`seed ${seed} ${def.id}: ${m}`);
         try {
           if (def.id === 'switches') {
-            const want = s.lamps.map((on, k) => on !== T.TOGGLE_RULES[k][1](bomb));
+            const want = s.lamps.map((on, k) => on !== T.TOGGLE_RULES[k][1](bomb, s));
             [...root.querySelectorAll('.tg')].forEach((tg, k) => { if (tg.classList.contains('up') !== want[k]) click(tg); });
             click(root.querySelector('.go')); if (!solved) fail('not solved');
           } else if (def.id === 'memory') {

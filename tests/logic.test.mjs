@@ -209,6 +209,10 @@ test('every module can be made for many bombs, and the rules always give a real 
           assert.equal(g.breakerWantUp({ n, lamp }, s, bomb), ((Math.floor(n / 10) + n % 10) % 2 === 0) !== odd !== (lamp === 'red'));
         }
       }
+      if (def.id === 'switches') {
+        assert.equal(typeof s.backup, 'boolean', 'the backup window has its own reading');
+        assert.equal(g.TOGGLE_RULES[3][1](bomb, s), s.fitted ? s.backup : bomb.coins.length > 0, 'switch 4 follows the window when it is fitted');
+      }
       if (def.id === 'dip') {
         assert.equal(s.fitted, seed % 2 === 0);
         assert.ok(Number.isInteger(s.offset) && s.offset >= 0 && s.offset <= 9, 'the plate has its own offset');
