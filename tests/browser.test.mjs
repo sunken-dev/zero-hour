@@ -325,7 +325,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (dp.querySelector('.dip-off')?.textContent !== 'OFFSET ' + dp.state.offset) out.push(`${bomb.serial}: DIP offset ${dp.querySelector('.dip-off')?.textContent}`);
       dp.remove();
       if (w.querySelector('.plug-lbl')?.textContent !== (w.state.reversed ? 'REVERSED' : 'NORMAL')) out.push(`${bomb.serial}: wires plug ${w.querySelector('.plug-lbl')?.textContent}`);
-      if (si.querySelector('.cone-lbl')?.textContent !== 'CH ' + 'ABC'[si.state.channel]) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
+      if (si.querySelector('.cone-lbl')?.textContent !== 'ABC'[si.state.channel]) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (sw.state.backup ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
       if (br.querySelector('.trip')?.textContent !== String(br.state.coil)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
       const gl = rear('glyphs', bomb);
