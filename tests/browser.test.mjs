@@ -218,7 +218,7 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
       },
       breaker(root, s, back, bomb) {
         const n = +root.querySelector('.mini-lcd').textContent, lamp = root.querySelector('.led').style.getPropertyValue('--lc').includes('ff3b5c') ? 'red' : 'green';
-        bomb.lever.up = T.breakerWantUp({ n, lamp }, bomb); root.querySelector('.go').click();
+        bomb.lever.up = T.breakerWantUp({ n, lamp }, s, bomb); root.querySelector('.go').click();
       },
       knob(root, s) {
         const lit = [...root.querySelectorAll('.pat .led')].map(l => l.classList.contains('off') ? '0' : '1').join('');
@@ -231,7 +231,7 @@ test('needy modules wake with a countdown, sleep once handled, strike when it ru
     for (const def of T.Modules.list.filter(d => d.needy)) {
       for (let seed = 1; seed <= 3; seed++) {
         const r = T.rng(seed), bomb = T.makeBomb(r, 300000); T.ensureNeeds(bomb, [def], r);
-        const s = def.create(bomb, r), root = document.createElement('div'), back = document.createElement('div'); document.body.append(root, back);
+        const s = def.create(bomb, r, seed % 2 === 1), root = document.createElement('div'), back = document.createElement('div'); document.body.append(root, back);
         let strikes = 0;
         const ctl = { bomb, sfx: T.sfx, timeScale: .02, isSolved: () => false, timeText: () => '04:12', solve() { out.push(def.id + ': a needy module called solve'); }, strike() { strikes++; } };
         const stop = def.mount(root, s, ctl), stopBack = def.mountBack ? def.mountBack(back, s, ctl) : null;
@@ -328,7 +328,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
       if (si.querySelector('.cone-lbl')?.textContent !== (vowels || '—')) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (bomb.coins.length ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
-      if (br.querySelector('.trip')?.textContent !== String(last)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
+      if (br.querySelector('.trip')?.textContent !== String(br.state.coil)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
       [w, si, sw, br].forEach(e => e.remove());
     }
     return out;

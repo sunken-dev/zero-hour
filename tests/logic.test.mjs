@@ -202,6 +202,13 @@ test('every module can be made for many bombs, and the rules always give a real 
         const man = start.reduce((d, n, i) => n ? d + Math.abs(i % 3 - want.indexOf(n) % 3) + Math.abs((i / 3 | 0) - (want.indexOf(n) / 3 | 0)) : d, 0);
         assert.ok(man >= 12, `at least 12 moves from the target (Manhattan ${man})`);
       }
+      if (def.id === 'breaker') {
+        assert.ok(Number.isInteger(s.coil) && s.coil >= 0 && s.coil <= 9, 'the rating plate has its own trip coil number');
+        for (const n of [10, 23, 47, 99]) for (const lamp of ['red', 'green']) {
+          const odd = s.fitted ? s.coil % 2 === 1 : bomb.serialOdd;
+          assert.equal(g.breakerWantUp({ n, lamp }, s, bomb), ((Math.floor(n / 10) + n % 10) % 2 === 0) !== odd !== (lamp === 'red'));
+        }
+      }
       if (def.id === 'dip') {
         assert.equal(s.fitted, seed % 2 === 0);
         assert.ok(Number.isInteger(s.offset) && s.offset >= 0 && s.offset <= 9, 'the plate has its own offset');
