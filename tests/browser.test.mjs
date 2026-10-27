@@ -325,7 +325,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       const dp = rear('dip', bomb);
       if (dp.querySelector('.dip-off')?.textContent !== 'OFFSET ' + dp.state.offset) out.push(`${bomb.serial}: DIP offset ${dp.querySelector('.dip-off')?.textContent}`);
       dp.remove();
-      if (w.querySelectorAll('.plug .pin').length !== last) out.push(`${bomb.serial}: wires plug has ${w.querySelectorAll('.plug .pin').length} pins`);
+      if (w.querySelector('.plug-lbl')?.textContent !== (w.state.reversed ? 'REVERSED' : 'NORMAL')) out.push(`${bomb.serial}: wires plug ${w.querySelector('.plug-lbl')?.textContent}`);
       if (si.querySelector('.cone-lbl')?.textContent !== 'CH ' + 'ABC'[si.state.channel]) out.push(`${bomb.serial}: simon label ${si.querySelector('.cone-lbl')?.textContent}`);
       if (sw.querySelector('.backup')?.textContent !== (sw.state.backup ? 'BACKUP FITTED' : 'BACKUP EMPTY')) out.push(`${bomb.serial}: switches backup ${sw.querySelector('.backup')?.textContent}`);
       if (br.querySelector('.trip')?.textContent !== String(br.state.coil)) out.push(`${bomb.serial}: breaker trip ${br.querySelector('.trip')?.textContent}`);
@@ -524,7 +524,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             const labels = [...back.querySelectorAll('.fuse-lbl')].map(e => e.textContent).reverse();
             if (labels.join() !== s.circuits.join()) fail('rear labels ' + labels.join() + ' vs ' + s.circuits.join());
           } else if (def.id === 'wires') {
-            const w = [...root.querySelectorAll('.wire')], ans = T.wireAnswer(s.wires, bomb);
+            const w = [...root.querySelectorAll('.wire')], ans = T.wireAnswer(s.wires, bomb, s);
             click(w[(ans + 1) % w.length]); if (strikes !== 1) fail('wrong wire did not strike');
             click(w[ans]); if (!solved) fail('wires not solved');
           } else if (!['button', 'glyphs', 'password', 'simon'].includes(def.id)) fail('no solver in this test');

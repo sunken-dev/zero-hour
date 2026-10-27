@@ -125,7 +125,11 @@ test('every module can be made for many bombs, and the rules always give a real 
       g.ensureNeeds(bomb, [def], r);
       const s = def.create(bomb, r, seed % 2 === 0);                // the rear plate fitted on every other bomb
       if (def.id === 'wires') {
-        const a = g.wireAnswer(s.wires, bomb);
+        assert.equal(typeof s.reversed, 'boolean', 'the harness plug has its own stamp');
+        const flip = s.fitted && s.reversed, top = flip ? [...s.wires].reverse() : [...s.wires];
+        const plain = g.wireAnswer(top, bomb), want = flip ? s.wires.length - 1 - plain : plain;
+        assert.equal(g.wireAnswer(s.wires, bomb, s), want, 'a REVERSED plug counts the wires from the bottom');
+        const a = g.wireAnswer(s.wires, bomb, s);
         assert.ok(a >= 0 && a < s.wires.length, `wire answer ${a} of ${s.wires.length}`);
       }
       if (def.id === 'password') {
