@@ -6,8 +6,8 @@ const g = loadGame();
 const isPlate = k => k === 'serial' || k === 'plate';
 
 // Everything the game builds for a seed, as plain data.
-function world(seed, vw = 1360, count = 6, difficulty = 'medium') {
-  const r = g.rng(seed), bomb = g.makeBomb(r, 300000), L = g.layoutFor(vw, count);
+function world(seed, count = 6, difficulty = 'medium') {
+  const r = g.rng(seed), bomb = g.makeBomb(r, 300000), L = g.layoutFor(count);
   const defs = g.pickModules(r, Math.min(count, L.cols * L.rows), difficulty);
   g.ensureNeeds(bomb, defs, r);
   const plan = g.planCase(r, bomb, L, defs.length);
@@ -401,15 +401,12 @@ test('a bomb with Semaphore has three different letters in its serial number; th
   }
 });
 
-test('up to nine modules: a third row of bays only for 7 to 9, and every module gets a bay', () => {
+test('case sizes: 2x2 bays up to 4 modules, 2 rows of 3 up to 6, 3x3 up to 9, nothing else; every module gets a bay', () => {
   for (let count = 2; count <= 9; count++) {
-    const L = g.layoutFor(1360, count);
-    assert.equal(L.rows, count > 6 ? 3 : 2, `${count} modules: ${L.rows} rows`);
-    assert.ok(L.cols * L.rows >= count);
-    const narrow = g.layoutFor(600, count);
-    assert.ok(narrow.cols * narrow.rows >= count, `narrow, ${count} modules`);
+    const L = g.layoutFor(count);
+    assert.deepEqual([L.rows, L.cols], count <= 4 ? [2, 2] : count <= 6 ? [2, 3] : [3, 3], `${count} modules`);
     for (let seed = 1; seed <= 200; seed++) {
-      const w = world(seed, 1360, count);
+      const w = world(seed, count);
       assert.equal(w.defs.length, count, `seed ${seed}: ${w.defs.length} of ${count} modules dealt`);
       assert.equal(new Set(w.plan.bays.map(b => b.i)).size, count, 'each module in its own bay');
     }
@@ -423,10 +420,26 @@ test('semaphore: 26 letters, each with its own pair of arm positions', () => {
   for (const k of keys) for (const a of g.SEMAPHORE[k]) assert.ok(a % 45 === 0 && a >= 0 && a < 360);
 });
 
+test('every case size has room for the most a bomb can carry, with only plates on the bottom', () => {
+  for (const count of [2, 4, 5, 6, 7, 9]) {
+    const L = g.layoutFor(count);
+    for (let seed = 1; seed <= 300; seed++) {
+      const r = g.rng(seed), bomb = g.makeBomb(r, 300000);
+      Object.assign(bomb, { batteries: 4, lever: { up: true }, indicators: ['CAR', 'FRK', 'SND'].map(label => ({ label, lit: true })) });
+      bomb.coins = [bomb.coins[0] || { model: 'CR2032', volts: 3, d: 72, t: 11.5 }, { model: 'LR44', volts: 1.5, d: 44, t: 19.5 }];
+      bomb.encoders = ['A', 'B', 'C'].map((label, i) => ({ label, cap: 'red', value: i }));
+      const plan = g.planCase(r, bomb, L, count);
+      assert.equal(plan.widgets.filter(w => !isPlate(w.kind)).length, 2 + 3 + 2 + 3 + 1, `${count} modules, seed ${seed}: every part placed`);
+      assert.ok(plan.widgets.every(w => w.at && (w.at.face !== 'bottom' || isPlate(w.kind))), `${count} modules, seed ${seed}: only plates on the bottom`);
+      assert.ok(plan.widgets.some(w => w.kind === 'serial'), 'the serial plate is placed');
+    }
+  }
+});
+
 test('placement: modules in the front bays, bottom carries plates only, tall lever on a side panel, nothing overlaps', () => {
-  for (const vw of [1360, 600]) {
+  for (const modules of [3, 6, 9]) {
     for (let seed = 1; seed <= 1500; seed++) {
-      const { bomb, L, plan } = world(seed, vw);
+      const { bomb, L, plan } = world(seed, modules);
       const used = new Set(), count = k => plan.widgets.filter(w => w.kind === k).length;
       for (const w of plan.widgets) {
         assert.ok(w.at, 'every widget has a place');
