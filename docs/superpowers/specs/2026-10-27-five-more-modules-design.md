@@ -64,7 +64,8 @@ is needy. Every one has an optional rear plate that repeats a clue found elsewhe
 
 ### Tiles (hard)
 
-- Front: a 3x3 tray of eight numbered tiles and a gap. Clicking a tile next to the gap slides it in. A Check button.
+- Front: a 3x3 tray of eight tiles and a gap. The tiles carry symbols, not numbers: circle, square, triangle, star,
+  cross, diamond, moon and hexagon; the manual draws the targets with the same symbols. Clicking a tile next to the gap slides it in. A Check button.
 - Ten target arrangements, one per last digit of the serial number, in the manual. The tiles start a scramble that can
   be solved (made by moving backwards from the target), at least 12 moves away. Check with the target: solved; Check
   with anything else: a strike.

@@ -471,6 +471,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             const tiles = () => [...root.querySelectorAll('.tl-tile')], order = () => { const o = Array(9).fill(0); tiles().forEach(t => { o[+t.dataset.at] = +t.dataset.n; }); return o; };
             const want = T.tilesTarget(bomb).join();
             if (order().join() !== [...s.start].join()) fail('the tray does not show the scramble');
+            if (!tiles().every(t => t.querySelector('svg') && !/\d/.test(t.textContent))) fail('the tiles show digits instead of symbols');
             const far = tiles().find(t => { const a = +t.dataset.at, gp = order().indexOf(0); return Math.abs(a % 3 - gp % 3) + Math.abs((a / 3 | 0) - (gp / 3 | 0)) > 1; });
             const before = order().join(); click(far); if (order().join() !== before) fail('a tile away from the gap moved');
             click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('checking the scramble did not strike');

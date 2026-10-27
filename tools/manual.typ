@@ -113,7 +113,7 @@
     // the logo is drawn for the dark screen: its pale zero becomes navy on paper, as in the print stylesheet
     return image(bytes(n.svg.replace("#d6eef3", navy.to-hex())), format: "svg", width: 90pt)
   }
-  if t == "svg" and n.svg.contains("class=\"tile-grid\"") { return svg-image(n, 44pt, deep) }
+  if t == "svg" and n.svg.contains("class=\"tile-grid\"") { return svg-image(n, 58pt, deep) }
   if t == "svg" { panic("manual.typ only knows the logo, the glyph columns, the gate symbols, the tile grids and schematic figures as images") }
   if has-class(n, "no-print") or t == "nav" { return none }
   let kids = n.k

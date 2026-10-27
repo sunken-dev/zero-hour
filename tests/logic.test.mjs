@@ -338,10 +338,13 @@ test('safe: numbers are entered where the dial changes direction; a full turn cl
   assert.ok(!g.safeOpens(lock, [12, 38, 38]), 'the third number is entered clockwise');
 });
 
-test('tiles: ten different targets, each eight tiles and a gap', () => {
+test('tiles: ten different targets, each eight tiles and a gap, and eight symbols for the tiles', () => {
   assert.equal(g.TILE_TARGETS.length, 10);
   assert.equal(new Set(g.TILE_TARGETS.map(t => t.join())).size, 10);
   for (const t of g.TILE_TARGETS) assert.deepEqual([...t].sort(), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.equal(g.TILE_GLYPHS.length, 8, 'one symbol per tile');
+  assert.equal(new Set(g.TILE_GLYPHS.map(x => x.name)).size, 8, 'eight different names to say out loud');
+  assert.equal(new Set(g.TILE_GLYPHS.map(x => x.svg)).size, 8, 'eight different shapes');
 });
 
 test('a bomb with Semaphore has three different letters in its serial number; the digits stay', () => {
