@@ -170,8 +170,10 @@ test('every module can be made for many bombs, and the rules always give a real 
         assert.equal(new Set(s.seq).size, 4, 'four different signals, so how often one repeats gives nothing away');
       }
       if (def.id === 'meter') {
-        const v = [...s.volts], target = bomb.coinVolts || bomb.batteries * 1.5 || 12;
-        assert.equal(g.meterTarget(bomb), target);
+        assert.ok([-1.5, 0, 1.5].includes(s.offset), 'the supply label has its own offset');
+        const v = [...s.volts], target = (bomb.coinVolts || bomb.batteries * 1.5 || 12) + (s.fitted ? s.offset : 0);
+        assert.equal(g.meterTarget(s, bomb), target);
+        assert.ok(target >= 1.5 && target <= 12, `the target ${target} V is on the meter`);
         assert.equal(v.length, 6); assert.equal(new Set(v).size, 6);
         assert.ok(v.every(x => x >= 0 && x <= 12 && Number.isInteger(x * 2)), 'every jack sits on the half-volt grid from 0 to 12 V');
         const pairs = [];

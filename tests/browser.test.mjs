@@ -314,7 +314,7 @@ test('rear plates show what their module needs', T, () => withPage(pathToFileURL
       if (sm.querySelector('.cs-letters')?.textContent !== letters) out.push(`${bomb.serial}: call sign ${sm.querySelector('.cs-letters')?.textContent}`);
       sm.remove();
       const mt = rear('meter', bomb);
-      if (mt.querySelector('.pw-cells')?.textContent !== String(bomb.batteries) || mt.querySelector('.pw-coin')?.textContent !== bomb.coinVolts.toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-cells')?.textContent}/${mt.querySelector('.pw-coin')?.textContent}`);
+      if (mt.querySelector('.pw-off')?.textContent !== (mt.state.offset > 0 ? '+' : mt.state.offset < 0 ? '\u2212' : '') + Math.abs(mt.state.offset).toFixed(1) + ' V') out.push(`${bomb.serial}: meter label ${mt.querySelector('.pw-off')?.textContent}`);
       mt.remove();
       const sf = rear('safe', bomb);
       if (sf.querySelector('.sf-order')?.textContent !== 'DIAL ' + sf.state.order) out.push(`${bomb.serial}: safe plate ${sf.querySelector('.sf-order')?.textContent}`);
@@ -444,7 +444,7 @@ test('every module can be solved through its real controls, and a wrong answer i
             if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== Math.abs(s.volts[a] - s.volts[b])) fail('the needle does not show the voltage between the probes');
             click(root.querySelector('.go')); if (strikes !== 1 || solved) fail('patching the wrong pair did not strike');
             click(ports[want[0]]); click(ports[want[1]]);
-            if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== T.meterTarget(bomb)) fail('the right pair does not read the target');
+            if (+root.querySelector('.mt-needle').style.getPropertyValue('--v') !== T.meterTarget(s, bomb)) fail('the right pair does not read the target');
             click(root.querySelector('.go')); if (!solved) fail('multimeter not solved');
             if (!root.querySelector('.mt-cable')) fail('no cable patched after solving');
             click(ports[a]); click(root.querySelector('.go')); if (strikes !== 1) fail('a click after solving struck');
