@@ -438,13 +438,12 @@ svg{display:block}
 .gy-index{position:absolute;left:-1.5px;top:-44px;width:3px;height:16px;border-radius:2px;background:var(--amber);box-shadow:0 0 6px #ffb224aa;transform:translateZ(22px)}
 @keyframes gy-spin{to{transform:translateZ(13.2px) rotateZ(360deg)}}
 @media(prefers-reduced-motion:reduce){.gy-rotor{animation:none}}
-.cph-enc{height:36px;font-size:24px;letter-spacing:.32em;padding-left:.3em}
+.mini-lcd.cph-enc{height:36px;font-size:24px;letter-spacing:.32em;padding-left:.3em}
 .wheels{display:flex;justify-content:space-between;gap:4px}
 .wheel{display:flex;flex-direction:column;align-items:center;gap:4px;width:36px}
-.wheel .sk{width:100%;height:24px}
+.wheel .sk{width:100%;height:20px}
 .wheel svg{width:12px;height:12px}
 .rotor3d{display:flex;flex-direction:column;align-items:center;gap:12px}
-.rotor3d small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .rotors{display:flex;gap:6px}
 .rotor{width:30px;height:46px;display:grid;place-items:center;font:700 22px var(--mono);color:#0b141a;background:repeating-linear-gradient(#cfdadf 0 3px,#a9b8c0 3px 5px);border:2px solid #2b3b45;border-radius:4px}
 .resm{gap:8px}
@@ -541,7 +540,7 @@ svg{display:block}
 .g-tooth .cb{--c:#8d9ca4;--top:#b8c4cb}
 .g-bore{position:absolute;border-radius:50%;background:radial-gradient(circle,#05090b 55%,#3a464d);transform:translateZ(7.6px)}
 .g-rope{position:absolute;border-radius:50%;background:repeating-radial-gradient(circle,#c9a36a 0 1.5px,#7a5426 1.5px 3px);transform:translateZ(22.6px)}
-.train-lbl{position:absolute;top:116px;transform:translateX(-50%);font:600 11px var(--mono);color:#2b3b45}
+.train-lbl{position:absolute;top:116px;translate:-50% 0}
 .jp .hdr{position:relative;width:22px;height:52px}
 .jp .hdr>.cb{--c:#14181b;--top:linear-gradient(90deg,#1c2226,#2b3338 50%,#1c2226)}
 .jp .pin{position:absolute;left:8px;width:6px;height:6px;transform:translateZ(4px)}
@@ -579,9 +578,9 @@ svg{display:block}
 .mt-zero{position:relative;width:0;height:0;transform-style:preserve-3d;margin-right:4px}
 .mt-zero>i{position:absolute;left:-3.5px;top:-.6px;width:7px;height:1.2px;background:#2b3438;transform:translateZ(1.6px) rotate(35deg)}
 .mt-glass{position:absolute;inset:0;transform:translateZ(9px);pointer-events:none;border-radius:4px 4px 2px 2px;background:linear-gradient(115deg,#ffffff00 30%,#ffffff40 38%,#ffffff10 46%,#ffffff00 52%,#ffffff00 70%,#ffffff22 76%,#ffffff00 82%);box-shadow:inset 0 0 0 1px #ffffff26}
-.mt-row{position:relative;display:flex;justify-content:space-around;padding:12px 2px 0;transform-style:preserve-3d}
+.mt-row{position:relative;display:flex;justify-content:space-around;padding:4px 2px 0;transform-style:preserve-3d}
 .mt-port{display:flex;flex-direction:column;align-items:center;gap:15px;width:30px;cursor:pointer;transform-style:preserve-3d}
-.mt-port small{font:700 11px var(--mono);color:var(--ice)}
+.mt-port small{margin-top:8px;font:700 11px var(--mono);color:var(--ice)}
 .mt-port:hover small{color:var(--cyan)}
 .mt-jack{position:relative;width:0;height:0;top:9px;transform-style:preserve-3d}
 .mt-hole{position:absolute;left:-2.6px;top:-2.6px;width:5.2px;height:5.2px;border-radius:50%;background:radial-gradient(#000 40%,#3a4248);transform:translateZ(10.6px)}
@@ -642,7 +641,7 @@ svg{display:block}
 .sf>.cb>.t{border-radius:6px;box-shadow:inset 0 1px 0 #ffffff40,inset 0 0 0 2px #0003}
 .sf-door{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 0 10px;transform-style:preserve-3d}
 .sf-bolt{position:absolute;width:0;height:0;transform-style:preserve-3d}
-.sf-dial{position:relative;width:128px;height:128px;margin:-7px 0;transform-style:preserve-3d;transform:scale(.88)}
+.sf-dial{position:relative;top:5px;width:128px;height:128px;margin:-7px 0;transform-style:preserve-3d;transform:scale(.88)}
 .sf-dial>.cz{left:64px;top:64px;position:absolute}
 .sf-index{position:absolute;left:58px;top:-1px;width:0;height:0;border:6px solid transparent;border-top:9px solid #e5412d;transform:translateZ(3.2px)}
 .sf-wheel{position:absolute;left:64px;top:64px;width:0;height:0;transform-style:preserve-3d;transform:rotate(var(--ang));transition:transform .12s ease-out}
@@ -679,7 +678,6 @@ svg{display:block}
 .tl-tile:hover .cb{--top:linear-gradient(150deg,#fffaf0,#e8dfc5)}
 .tl-plate3d{display:flex;justify-content:center}
 .plug3d,.speaker3d,.backup3d{display:flex;flex-direction:column;align-items:center;gap:10px}
-.plug3d small,.speaker3d small,.backup3d small,.trip-row small{font-size:12px;letter-spacing:.08em;color:#2b3b45}
 .speaker{position:relative;width:150px;height:150px}
 .spk{position:absolute;left:75px;top:75px;width:0;height:0}
 .spk-grille{position:absolute;left:-62px;top:-62px;width:124px;height:124px;border-radius:50%;transform:translateZ(5.2px);
@@ -833,21 +831,23 @@ svg{display:block}
 .np span{font-size:9px;letter-spacing:.08em;color:#9fb0b9}
 .np-s{position:absolute;top:4px;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e9eef0,#5e6b73)}
 .np-s.l{left:5px}.np-s.r{right:5px}
+.np-sm{display:inline-block;padding:3px 9px;background:linear-gradient(#2c353b,#1b2227);border:1px solid #0b0f12;border-radius:2px;font:600 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#d3dce1;box-shadow:0 1px 2px #0006,inset 0 1px 0 #ffffff1f;transform:translateZ(1px)}
 .np .gyro-lbl,.np .relief{font-size:16px}
-.plug{position:relative;width:170px;height:72px;margin-bottom:34px;transform-style:preserve-3d}
+.plug{position:relative;width:170px;height:72px;transform-style:preserve-3d}
 .plug>.cb{--c:#0b0f12;--top:linear-gradient(#262d32,#14191c)}
 .plug>.cb>.t{border-radius:6px 6px 14px 14px;box-shadow:inset 0 1px 0 #ffffff1a}
 .pin3d{position:absolute;width:0;height:0;transform-style:preserve-3d}
-.loom3d{position:absolute;top:72px;width:34px;height:0;transform:rotateZ(90deg);transform-origin:0 0;--c:#1b1f22}
 .fusemap{position:relative;width:200px;height:92px;transform-style:preserve-3d}
 .fusemap>.cb{--c:#0b0f12;--top:linear-gradient(#262d32,#14191c)}
 .fusemap>.cb>.t{display:flex;justify-content:space-around;align-items:flex-end;padding:0 4px 8px;border-radius:4px;box-shadow:inset 0 1px 0 #ffffff1a;transform-style:preserve-3d}
 .fusemap .term{position:relative;width:36px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transform-style:preserve-3d}
-.term-wire{position:absolute;left:18px;top:-26px;width:44px;height:0;transform:rotateZ(90deg);transform-origin:0 0;--c:#b8402c}
+.tw3{position:absolute;width:0;height:0;transform-style:preserve-3d;transform-origin:0 0;--c:#b8402c}
+.term-socket{position:absolute;left:12px;top:-30px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,#0b1216 30%,#c9a36a 36%,#7a5a26);transform:translateZ(-7.7px)}   /* like the resistors' wire sockets, a size up */
 .term-clamp{position:absolute;left:8px;top:22px;width:20px;height:22px}
 .term-clamp .cb{--c:#5e6b73;--top:linear-gradient(#c9d3d8,#8d9ca4)}
 .term-screw{position:absolute;left:18px;top:33px;width:0;height:0;transform-style:preserve-3d}
-.term-screw>i{position:absolute;left:-4px;top:-.6px;width:8px;height:1.2px;background:#2b3438;transform:translateZ(8.2px) rotate(40deg)}
+.term-screw>i{position:absolute;left:-3.5px;top:-.7px;width:7px;height:1.4px;background:#2b3438;transform:translateZ(8.2px) rotate(45deg)}
+.term-screw>i.x{transform:translateZ(8.2px) rotate(-45deg)}
 .fusemap b{font:700 10px var(--mono);color:#e9eef0;letter-spacing:.02em}
 .m-ring{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transform:translateZ(4.5px)}
 .arch{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
@@ -869,7 +869,7 @@ svg{display:block}
 @keyframes tw-dn{from{transform:translateY(7px)}}
 .pw .tw{height:62px}
 .pw .tw-drum>b{font-size:26px;height:30px;margin-top:-15px}
-.wheel .tw{width:100%;height:48px}
+.wheel .tw{width:100%;height:42px}
 .digit .tw{width:100%;height:50px}
 /* simon: black housing, domed sheen over the pads, a raised centre cap carrying the stage dots */
 .simon-base,.simon-cap{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
@@ -2101,10 +2101,9 @@ Modules.register({
     root.append(box);
   },
   mountBack(root, s, ctl) {
-    // the harness plug: a moulded housing with ten brass pins, the loom of three cables running out of its bottom
+    // the harness plug: a moulded housing with ten brass pins
     const pins = Array.from({ length: 10 }, (_, k) => h('div', { class: 'pin3d', style: `left:${33 + (k % 5) * 26}px;top:${23 + Math.floor(k / 5) * 26}px` }, cylZ(7, 6, 14, { color: '#d9a640' })));
-    const loom = [0, 1, 2].map(k => h('div', { class: 'loom3d', style: `left:${58 + k * 18}px` }, tube(5, 10, 6)));
-    root.append(h('div', { class: 'plug3d' }, h('div', { class: 'plug' }, cuboid(10, pins, 'fill'), loom),
+    root.append(h('div', { class: 'plug3d' }, h('div', { class: 'plug' }, cuboid(10, pins, 'fill')),
       namePlate('harness', s.reversed ? 'REVERSED' : 'NORMAL', 'plug-lbl')));
   },
   manual() {
@@ -2489,7 +2488,7 @@ Modules.register({
     root.append(cols, go);
   },
   mountBack(root, s, ctl) {
-    root.append(h('div', { class: 'backup3d' }, h('small', {}, 'memory backup'),
+    root.append(h('div', { class: 'backup3d' }, h('small', { class: 'np-sm' }, 'memory backup'),
       h('div', { class: 'backup-win' + (s.backup ? ' fitted' : '') }, h('b', { class: 'backup' }, s.backup ? 'BACKUP FITTED' : 'BACKUP EMPTY')),
       h('div', { class: 'hazard sm' })));
   },
@@ -2546,9 +2545,9 @@ Modules.register({
       if (ctl.isSolved()) return;
       MORSE_CHANNELS[ci] === s.word[1] ? ctl.solve() : ctl.strike(`Transmitted on ${MORSE_CHANNELS[ci]} MHz.`);
     }, 'Transmit');
-    // the lamp in a chrome bezel; two wire hoops arch over it, crossing above the lens, on a ring round its foot
+    // the lamp in a chrome bezel; four wire hoops arch over it, crossing above the lens, on a ring round its foot
     const cage = h('div', { class: 'm-cage' }, cylZ(30, 4, 36, { color: '#aebcc4' }), h('div', { class: 'm-bulb' }, lamp),
-      h('div', { class: 'm-ring' }, torus(26, 1.3, 28, '#c9d3d8', 6)), arch3d(26, 1.1, 12, '#d3dce1', 45), arch3d(26, 1.1, 12, '#d3dce1', 135));
+      h('div', { class: 'm-ring' }, torus(26, 1.3, 28, '#c9d3d8', 6)), [0, 45, 90, 135].map(a => arch3d(26, 1, 12, '#d3dce1', a)));
     root.append(h('div', { class: 'morse' }, h('div', { class: 'lampwrap' }, cage), h('div', { class: 'freqrow' }, left, lcd, right), tx));
     return () => { dead = true; clearTimeout(timer); };
   },
@@ -2806,13 +2805,19 @@ Modules.register({
     root.append(row);
   },
   mountBack(root, s) {
+    // each wire leaves its socket in the plate, bends over and runs down the block to end under its terminal's Phillips screw
+    const W = 2.6, seg = (len, css) => { const t = tube(W, 10, 0); t.style.cssText += `;position:absolute;left:0;top:${-W}px;width:${len}px`; return h('div', { class: 'tw3', style: css }, t); };
+    const elbow = () => h('div', { class: 'tw3', style: 'left:18px;top:-19px;transform:translateZ(-2px) rotateY(90deg)' },
+      [0, 1, 2, 3].map(k => { const t = tube(W, 10, 0); t.style.cssText += `;position:absolute;left:-1.3px;top:${-W}px;width:2.6px`; return h('div', { class: 'tw3', style: `transform:rotateZ(${-78.75 + k * 22.5}deg) translateY(-5px)` }, t); }));
     const term = c => h('div', { class: 'term' },
-      h('div', { class: 'term-wire' }, tube(3.2, 10, 3)),
+      h('i', { class: 'term-socket' }),
+      seg(6, 'left:18px;top:-24px;transform:translateZ(-8px) rotateY(-90deg)'), elbow(),
+      seg(52, 'left:18px;top:-19px;transform:translateZ(3px) rotateZ(90deg)'),
       h('div', { class: 'term-clamp' }, cuboid(5, '', 'fill')),
-      h('div', { class: 'term-screw' }, cylZ(6.5, 3, 16, { z: 5, color: '#c9d3d8' }), h('i')),
+      h('div', { class: 'term-screw' }, cylZ(6, 3, 16, { z: 5, color: '#c9d3d8' }), h('i'), h('i', { class: 'x' })),
       h('b', { class: 'fuse-lbl' }, c));
     root.append(h('div', { class: 'fusemap3d' },
-      h('div', { class: 'fusemap' }, cuboid(8, s.circuits.slice().reverse().map(term), 'fill')), h('small', {}, 'wiring')));
+      h('div', { class: 'fusemap' }, cuboid(8, s.circuits.slice().reverse().map(term), 'fill')), namePlate('fuse block', 'WIRING')));
   },
   manual() {
     return `<p>Five fuses sit side by side. Pull exactly one: the one that feeds the circuit named by the first rule that applies. A wrong fuse is a strike.</p>
@@ -2864,7 +2869,7 @@ function gearTrain3d(s) {
     }
     el.append(h('div', { class: 'gear' + (s.dots.includes(k) ? ' dot' : ''), 'data-r': String(r), style: `left:${x0 + shift}px;top:${70 + (k % 2 ? 9 : 0)}px` }, g));
   });
-  el.append(h('b', { class: 'train-lbl', style: `left:${xs[0] + shift}px` }, 'crank'), h('b', { class: 'train-lbl', style: `left:${xs[xs.length - 1] + shift}px` }, 'drum'));
+  el.append(h('b', { class: 'train-lbl np-sm', style: `left:${xs[0] + shift}px` }, 'crank'), h('b', { class: 'train-lbl np-sm', style: `left:${xs[xs.length - 1] + shift}px` }, 'drum'));
   return el;
 }
 
@@ -3337,7 +3342,7 @@ Modules.register({
     root.append(h('div', { class: 'stack cph' }, h('div', { class: 'mini-lcd cph-enc' }, s.enc), h('div', { class: 'wheels' }, wheels), submit));
   },
   mountBack(root, s) {
-    root.append(h('div', { class: 'rotor3d' }, h('small', {}, 'rotors'),
+    root.append(h('div', { class: 'rotor3d' }, h('small', { class: 'np-sm' }, 'rotors'),
       h('div', { class: 'rotors' }, s.shifts.slice().reverse().map(d => h('b', { class: 'rotor' }, String(d))))));
   },
   manual() {
