@@ -130,12 +130,7 @@
     )
     counter(page).update(1)
     outline(title: [Contents], depth: 2, indent: 1.6em)
-    let sections = kids.filter(k => is-el(k, "section"))
-    sections.filter(k => not has-class(k, "appendix")).map(render).join()
-    // appendices are lettered: A, A.1, ...
-    counter(heading).update(0)
-    set heading(numbering: "A.1", supplement: [Appendix])
-    sections.filter(k => has-class(k, "appendix")).map(render).join()
+    kids.filter(k => is-el(k, "section")).map(render).join()
   }
   else if t == "div" and has-class(n, "gcols") {
     block(breakable: false, grid(columns: (1fr,) * 4, column-gutter: 6pt, ..kids.map(render)))

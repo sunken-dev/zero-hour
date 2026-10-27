@@ -467,7 +467,7 @@ test('seeds: numbers are used as they are, words are hashed, case and spaces do 
   assert.ok(n >= 100000 && n <= 999999);
 });
 
-test('the manual: Bomb basics is the appendix, with its schematics, no duplicate entries and no leftovers of removed parts', () => {
+test('the manual: Bomb basics comes first, with its schematics, no duplicate entries and no leftovers of removed parts', () => {
   const html = g.manualHTML();
   const basics = html.slice(html.indexOf('id="man-basics"'), html.indexOf('</section>', html.indexOf('id="man-basics"')));
   const names = [...basics.matchAll(/<li><b>([^<]+)<\/b>/g)].map(m => m[1]);
@@ -475,7 +475,8 @@ test('the manual: Bomb basics is the appendix, with its schematics, no duplicate
   for (const want of ['Rotate the case.', 'Serial number.', 'Batteries.', 'Coin cells.', 'Indicators.', 'Rotary encoders.', 'Knife switch.', 'Rear plates.', 'Strikes.', 'Modules.']) assert.ok(names.includes(want), 'missing: ' + want);
   assert.ok(!/half-circle|colored knob/.test(html), 'the old lever is still described');
   for (const m of g.Modules.list) assert.ok(html.includes(`id="man-${m.id}"`), `section for ${m.id}`);
-  assert.ok(html.lastIndexOf('<section') === html.indexOf('<section id="man-basics" class="appendix">'), 'Bomb basics is the last section');
+  assert.ok(html.indexOf('<section') === html.indexOf('<section id="man-basics">'), 'Bomb basics is the first section');
+  assert.ok(/<nav><a href="#man-basics">Bomb basics<\/a>/.test(html), 'and first in the contents');
   assert.equal((basics.match(/<figure class="schem"><svg /g) || []).length, 5, 'one schematic each for the case, side parts, encoder, knife switch and module');
   assert.equal(g.manualFingerprint(), g.manualFingerprint());
 });

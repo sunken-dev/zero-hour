@@ -24,7 +24,7 @@ test('the template typesets every kind of element the manual uses', () => {
       el('div', 'mchart', el('div', '', el('b', '', 'A'), ' ·−')),
       el('div', 'words', el('div', '', 'about')),
       el('div', 'gates', el('div', 'gate', svg, el('b', '', 'AND'), el('span', '', '1 only when both inputs are 1')))),
-    el('section', 'appendix', el('h2', '', 'Bomb basics'), el('h3', '', 'The case'),
+    el('section', '', el('h2', '', 'Bomb basics'), el('h3', '', 'The case'),
       el('figure', 'schem', { t: 'svg', svg: svg.svg.replace('viewBox', 'width="260" viewBox') }, el('figcaption', '', 'The case unfolded.'))));
   const pdf = typeset(tree, 'abc123');
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
