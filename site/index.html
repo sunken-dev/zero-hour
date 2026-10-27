@@ -379,17 +379,37 @@ svg{display:block}
 .manual .gate{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;background:#0a1a21;border:1px solid #43dfff33;text-align:center;font-size:13px}
 .manual .gate svg{width:60px;height:40px;color:var(--cyan)}
 .manual .gate b{font-family:var(--mono);color:var(--amber)}
-.gauge{position:relative;width:190px;height:158px;margin:0 auto}
-.gauge svg{position:absolute;inset:0;width:100%;height:100%}
-.gauge .rim{fill:#0a1a21;stroke:#43dfff55;stroke-width:2}
-.gauge .ticks line{stroke:var(--cyan);stroke-width:2}
-.gauge .ticks text,.gauge .unit{fill:var(--ice);font:600 10px var(--mono);text-anchor:middle}
-.gauge .needle{position:absolute;left:calc(50% - 2px);top:22px;width:4px;height:76px;background:linear-gradient(var(--red),#a3243a);transform-origin:50% 76px;transform:rotate(var(--ang,-120deg));border-radius:2px}
-.gauge .hub{position:absolute;left:calc(50% - 8px);top:90px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#eef3f5,#6f7d86)}
-.valve3d{display:flex;flex-direction:column;align-items:center;gap:12px}
-.demand-box{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;font-family:var(--mono)}
+.gauge{position:relative;width:200px;height:150px;margin:0 auto;transform-style:preserve-3d}
+.cg{position:absolute;left:100px;top:78px;width:0;height:0;transform-style:preserve-3d}
+.cg-face{position:absolute;left:-56px;top:-56px;width:112px;height:112px;border-radius:50%;transform:translateZ(7.1px);background:radial-gradient(circle at 45% 35%,#fdfaf0,#e6ddc4 80%);box-shadow:inset 0 0 6px #0005}
+.cg-face svg{width:100%;height:100%}
+.cg-face .arc{fill:none;stroke:#1b262c;stroke-width:1}
+.cg-face .scale line{stroke:#1b262c;stroke-width:1.8}
+.cg-face .scale line.mn{stroke-width:.9}
+.cg-face .scale text{fill:#1b262c;font:700 10px var(--mono);text-anchor:middle}
+.cg-face .unit{fill:#1b262c;font:700 9px var(--mono);text-anchor:middle}
+.cg-face .maker{fill:#7a6c4c;font:700 5.5px var(--mono);letter-spacing:.2em;text-anchor:middle}
+.gauge .needle,.cg-shade{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transition:transform .12s linear}
+.gauge .needle{transform:translateZ(9.5px) rotate(var(--ang,-120deg))}
+.cg-blade{position:absolute;left:-1.6px;top:-42px;width:3.2px;height:42px}
+.cg-blade .cb{--c:#0b0e10;--top:linear-gradient(90deg,#1b1f22,#3a4248,#1b1f22)}
+.cg-tip{position:absolute;left:-1px;top:-50px;width:2px;height:9px}
+.cg-tip .cb{--c:#8a1d14;--top:#e5412d}
+.cg-tail{position:absolute;left:-3.5px;top:0;width:7px;height:13px}
+.cg-tail .cb{--c:#0b0e10;--top:linear-gradient(90deg,#1b1f22,#3a4248,#1b1f22)}
+.cg-shade{transform:translateZ(7.3px) translate(2.5px,3px) rotate(var(--ang,-120deg))}
+.cg-shade::before{content:"";position:absolute;left:-2px;top:-48px;width:4px;height:60px;border-radius:2px;background:#0003;filter:blur(1.5px)}
+.cg-hub{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.cg-bezel{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transform:translateZ(8px)}
+.cg-glass{position:absolute;left:-56px;top:-56px;width:112px;height:112px;border-radius:50%;transform:translateZ(14px);pointer-events:none;background:radial-gradient(ellipse 60% 40% at 35% 25%,#ffffff40,#ffffff00 70%),linear-gradient(130deg,#ffffff00 55%,#ffffff1a 62%,#ffffff00 70%)}
+.demand-box{position:absolute;left:0;top:0;width:44px;height:46px;font-family:var(--mono)}
+.demand-box>.cb{--c:#0e1113;--top:linear-gradient(#262b2f,#15191c)}
+.demand-box>.cb>.t{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:4px;box-shadow:inset 0 1px 0 #ffffff1a}
 .demand-box small,.idle-lamp small{font-size:9px;letter-spacing:.08em;color:var(--mute)}
-.demand{min-width:26px;text-align:center;font-size:20px;color:var(--amber);background:#05090b;border:1px solid #ffb22444;padding:0 4px}
+.cd-win{position:relative;width:30px;height:26px;border-radius:2px;background:#050708;box-shadow:inset 0 2px 4px #000,0 0 0 1px #ffb22433;font-size:22px;line-height:26px;text-align:center}
+.cd-win i{position:absolute;inset:0;font-style:normal;color:#ffb22414}
+.demand{position:relative;color:var(--amber);text-shadow:0 0 8px #ffb22477}
+.valve3d{display:flex;flex-direction:column;align-items:center;gap:12px}
 .idle-lamp{position:absolute;right:0;top:2px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .valve{position:relative;width:150px;height:150px}
 .torus,.torus-seg{position:absolute;left:0;top:0;width:0;height:0}
@@ -2941,16 +2961,30 @@ Modules.register({
     return { valve: 0, pressure: 0, demand: 0, relief: 4 + r.int(5), seed: r.int(1e9) };   // each wake draws a demand and a slip from seed
   },
   mount(root, s, ctl) {
-    const ticks = Array.from({ length: 10 }, (_, k) => {
-      const a = gaugeAngle(k) * Math.PI / 180, x = 60 + 38 * Math.sin(a), y = 62 - 38 * Math.cos(a), x2 = 60 + 46 * Math.sin(a), y2 = 62 - 46 * Math.cos(a);
-      return `<line x1="${x2.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${(60 + 50 * Math.sin(a)).toFixed(1)}" y2="${(62 - 50 * Math.cos(a)).toFixed(1)}"/>` +
-        `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}">${k}</text>`;
-    }).join('');
-    const gauge = html('div', { class: 'gauge' }, `<svg viewBox="0 0 120 100" aria-hidden="true"><circle cx="60" cy="62" r="56" class="rim"/><g class="ticks">${ticks}</g><text x="60" y="92" class="unit">bar</text></svg><i class="needle"></i><i class="hub"></i>`);
-    const needle = gauge.querySelector('.needle'), r = rng(s.seed);
+    // the gauge: a steel case under a chrome bezel, a cream face, a 3D needle with counterweight and shadow, a domed glass
+    const pt = (rad, p) => { const a = gaugeAngle(p) * Math.PI / 180; return [(60 + rad * Math.sin(a)).toFixed(1), (60 - rad * Math.cos(a)).toFixed(1)]; };
+    let scale = '';
+    for (let k = 0; k <= 36; k++) {
+      const p = k / 4, [x1, y1] = pt(51, p), [x2, y2] = pt(k % 4 ? 47.5 : 44, p);
+      scale += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${k % 4 ? 'mn' : ''}"/>`;
+      if (k % 4 === 0) { const [tx, ty] = pt(36, p); scale += `<text x="${tx}" y="${(+ty + 4).toFixed(1)}">${p}</text>`; }
+    }
+    const [a0x, a0y] = pt(51, 0), [a9x, a9y] = pt(51, 9);
+    const face = html('div', { class: 'cg-face' }, `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M${a0x} ${a0y} A51 51 0 1 1 ${a9x} ${a9y}" class="arc"/><g class="scale">${scale}</g>
+      <text x="60" y="84" class="unit">bar</text><text x="60" y="94" class="maker">COOLANT</text></svg>`);
+    const needle = h('div', { class: 'needle' },
+      h('div', { class: 'cg-blade' }, cuboid(1.2, '', 'fill')), h('div', { class: 'cg-tip' }, cuboid(1.2, '', 'fill')), h('div', { class: 'cg-tail' }, cuboid(2, '', 'fill')));
+    const shade = h('i', { class: 'cg-shade' });
+    const ring = h('div', { class: 'cg-bezel' }, torus(58, 4.5, 40, '#d3dce1'));
+    const gaugeBody = h('div', { class: 'cg' }, cylZ(62, 7, 48, { color: '#7f8d96' }), face, shade, needle,
+      h('div', { class: 'cg-hub' }, cylZ(6.5, 4.5, 18, { z: 7, color: '#1b1f22' }), cylZ(3, 1.2, 12, { z: 11.5, color: '#d3dce1' })), ring, h('i', { class: 'cg-glass' }));
+    const r = rng(s.seed);
     const demand = h('b', { class: 'demand' }, '-'), idle = led('#4dffb0', true);
-    gauge.append(h('div', { class: 'demand-box' }, h('small', {}, 'demand'), demand), h('div', { class: 'idle-lamp' }, idle, h('small', {}, 'idle')));
-    const draw = () => needle.style.setProperty('--ang', gaugeAngle(s.pressure) + 'deg');
+    const gauge = h('div', { class: 'gauge' }, gaugeBody,
+      h('div', { class: 'demand-box' }, cuboid(6, [h('small', {}, 'demand'), h('div', { class: 'cd-win' }, h('i', {}, '8'), demand)], 'fill')),
+      h('div', { class: 'idle-lamp' }, idle, h('small', {}, 'idle')));
+    const draw = () => [needle, shade].forEach(e => e.style.setProperty('--ang', gaugeAngle(s.pressure) + 'deg'));
     draw();
     const cycle = needyCycle(root, ctl, {
       window: 60,
