@@ -4120,11 +4120,13 @@ function barcode(text) {
    (serial number, battery holders and indicators in random spots).
    ===================================================================== */
 // The case's bays come in three sizes only: 2 x 2 for up to 4 modules, 2 rows of 3 for 5 or 6, 3 x 3 for 7 to 9.
-// The case is never narrower than four cells across, so its top and side panels always have room for every part.
+// The case is never narrower than four cells across, so its top and side panels always have room for every part;
+// the 2 x 2 case gets wider bays to fill that width.
 function layoutFor(count = 6) {
   const cols = count <= 4 ? 2 : 3, rows = count <= 6 ? 2 : 3;
-  const SW = 244, SH = 272, GAP = 14, P = 22, TB = 136, D = 210;
-  const W = Math.max(P * 2 + cols * SW + (cols - 1) * GAP + 10, 42 + 4 * 160);
+  const SH = 272, GAP = 14, P = 22, TB = 136, D = 210;
+  const W = Math.max(P * 2 + cols * 244 + (cols - 1) * GAP + 10, 42 + 4 * 160);
+  const SW = (W - P * 2 - (cols - 1) * GAP - 10) / cols;
   const H = P * 2 + TB + GAP + rows * SH + (rows - 1) * GAP + 10;
   return { cols, rows, SW, SH, GAP, P, TB, D, W, H, wr: Math.floor((H - 42) / 170), wc: Math.floor((W - 42) / 160) };
 }

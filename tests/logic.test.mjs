@@ -405,6 +405,7 @@ test('case sizes: 2x2 bays up to 4 modules, 2 rows of 3 up to 6, 3x3 up to 9, no
   for (let count = 2; count <= 9; count++) {
     const L = g.layoutFor(count);
     assert.deepEqual([L.rows, L.cols], count <= 4 ? [2, 2] : count <= 6 ? [2, 3] : [3, 3], `${count} modules`);
+    assert.equal(L.P * 2 + L.cols * L.SW + (L.cols - 1) * L.GAP + 10, L.W, `${count} modules: the bays fill the case, no gap at the sides`);
     for (let seed = 1; seed <= 200; seed++) {
       const w = world(seed, count);
       assert.equal(w.defs.length, count, `seed ${seed}: ${w.defs.length} of ${count} modules dealt`);
