@@ -496,6 +496,19 @@ test('the manual: Bomb basics comes first, with its schematics, no duplicate ent
   assert.equal(g.manualFingerprint(), g.manualFingerprint());
 });
 
+test('a manual for the switched-on modules: switched-off modules are left out, and the cover says how many it covers', () => {
+  const full = g.manualHTML(), off = { wires: { off: true }, maze: { off: true }, simon: { rear: 'never' } };
+  const part = g.manualHTML(off), total = g.Modules.list.length;
+  for (const id of ['wires', 'maze']) {
+    assert.ok(full.includes(`id="man-${id}"`) && !part.includes(`id="man-${id}"`), `${id} section left out`);
+    assert.ok(!part.includes(`href="#man-${id}"`), `${id} left out of the contents`);
+  }
+  assert.ok(part.includes('id="man-simon"') && part.includes('id="man-basics"'), 'the others and Bomb basics stay');
+  assert.ok(part.includes(`covers ${total - 2} of the ${total} modules`), 'the cover says how many it covers');
+  assert.ok(!/covers \d+ of the \d+ modules/.test(full), 'the full manual has no such note');
+  assert.equal(g.manualHTML({}), full, 'no switched-off modules: the full manual');
+});
+
 test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {
   assert.equal(g.beepInterval(200000, 'off'), null);
   assert.equal(g.beepInterval(200000, '60'), 60000);
