@@ -3,8 +3,8 @@
 //   node tools/build-manual-pdf.mjs site/index.html
 //
 // It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualHTML(), the same source
-// as the on-screen manual, as a tree of elements. Typst typesets that tree with tools/manual.typ and the fonts in
-// tools/fonts, with the manual's fingerprint as its revision. The result is written to zero-hour-manual.pdf next to the
+// as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the fonts in
+// site/fonts (the page uses the same two to typeset a manual in the browser), with the manual's fingerprint as its revision. The result is written to zero-hour-manual.pdf next to the
 // page and embedded in the page together with the fingerprint. The game only offers the embedded PDF while that
 // fingerprint still matches the manual; if the manual changes and this script has not been re-run, its buttons print a
 // fresh copy from the live manual instead.
@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launch } from './chrome.mjs';
 
-const toolsDir = path.dirname(fileURLToPath(import.meta.url));
+const siteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'site');
 
 // Runs in the page. Turns the manual's HTML into plain data for the Typst template:
 // text becomes a string, an element becomes { t: tag, c: class, k: children }, and an SVG keeps its markup in `svg`.
@@ -41,12 +41,12 @@ function manualTree() {
 export function typeset(tree, revision) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zero-hour-manual-'));
   try {
-    fs.copyFileSync(path.join(toolsDir, 'manual.typ'), path.join(dir, 'manual.typ'));
+    fs.copyFileSync(path.join(siteDir, 'manual.typ'), path.join(dir, 'manual.typ'));
     fs.writeFileSync(path.join(dir, 'manual.json'), JSON.stringify(tree));
     const out = path.join(dir, 'manual.pdf');
     try {
       execFileSync(process.env.TYPST_PATH || 'typst', [
-        'compile', '--root', dir, '--font-path', path.join(toolsDir, 'fonts'), '--ignore-system-fonts',
+        'compile', '--root', dir, '--font-path', path.join(siteDir, 'fonts'), '--ignore-system-fonts', '--ignore-embedded-fonts',
         ...(revision ? ['--input', 'revision=' + revision] : []),
         path.join(dir, 'manual.typ'), out
       ], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });

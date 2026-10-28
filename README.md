@@ -54,8 +54,8 @@ tests/               tests (node:test)
 
 The manual is generated from the modules' own text (`manual()` and `manualBack()` on each module), so it cannot drift from
 the rules. `tools/build-manual-pdf.mjs` reads that same manual from the page in headless Chrome and has Typst typeset it
-with `tools/manual.typ` and the fonts in `tools/fonts/`. The PDF is stored inside `index.html` with a fingerprint of the
-manual text. Typst stops with an error when a manual uses markup the template does not know: teach `tools/manual.typ` the
+with `site/manual.typ` and the fonts in `site/fonts/`. The PDF is stored inside `index.html` with a fingerprint of the
+manual text. Typst stops with an error when a manual uses markup the template does not know: teach `site/manual.typ` the
 new element. CI pins the Typst version; use the same one locally (`typst-version` in `.github/workflows/`) so
 `npm run pdf` produces the same file. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
 print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
