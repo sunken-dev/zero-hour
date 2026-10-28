@@ -1,13 +1,10 @@
-// Builds the PDF manual from the game's own manual source and stores it inside the game page.
+// Builds the published PDF of the manual, zero-hour-manual.pdf next to the page.
 //
 //   node tools/build-manual-pdf.mjs site/index.html
 //
 // It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualTree(): manualHTML(), the
-// same source as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the fonts in
-// site/fonts (the page uses the same two to typeset a manual in the browser), with the manual's fingerprint as its revision. The result is written to zero-hour-manual.pdf next to the
-// page and embedded in the page together with the fingerprint. The game only offers the embedded PDF while that
-// fingerprint still matches the manual; if the manual changes and this script has not been re-run, its buttons print a
-// fresh copy from the live manual instead.
+// same source as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the
+// fonts in site/fonts, with the manual's fingerprint as its revision.
 //
 // Needs the typst CLI on the PATH, or TYPST_PATH set to it.
 import fs from 'node:fs';
@@ -52,15 +49,10 @@ export async function buildManualPdf(file) {
   const pdf = typeset(tree, hash);
   const pdfFile = path.join(path.dirname(file), 'zero-hour-manual.pdf');
   fs.writeFileSync(pdfFile, pdf);
-  const slot = /<!--MANUAL-PDF:BEGIN-->[\s\S]*?<!--MANUAL-PDF:END-->/;
-  const html = fs.readFileSync(file, 'utf8');
-  if (!slot.test(html)) throw new Error('PDF slot not found in ' + file);
-  const block = `<!--MANUAL-PDF:BEGIN--><script id="manual-pdf" type="application/octet-stream" data-hash="${hash}">${pdf.toString('base64')}</script><!--MANUAL-PDF:END-->`;
-  fs.writeFileSync(file, html.replace(slot, () => block));
   return { hash, bytes: pdf.length, pdfFile };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const r = await buildManualPdf(process.argv[2] || 'site/index.html');
-  console.log(`manual fingerprint ${r.hash}, ${(r.bytes / 1024).toFixed(0)} KB -> ${r.pdfFile} (also embedded in the page)`);
+  console.log(`manual fingerprint ${r.hash}, ${(r.bytes / 1024).toFixed(0)} KB -> ${r.pdfFile}`);
 }

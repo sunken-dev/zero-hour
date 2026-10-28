@@ -59,21 +59,8 @@ test('main screen: tagline, intro, and Settings, Manual and Modules side by side
   assert.ok(!r.link);
 }));
 
-test('the embedded PDF is the one for the current manual, and the buttons open and download it', T, () => withPage(home(), async page => {
-  await page.waitForSelector('.arm');
-  const same = await page.evaluate(() => { const n = document.getElementById('manual-pdf'); return { match: n.dataset.hash === window.__zh.manualFingerprint(), head: atob(n.textContent.trim().slice(0, 8)).slice(0, 4) }; });
-  assert.equal(same.match, true, 'the PDF is out of date: run npm run pdf');
-  assert.equal(same.head, '%PDF');
-  await clickText(page, '.startrow button', 'Manual'); await sleep(600);
-  await page.evaluate(() => { window.__opened = null; window.open = u => { window.__opened = u; return null; }; });
-  await page.click('.drawer [data-act=pdf-open]'); await sleep(300);
-  const got = await page.evaluate(async () => { const b = new Uint8Array(await (await fetch(window.__opened)).arrayBuffer()); return { url: window.__opened.slice(0, 5), head: String.fromCharCode(...b.slice(0, 5)), n: b.length }; });
-  assert.deepEqual([got.url, got.head], ['blob:', '%PDF-']);
-  assert.ok(got.n > 50000);
-}));
-
-test('a manual with modules switched off is typeset in the browser: a PDF from the same template and fonts', { timeout: 240000 }, async () => {
-  // served over HTTP like the real site, since the page fetches site/manual.typ and site/fonts (typst.ts comes from jsDelivr)
+// The site served over HTTP, as on the real site: the page fetches its fonts from site/fonts (pdfmake comes from jsDelivr).
+async function withServedSite(fn) {
   const site = path.dirname(indexFile);
   const server = http.createServer((req, res) => {
     const file = path.join(site, decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\/$/, '/index.html'));
@@ -81,28 +68,33 @@ test('a manual with modules switched off is typeset in the browser: a PDF from t
     res.writeHead(200); fs.createReadStream(file).pipe(res);
   });
   await new Promise(r => server.listen(0, r));
-  try {
-    await withPage(`http://localhost:${server.address().port}/`, async page => {
-      const r = await page.evaluate(async () => {
-        const url = await window.__zh.typesetManual(window.__zh.manualHTML({ wires: { off: true } }));
-        const b = new Uint8Array(await (await fetch(url)).arrayBuffer());
-        return { head: new TextDecoder().decode(b.slice(0, 5)), size: b.length };
-      });
-      assert.equal(r.head, '%PDF-');
-      assert.ok(r.size > 100000, `a whole manual, not an empty file (${r.size} bytes)`);
-    });
-  } finally { server.close(); }
-});
+  try { await fn(`http://localhost:${server.address().port}/`); } finally { server.close(); }
+}
 
-test('a stale PDF is never offered: the buttons print a fresh copy of the live manual instead', T, () => withPage(home(), async page => {
+test('the manual buttons make a PDF in the browser, and a manual without switched-off modules is shorter', { timeout: 120000 }, () => withServedSite(url => withPage(url, async page => {
   await page.waitForSelector('.arm');
-  await page.evaluate(() => { document.getElementById('manual-pdf').dataset.hash = 'stale'; document.querySelector('.drawer').classList.add('open'); });
+  await clickText(page, '.startrow button', 'Manual'); await sleep(600);
+  await page.evaluate(() => { window.__tab = { document: { write() {} }, location: {}, close() {} }; window.open = () => window.__tab; });
+  await page.click('.drawer [data-act=pdf-open]');
+  await page.waitForFunction(() => window.__tab.location.href, { timeout: 60000 });
+  const r = await page.evaluate(async () => {
+    const size = async u => { const b = new Uint8Array(await (await fetch(u)).arrayBuffer()); return { head: String.fromCharCode(...b.slice(0, 5)), n: b.length }; };
+    return { opened: await size(window.__tab.location.href), full: await size(await window.__zh.manualPdf({})), part: await size(await window.__zh.manualPdf({ wires: { off: true }, maze: { off: true } })) };
+  });
+  assert.deepEqual([r.opened.head, r.full.head, r.part.head], ['%PDF-', '%PDF-', '%PDF-']);
+  assert.ok(r.full.n > 100000, `a whole manual (${r.full.n} bytes)`);
+  assert.ok(r.part.n < r.full.n, 'leaving modules out makes it shorter');
+})));
+
+test('opened from disk, where the page cannot load its fonts, the buttons print the manual instead', T, () => withPage(home(), async page => {
+  await page.waitForSelector('.arm');
+  await page.evaluate(() => document.querySelector('.drawer').classList.add('open'));
   await sleep(700);
-  const [popup] = await Promise.all([new Promise(res => page.once('popup', res)), page.click('.drawer [data-act=pdf-open]')]);
+  const [popup] = await Promise.all([new Promise(res => page.once('popup', res)), page.click('.drawer [data-act=pdf-download]')]);
   await sleep(1200);
   const shown = await popup.evaluate(() => ({ h1: document.querySelector('.manual h1')?.textContent, n: document.querySelectorAll('.manual section').length }));
   assert.equal(shown.h1, 'Defusal manual');
-  assert.equal(shown.n, MODULE_COUNT + 1, 'every module and the appendix');
+  assert.equal(shown.n, MODULE_COUNT + 1, 'Bomb basics and every module');
 }));
 
 test('settings, time, module count and seed survive a reload; the same seed gives the same bomb', T, () => withPage(home(), async page => {

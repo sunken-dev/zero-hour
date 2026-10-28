@@ -509,6 +509,28 @@ test('a manual for the switched-on modules: switched-off modules are left out, a
   assert.equal(g.manualHTML({}), full, 'no switched-off modules: the full manual');
 });
 
+test('the PDF layout: numbered chapters, headings kept with what follows, lamp patterns drawn, the revision on every page', () => {
+  const el = (t, c, ...k) => ({ t, c, k });
+  const tree = el('div', 'manual',
+    el('div', 'mh', { t: 'svg', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"></svg>' }, el('h1', '', 'Defusal manual')),
+    el('p', '', 'Read the rules.'),
+    el('section', '', el('h2', '', 'Bomb basics'), el('p', '', 'The case.')),
+    el('section', '', el('h2', '', 'Knob'), el('h3', '', 'Patterns'),
+      el('table', 'tbl', el('tbody', '', el('tr', '', el('th', '', 'Pattern')), el('tr', '', el('td', 'pat-c', '\u25cf\u25cb', el('br', ''), '\u25cb\u25cf')))),
+      el('blink', '', 'markup the layout does not know')));
+  const dd = g.manualPdfDoc(tree, 'abc123'), text = JSON.stringify(dd.content);
+  assert.ok(text.includes('"1  BOMB BASICS"') && text.includes('"2  KNOB"') && text.includes('"2.1  Patterns"'), 'numbered chapters and sections');
+  assert.ok(dd.content.some(n => n.toc), 'a contents page');
+  const knob = dd.content.at(-1).stack[0];
+  assert.equal(knob.unbreakable, true, 'the headings and the table after them stay together');
+  assert.deepEqual([...knob.stack].map(n => n.headlineLevel || (n.table ? 'table' : '?')), [1, 2, 'table']);
+  const svg = knob.stack[2].table.body[1][0].svg;
+  assert.equal((svg.match(/fill="none"/g) || []).length, 2, 'two empty lamps');
+  assert.equal((svg.match(/<circle/g) || []).length, 4, 'four lamps');
+  assert.ok(text.includes('markup the layout does not know'), 'unknown markup still shows its text');
+  assert.match(JSON.stringify(dd.footer(3, 10)), /Revision abc123/);
+});
+
 test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {
   assert.equal(g.beepInterval(200000, 'off'), null);
   assert.equal(g.beepInterval(200000, '60'), 60000);
