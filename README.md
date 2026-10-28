@@ -47,7 +47,7 @@ tests/               tests (node:test)
 | `npm run pdf` | Rebuilds the PDF manual from the manual's source and embeds it in `site/index.html`. Needs Chrome and Typst. |
 | `npm run build` | Copies `site/` to `dist/` and rebuilds the PDF inside `dist/`. This is what gets published. |
 | `npm run icons` | Redraws every favicon and app icon from the logo mark. |
-| `npm run preview` | Re-renders the link-preview images (`-- --seed 202` picks the bomb). |
+| `npm run preview` | Re-renders the link-preview images (`-- --seed 1978` picks the bomb). |
 | `npm run serve` | Serves `site/` on port 8080. |
 
 ### The manual and its PDF
