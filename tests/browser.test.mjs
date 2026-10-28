@@ -71,19 +71,26 @@ async function withServedSite(fn) {
   try { await fn(`http://localhost:${server.address().port}/`); } finally { server.close(); }
 }
 
-test('the manual buttons make a PDF in the browser, and a manual without switched-off modules is shorter', { timeout: 120000 }, () => withServedSite(url => withPage(url, async page => {
+test('the PDF: Open gives a link that can be sent on, the link shows the PDF, and leaving modules out makes it shorter', { timeout: 120000 }, () => withServedSite(url => withPage(url, async page => {
   await page.waitForSelector('.arm');
+  await page.evaluate(() => { localStorage.setItem('zero-hour-settings-v1', JSON.stringify({ modules: { wires: { off: true }, maze: { off: true } } })); });
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.arm');
   await clickText(page, '.startrow button', 'Manual'); await sleep(600);
-  await page.evaluate(() => { window.__tab = { document: { write() {} }, location: {}, close() {} }; window.open = () => window.__tab; });
+  await page.evaluate(() => { window.__opened = null; window.open = u => { window.__opened = u; return null; }; });
   await page.click('.drawer [data-act=pdf-open]');
-  await page.waitForFunction(() => window.__tab.location.href, { timeout: 60000 });
-  const r = await page.evaluate(async () => {
+  const link = await page.evaluate(() => window.__opened);
+  assert.match(link, /\?pdf=1\.[A-Za-z0-9_-]{1,6}$/, 'a short link with the module code');
+  const sizes = await page.evaluate(async () => {
     const size = async u => { const b = new Uint8Array(await (await fetch(u)).arrayBuffer()); return { head: String.fromCharCode(...b.slice(0, 5)), n: b.length }; };
-    return { opened: await size(window.__tab.location.href), full: await size(await window.__zh.manualPdf({})), part: await size(await window.__zh.manualPdf({ wires: { off: true }, maze: { off: true } })) };
+    return { full: await size(await window.__zh.manualPdf({})), part: await size(await window.__zh.manualPdf({ wires: { off: true }, maze: { off: true } })) };
   });
-  assert.deepEqual([r.opened.head, r.full.head, r.part.head], ['%PDF-', '%PDF-', '%PDF-']);
-  assert.ok(r.full.n > 100000, `a whole manual (${r.full.n} bytes)`);
-  assert.ok(r.part.n < r.full.n, 'leaving modules out makes it shorter');
+  assert.deepEqual([sizes.full.head, sizes.part.head], ['%PDF-', '%PDF-']);
+  assert.ok(sizes.part.n < sizes.full.n, 'leaving modules out makes it shorter');
+  await page.evaluate(() => localStorage.clear());                       // the link alone carries the selection
+  await page.goto(link, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => (document.querySelector('.pdf-page iframe') || {}).src, { timeout: 60000 });
+  const shown = await page.evaluate(() => ({ src: document.querySelector('iframe').src.slice(0, 5), note: document.querySelector('.pdf-head small').textContent, dl: !document.querySelector('.pdf-head .mbtn').hidden }));
+  assert.deepEqual(shown, { src: 'blob:', note: `${MODULE_COUNT - 2} of the ${MODULE_COUNT} modules`, dl: true });
 })));
 
 test('opened from disk, where the page cannot load its fonts, the buttons print the manual instead', T, () => withPage(home(), async page => {

@@ -1204,6 +1204,13 @@ body.manual-page .manual{margin:0 auto}
 
 @media(max-width:900px){.start{grid-template-columns:1fr;padding-top:24px;min-height:0}.demo{height:360px;min-height:300px}}
 @media(prefers-reduced-motion:reduce){*,*::after{animation:none!important;transition:none!important}}
+.pdf-page{margin:0;height:100vh;display:flex;flex-direction:column;background:#0b1419;color:#d6eef3;font-family:'Chakra Petch',sans-serif}
+.pdf-head{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid #43dfff33}
+.pdf-head b{letter-spacing:.12em}
+.pdf-head small{color:#8fa9b3}
+.pdf-head .mbtn{margin-left:auto}
+.pdf-page iframe{flex:1;width:100%;border:0;background:#525659}
+.pdf-note{padding:24px}
 </style>
 </head>
 <body>
@@ -4788,7 +4795,7 @@ function manualHTML(config = {}) {
     <p>The defuser describes what they see. You find the matching rule and say what to do. Don't look at the bomb.</p>
     <p>New to the bomb? Start with Bomb basics: it shows how the case is built and what its parts look like.</p>
     ${mods.length < Modules.list.length ? `<p>This copy covers ${mods.length} of the ${Modules.list.length} modules: the others are switched off in the module explorer.</p>` : ''}
-    <div class="mact no-print"><button class="mbtn" data-act="pdf-open">Open PDF</button><button class="mbtn" data-act="pdf-download">Download PDF</button></div>
+    <div class="mact no-print"><button class="mbtn" data-act="pdf-open">Open PDF</button><button class="mbtn" data-act="pdf-download">Download PDF</button><button class="mbtn" data-act="pdf-link">Copy link</button></div>
     <nav><a href="#man-basics">Bomb basics</a>${mods.map(m => `<a href="#man-${m.id}">${m.title}</a>`).join('')}</nav>
     <section id="man-basics"><h2>Bomb basics</h2>
       <h3>The case</h3>
@@ -4982,6 +4989,52 @@ function manualPdfDoc(tree, revision) {
     ].filter(Boolean)
   };
 }
+/* ---- links to the PDF ----
+   ?pdf=<code> shows the PDF of the manual for a module selection, so it can be sent to someone. The code is
+   "<version>.<off>": version 1, then the switched-off modules as a bitmask in base64url (bit k is LINK_ORDER[k], trailing
+   zero bytes dropped, so everything on is just "1"). Fields after a further "." are left to later versions. LINK_ORDER
+   only ever grows: a module's place in it is its bit in every link already sent, and modules added later count as
+   switched on in older links. */
+const LINK_ORDER = ['wires', 'button', 'glyphs', 'simon', 'password', 'switches', 'morse', 'memory', 'knob', 'breaker',
+  'combination', 'fuses', 'gears', 'relay', 'coolant', 'throttle', 'maze', 'cipher', 'resistors', 'signal', 'meter', 'semaphore', 'dip', 'safe', 'tiles'];
+function encodeModules(config) {
+  const bytes = [];
+  LINK_ORDER.forEach((id, k) => { if (config[id] && config[id].off) bytes[k >> 3] = (bytes[k >> 3] || 0) | 1 << (k & 7); });
+  const b = Array.from(bytes, x => x || 0);
+  while (b.length && !b[b.length - 1]) b.pop();
+  return b.length ? '1.' + btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : '1';
+}
+function decodeModules(code) {                                   // null for an unknown version or a damaged code
+  const [version, off = ''] = String(code).split('.');
+  if (version !== '1' || !/^[A-Za-z0-9_-]*$/.test(off)) return null;
+  let bin;
+  try { bin = atob(off.replace(/-/g, '+').replace(/_/g, '/')); } catch (e) { return null; }
+  const config = {};
+  LINK_ORDER.forEach((id, k) => { if ((bin.charCodeAt(k >> 3) || 0) >> (k & 7) & 1) config[id] = { off: true }; });
+  return config;
+}
+const manualLink = (config = settings.modules) => location.href.split(/[?#]/)[0] + '?pdf=' + encodeModules(config);
+// The page a PDF link opens: the PDF for that selection, made here and shown full size, with a Download link.
+function showPdfLink(code) {
+  const config = decodeModules(code);
+  document.body.className = 'pdf-page';
+  document.title = 'Zero Hour: defusal manual (PDF)';
+  if (!config) {
+    document.body.replaceChildren(h('p', { class: 'pdf-note' }, 'This link to the manual is damaged. ', h('a', { href: manualLink({}) }, 'Open the full manual'), '.'));
+    return;
+  }
+  const on = Modules.list.filter(m => !(config[m.id] && config[m.id].off)).length;
+  const status = h('span', {}, 'Making the manual\u2026'), dl = h('a', { class: 'mbtn', hidden: '' }, 'Download PDF'), view = h('iframe', { title: 'Defusal manual' });
+  document.body.replaceChildren(h('header', { class: 'pdf-head' }, h('b', {}, 'ZERO HOUR'), h('span', {}, 'Defusal manual'),
+    h('small', {}, on < Modules.list.length ? `${on} of the ${Modules.list.length} modules` : `all ${on} modules`), status, dl), view);
+  manualPdf(config).then(url => {
+    view.src = url; dl.href = url; dl.download = 'zero-hour-manual.pdf'; dl.hidden = false; status.remove();
+  }, e => {
+    console.warn('Making the PDF failed, showing the manual instead:', e);
+    document.body.className = 'manual-page';
+    document.body.innerHTML = manualHTML(config);
+  });
+}
 const manualPdfs = new Map();                                 // manual fingerprint -> blob URL of its PDF
 // The PDF of the manual for the given module configuration (settings.modules), as a blob URL.
 async function manualPdf(config = settings.modules) {
@@ -4997,22 +5050,25 @@ const pdfButtons = on => [document, ...(popWin && !popWin.closed ? [popWin.docum
   b.disabled = on; b.setAttribute('aria-busy', String(on));
   if (on) { b.dataset.label = b.textContent; b.textContent = 'Making PDF\u2026'; } else if (b.dataset.label) b.textContent = b.dataset.label;
 }));
-async function manualAction(act, win = window) {
-  if (act !== 'pdf-open' && act !== 'pdf-download') return;
-  const tab = act === 'pdf-open' ? win.open('', '_blank') : null;   // opened now, while the click still allows it
-  if (tab) tab.document.write('<title>Zero Hour manual</title><p style="font:16px sans-serif">Making your manual\u2026</p>');
+async function manualAction(act, win = window, button = null) {
+  if (act === 'pdf-open') { win.open(manualLink(), '_blank'); return; }   // a link that can be sent on
+  if (act === 'pdf-link') {
+    const link = manualLink();
+    try { await navigator.clipboard.writeText(link); } catch (e) { win.prompt('Copy this link to the manual:', link); return; }
+    if (button) { const label = button.textContent; button.textContent = 'Link copied'; setTimeout(() => { button.textContent = label; }, 1500); }
+    return;
+  }
+  if (act !== 'pdf-download') return;
   pdfButtons(true);
   try {
     const url = await manualPdf();
-    if (tab) tab.location.href = url;
-    else { const a = win.document.createElement('a'); a.href = url; a.download = 'zero-hour-manual.pdf'; win.document.body.append(a); a.click(); a.remove(); }
+    const a = win.document.createElement('a'); a.href = url; a.download = 'zero-hour-manual.pdf'; win.document.body.append(a); a.click(); a.remove();
   } catch (e) {
     console.warn('Making the PDF in the browser failed, printing the manual instead:', e);
-    if (tab) tab.close();
     popOut(true);
   } finally { pdfButtons(false); }
 }
-const manualClick = e => { const b = e.target.closest && e.target.closest('[data-act]'); if (b) manualAction(b.dataset.act, e.view || window); };
+const manualClick = e => { const b = e.target.closest && e.target.closest('[data-act]'); if (b) manualAction(b.dataset.act, e.view || window, b); };
 
 function buildDrawer() {
   const pop = h('button', { onclick: () => popOut() }, 'Pop out');
@@ -5579,7 +5635,7 @@ function defuse() {
 /* =====================================================================
    7. BOOT
    ===================================================================== */
-window.__zh = { manualHTML, manualFingerprint, manualTree, manualPdf };   // used by build-manual-pdf.mjs and the tests
+window.__zh = { manualHTML, manualFingerprint, manualTree, manualPdf, manualLink };   // used by build-manual-pdf.mjs and the tests
 // Belt and braces: block selecting and dragging text or pictures anywhere except the stand-alone manual page.
 ['selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => {
   const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
@@ -5587,7 +5643,9 @@ window.__zh = { manualHTML, manualFingerprint, manualTree, manualPdf };   // use
   if (!document.body.classList.contains('manual-page')) e.preventDefault();
 }));
 sfx.muted = !settings.fxOn; sfx.musicMuted = !settings.musicOn;
-if (new URLSearchParams(location.search).has('manual')) {
+const query = new URLSearchParams(location.search);
+if (query.has('pdf')) showPdfLink(query.get('pdf'));
+else if (query.has('manual')) {
   document.body.className = 'manual-page';
   document.title = 'Zero Hour: defusal manual';
   document.body.innerHTML = manualHTML(settings.modules);

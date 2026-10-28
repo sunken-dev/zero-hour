@@ -557,6 +557,28 @@ test('the PDF layout never splits a table across pages', () => {
   assert.ok(tables.length >= 1 && tables.every(Boolean), 'every table sits in an unbreakable block');
 });
 
+test('PDF links: the switched-off modules in a short, versioned code that round-trips and survives new modules', () => {
+  const ids = [...g.Modules.list].map(m => m.id);
+  assert.deepEqual([...g.LINK_ORDER].sort(), [...ids].sort(), 'every module has a place in the link order, once');
+  assert.deepEqual([...g.LINK_ORDER].slice(0, 25), ['wires', 'button', 'glyphs', 'simon', 'password', 'switches', 'morse', 'memory', 'knob', 'breaker',
+    'combination', 'fuses', 'gears', 'relay', 'coolant', 'throttle', 'maze', 'cipher', 'resistors', 'signal', 'meter', 'semaphore', 'dip', 'safe', 'tiles'],
+    'the order is append-only: old links must keep their meaning');
+  assert.equal(g.encodeModules({}), '1', 'everything on: just the version');
+  for (let seed = 1; seed <= 300; seed++) {
+    const r = g.rng(seed), config = {};
+    ids.forEach(id => { if (r() < .4) config[id] = { off: true }; else if (r() < .2) config[id] = { rear: 'never' }; });
+    const code = g.encodeModules(config);
+    assert.match(code, /^1(\.[A-Za-z0-9_-]+)?$/, 'URL-safe');
+    assert.ok(code.length <= 8, `short: ${code}`);
+    const back = g.decodeModules(code), off = c => ids.filter(id => c[id] && c[id].off).sort().join();
+    assert.equal(off(back), off(config), `round trip ${code}`);
+  }
+  const one = g.encodeModules({ [g.LINK_ORDER[0]]: { off: true } });
+  assert.equal(g.decodeModules(one + '.more')[g.LINK_ORDER[0]].off, true, 'later fields are ignored by this version');
+  assert.equal(g.decodeModules('9.AAAA'), null, 'an unknown version is not guessed at');
+  assert.equal(g.decodeModules('1.!!'), null, 'a damaged code is refused');
+});
+
 test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {
   assert.equal(g.beepInterval(200000, 'off'), null);
   assert.equal(g.beepInterval(200000, '60'), 60000);
