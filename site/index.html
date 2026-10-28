@@ -5174,8 +5174,9 @@ function openSettings() {
 
 /* ---- start page: the hero is the case itself, already draggable ---- */
 function destroyDemo() { if (demo) { demo.rig.destroy(); demo = null; } }
-// The start screen shows the case up to 110 %, smaller when its stage is too narrow for that.
-const demoZoom = host => Math.min(1.1, (host.clientWidth || 900) / (layoutFor(opts.count).W * 1.12));
+// The start screen shows the case up to 110 %, smaller when its stage is too narrow for that, and the tall 3 x 3 case
+// a little smaller again so it does not fill the start screen.
+const demoZoom = host => Math.min(1.1, (host.clientWidth || 900) / (layoutFor(opts.count).W * 1.12)) * Math.min(1, Math.sqrt(layoutFor(6).H / layoutFor(opts.count).H));
 function mountDemo(host, view) {
   const keep = view || (demo && demo.rig.getView()) || { yaw: -20, pitch: -12, zoom: demoZoom(host) };
   destroyDemo();
