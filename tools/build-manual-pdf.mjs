@@ -2,8 +2,8 @@
 //
 //   node tools/build-manual-pdf.mjs site/index.html
 //
-// It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualHTML(), the same source
-// as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the fonts in
+// It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualTree(): manualHTML(), the
+// same source as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the fonts in
 // site/fonts (the page uses the same two to typeset a manual in the browser), with the manual's fingerprint as its revision. The result is written to zero-hour-manual.pdf next to the
 // page and embedded in the page together with the fingerprint. The game only offers the embedded PDF while that
 // fingerprint still matches the manual; if the manual changes and this script has not been re-run, its buttons print a
@@ -18,25 +18,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launch } from './chrome.mjs';
 
 const siteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'site');
-
-// Runs in the page. Turns the manual's HTML into plain data for the Typst template:
-// text becomes a string, an element becomes { t: tag, c: class, k: children }, and an SVG keeps its markup in `svg`.
-// Whitespace between block elements is dropped, as the browser does when it lays them out.
-function manualTree() {
-  const blocks = new Set(['div', 'section', 'nav', 'ul', 'ol', 'table', 'tbody', 'thead', 'tr']);
-  const walk = n => {
-    if (n.nodeType === Node.TEXT_NODE) return n.data.replace(/\s+/g, ' ');
-    if (n.nodeType !== Node.ELEMENT_NODE) return null;
-    const t = n.localName;
-    if (t === 'svg') return { t, svg: new XMLSerializer().serializeToString(n) };
-    let k = [...n.childNodes].map(walk).filter(x => x !== null);
-    if (blocks.has(t)) k = k.filter(x => typeof x !== 'string' || x.trim());
-    return { t, c: n.getAttribute('class') || '', k };
-  };
-  const root = document.createElement('div');
-  root.innerHTML = window.__zh.manualHTML();
-  return walk(root.firstElementChild);
-}
 
 export function typeset(tree, revision) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zero-hour-manual-'));
@@ -66,7 +47,7 @@ export async function buildManualPdf(file) {
     const page = await browser.newPage();
     await page.goto(pathToFileURL(file).href + '?manual', { waitUntil: 'load' });
     hash = await page.evaluate(() => window.__zh.manualFingerprint());
-    tree = await page.evaluate(manualTree);
+    tree = await page.evaluate(() => window.__zh.manualTree());
   } finally { await browser.close(); }
   const pdf = typeset(tree, hash);
   const pdfFile = path.join(path.dirname(file), 'zero-hour-manual.pdf');

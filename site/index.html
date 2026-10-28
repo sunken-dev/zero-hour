@@ -4838,6 +4838,25 @@ const drawer = h('aside', { class: 'drawer', 'aria-label': 'Defusal manual' });
    The PDF is typeset from manualHTML(), the same source as the on-screen manual (see build-manual-pdf.mjs),
    and stored inside this file. It is only offered while it still matches the manual's fingerprint; if the
    manual has changed since it was built, a fresh one is printed straight from the live manual instead. */
+// Turns the manual's HTML into plain data for the Typst template (site/manual.typ), both when the build typesets the PDF
+// and when the page typesets one itself: text becomes a string, an element becomes { t: tag, c: class, k: children }, and
+// an SVG keeps its markup in `svg`. Whitespace between block elements is dropped, as the browser does when it lays them out.
+function manualTree(html = manualHTML()) {
+  const blocks = new Set(['div', 'section', 'nav', 'ul', 'ol', 'table', 'tbody', 'thead', 'tr']);
+  const walk = n => {
+    if (n.nodeType === Node.TEXT_NODE) return n.data.replace(/\s+/g, ' ');
+    if (n.nodeType !== Node.ELEMENT_NODE) return null;
+    const t = n.localName;
+    if (t === 'svg') return { t, svg: new XMLSerializer().serializeToString(n) };
+    let k = [...n.childNodes].map(walk).filter(x => x !== null);
+    if (blocks.has(t)) k = k.filter(x => typeof x !== 'string' || x.trim());
+    return { t, c: n.getAttribute('class') || '', k };
+  };
+  const root = document.createElement('div');
+  root.innerHTML = html;
+  return walk(root.firstElementChild);
+}
+
 function manualFingerprint() {
   const t = manualHTML();
   let x = 2166136261;
@@ -5423,7 +5442,7 @@ function defuse() {
 /* =====================================================================
    7. BOOT
    ===================================================================== */
-window.__zh = { manualHTML, manualFingerprint };   // used by build-manual-pdf.mjs
+window.__zh = { manualHTML, manualFingerprint, manualTree };   // used by build-manual-pdf.mjs
 // Belt and braces: block selecting and dragging text or pictures anywhere except the stand-alone manual page.
 ['selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => {
   const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
