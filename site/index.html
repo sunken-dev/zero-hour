@@ -5218,7 +5218,7 @@ function showStart() {
         h('div', { class: 'opt' }, h('b', {}, 'Modules on the bomb'), seg([2, 3, 4, 5, 6, 7, 8, 9].map(n => [n, String(n)]), opts.count, v => { opts.count = v; save(); remount(); })),
         h('div', { class: 'opt' }, h('b', {}, 'Difficulty'), (w => { [...w.children].forEach((b, i) => b.classList.add('diff-' + DIFFICULTIES[i])); return w; })(seg([['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard']], opts.difficulty, v => { opts.difficulty = v; arm.className = 'arm diff-' + v; save(); remount(); }))),
         h('div', { class: 'opt' }, h('b', {}, 'Seed'), seedRow,
-          h('small', { class: 'seedhint' }, 'The same seed with the same time, module count, difficulty, module choices and screen size gives the same bomb. Numbers and words both work.'), last)),
+          h('small', { class: 'seedhint' }, 'The same seed with the same time, module count, difficulty and module choices gives the same bomb. Numbers and words both work.'), last)),
       h('div', { class: 'startrow' }, arm,
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: openSettings }, 'Settings'),
         h('button', { class: 'tbtn setbtn', type: 'button', onclick: () => drawer.classList.add('open') }, 'Manual'),
