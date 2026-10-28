@@ -4922,6 +4922,129 @@ async function typesetManual(html) {
   return url;
 }
 
+/* ---- PoC: a PDF of the manual made with pdfmake (about 1.2 MB to load, no compiler) ----
+   The same manual data the Typst template gets (manualTree), laid out by pdfmake in the browser. It does not look
+   exactly like the Typst PDF. Loads pdfmake 0.3.13 from jsDelivr, checked against its hash, and the fonts in site/fonts. */
+const PDFMAKE = ['https://cdn.jsdelivr.net/npm/pdfmake@0.3.13/build/pdfmake.min.js', 'sha384-/JVvlU2iyYp0inj2VW4i5tkJYTSn1bVkfuhFeEXFTXMMgiSjR+dDD1pnRqgl5csu'];
+let pdfmakeLoad = null;
+function loadPdfmake() {
+  return pdfmakeLoad || (pdfmakeLoad = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    Object.assign(s, { src: PDFMAKE[0], integrity: PDFMAKE[1], crossOrigin: 'anonymous' });
+    s.onload = () => resolve(window.pdfMake);
+    s.onerror = () => { pdfmakeLoad = null; s.remove(); reject(new Error('pdfmake did not load')); };
+    document.head.append(s);
+  }));
+}
+function pocDocument(tree) {
+  const ink = '#1b262c', deep = '#0b5f73', amber = '#b06f00', rule = '#9fb0b9';
+  const CHIP = { red: '#c0392b', blue: '#2f6bff', green: '#2a9d55', yellow: '#b8940f', white: '#5e6b73', black: '#1b1f22' };
+  const kids = n => (n && n.k) || [];
+  const isEl = (n, t) => n && typeof n === 'object' && n.t === t;
+  const has = (n, c) => !!n && typeof n === 'object' && (n.c || '').split(' ').includes(c);
+  const svgOf = (n, width) => ({ svg: n.svg.replace(/currentColor/g, ink).replace(/font-family="[^"]*"/g, 'font-family="Chakra"'), width });
+  const svgWidth = n => +((n.svg.match(/\swidth="(\d+(?:\.\d+)?)"/) || [])[1] || 0);
+  const textOf = n => typeof n === 'string' ? n : isEl(n, 'br') ? '\n' : kids(n).map(textOf).join('');
+  const inline = (n, st = {}) => {
+    if (typeof n === 'string') return [{ text: n, ...st }];
+    if (n.t === 'br') return [{ text: '\n' }];
+    if (n.t === 'svg') return [];
+    if (n.t === 'b') st = { ...st, bold: true };
+    if (n.t === 'em') st = { ...st, italics: true };
+    if (has(n, 'chip')) return [{ text: textOf(n), bold: true, color: CHIP[(n.c.match(/c-(\w+)/) || [])[1]] || ink }];
+    return kids(n).flatMap(k => inline(k, st));
+  };
+  let num = 0, sub = 0;
+  // a heading (or a run of them) and the block after it never part across a page break
+  const glue = blocks => {
+    const out = [];
+    for (let i = 0; i < blocks.length; i++) {
+      if (!blocks[i].headlineLevel) { out.push(blocks[i]); continue; }
+      const run = [blocks[i]];
+      while (i + 1 < blocks.length && blocks[i + 1].headlineLevel) run.push(blocks[++i]);
+      if (i + 1 < blocks.length) run.push(blocks[++i]);
+      out.push({ stack: run, unbreakable: true });
+    }
+    return out;
+  };
+  const cols = (items, n) => ({ columns: Array.from({ length: n }, (_, c) => ({ stack: items.filter((_, i) => i % n === c) })), columnGap: 10, margin: [0, 4, 0, 8] });
+  const block = n => {
+    if (typeof n === 'string') return n.trim() ? { text: n } : null;
+    if (has(n, 'no-print') || n.t === 'nav' || has(n, 'mh')) return null;
+    switch (n.t) {
+      case 'section': return { stack: glue(kids(n).map(block).filter(Boolean)) };
+      case 'h2': sub = 0; return { text: `${++num}  ${textOf(n).toUpperCase()}`, style: 'h2', tocItem: true, headlineLevel: 1 };
+      case 'h3': return { text: `${num}.${++sub}  ${textOf(n)}`, style: 'h3', tocItem: true, tocMargin: [14, 0, 0, 0], headlineLevel: 2 };
+      case 'p': return { text: inline(n), margin: [0, 0, 0, 6] };
+      case 'ul': return { ul: kids(n).map(li => ({ text: inline(li) })), margin: [0, 0, 0, 6] };
+      case 'ol': return { ol: kids(n).map(li => ({ text: inline(li) })), margin: [0, 0, 0, 6] };
+      case 'svg': return svgOf(n, Math.min(svgWidth(n) || 200, 480));
+      case 'figure': {
+        const svg = kids(n).find(k => isEl(k, 'svg')), cap = kids(n).find(k => isEl(k, 'figcaption'));
+        return { stack: [svg ? { ...svgOf(svg, Math.min(svgWidth(svg) || 400, 480)), alignment: 'center' } : null, cap ? { text: inline(cap), style: 'caption' } : null].filter(Boolean), unbreakable: true, margin: [0, 6, 0, 10] };
+      }
+      case 'table': {
+        const rows = kids(n).flatMap(k => isEl(k, 'tbody') ? kids(k) : [k]).filter(r => isEl(r, 'tr'));
+        const body = rows.map(r => kids(r).filter(c => isEl(c, 'td') || isEl(c, 'th')).map(c => {
+          const svg = kids(c).find(k => isEl(k, 'svg'));
+          if (svg) return { ...svgOf(svg, 44), margin: [0, 2, 0, 2] };
+          return c.t === 'th' ? { text: inline(c), bold: true, color: deep, fillColor: '#e3edf1' } : { text: inline(c), ...(has(c, 'pat-c') ? { font: 'Mono' } : {}) };
+        }));
+        const width = Math.max(...body.map(r => r.length));
+        body.forEach(r => { while (r.length < width) r.push(''); });
+        return { table: { headerRows: rows[0] && kids(rows[0]).some(c => isEl(c, 'th')) ? 1 : 0, widths: Array(width).fill('*'), body }, layout: { hLineColor: rule, vLineColor: rule, hLineWidth: () => .5, vLineWidth: () => .5 }, fontSize: 9, margin: [0, 2, 0, 10] };
+      }
+      case 'div': {
+        if (has(n, 'gcols')) return { columns: kids(n).map(col => ({ stack: kids(col).map(k => isEl(k, 'svg') ? { ...svgOf(k, 26), alignment: 'center', margin: [0, 2, 0, 2] } : { text: textOf(k), bold: true, color: amber, alignment: 'center' }) })), columnGap: 8, margin: [0, 4, 0, 10] };
+        if (has(n, 'gates')) return { columns: kids(n).map(g => ({ stack: kids(g).map(k => isEl(k, 'svg') ? { ...svgOf(k, 50), alignment: 'center' } : { text: textOf(k), bold: isEl(k, 'b'), color: isEl(k, 'b') ? amber : ink, fontSize: isEl(k, 'b') ? 10 : 8, alignment: 'center' }) })), columnGap: 8, margin: [0, 4, 0, 10] };
+        if (has(n, 'mchart') || has(n, 'words')) return cols(kids(n).map(k => ({ text: inline(k), font: 'Mono', fontSize: 9 })), 4);
+        return { stack: kids(n).map(block).filter(Boolean) };
+      }
+      default: return { text: inline(n) };
+    }
+  };
+  const top = kids(tree), mh = top.find(k => has(k, 'mh')), logo = kids(mh).find(k => isEl(k, 'svg'));
+  const intro = top.filter(k => isEl(k, 'p'));
+  return {
+    pageSize: 'A4', pageMargins: [54, 64, 54, 60],
+    info: { title: 'Zero Hour: defusal manual' },
+    header: page => page > 1 ? { columns: [{ text: 'ZERO HOUR — DEFUSAL MANUAL', fontSize: 7, characterSpacing: 1, color: deep }, { text: '', width: 'auto' }], margin: [54, 30, 54, 0] } : null,
+    footer: (page, pages) => page > 1 ? { text: `Page ${page - 1} of ${pages - 1}`, alignment: 'right', fontSize: 8, color: deep, margin: [54, 20, 54, 0] } : null,
+    defaultStyle: { font: 'Chakra', fontSize: 10, lineHeight: 1.2, color: ink },
+    styles: {
+      h2: { fontSize: 18, bold: true, color: ink, margin: [0, 16, 0, 8] },
+      h3: { fontSize: 12, bold: true, color: deep, margin: [0, 10, 0, 4] },
+      caption: { fontSize: 8, color: deep, alignment: 'center', margin: [0, 4, 0, 0] }
+    },
+    content: [
+      logo ? { ...svgOf(logo, 90), margin: [0, 120, 0, 24] } : null,
+      { text: 'ZERO HOUR', fontSize: 40, bold: true },
+      { text: 'DEFUSAL MANUAL', fontSize: 16, characterSpacing: 3, color: deep, margin: [0, 0, 0, 30] },
+      ...intro.map(p => ({ text: inline(p), margin: [0, 0, 0, 6] })),
+      { text: 'Made in the browser with pdfmake (proof of concept).', fontSize: 8, color: deep, margin: [0, 20, 0, 0], pageBreak: 'after' },
+      { toc: { title: { text: 'CONTENTS', style: 'h2' } }, pageBreak: 'after' },
+      ...top.filter(k => isEl(k, 'section')).map(block)
+    ].filter(Boolean)
+  };
+}
+async function pocPdf(btn) {
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Making PDF…';
+  try {
+    const pdfMake = await loadPdfmake(), font = f => new URL(`fonts/${f}.ttf`, location.href).href;
+    const fonts = {
+      Chakra: { normal: font('ChakraPetch-Regular'), bold: font('ChakraPetch-Bold'), italics: font('ChakraPetch-Italic'), bolditalics: font('ChakraPetch-Bold') },
+      Mono: { normal: font('DejaVuSansMono'), bold: font('DejaVuSansMono-Bold'), italics: font('DejaVuSansMono'), bolditalics: font('DejaVuSansMono-Bold') }
+    };
+    if (pdfMake.addFonts) pdfMake.addFonts(fonts); else pdfMake.fonts = fonts;
+    const blob = await pdfMake.createPdf(pocDocument(manualTree(manualHTML(settings.modules)))).getBlob();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'zero-hour-manual-poc.pdf'; document.body.append(a); a.click(); a.remove();
+  } catch (e) {
+    console.warn('PoC PDF failed:', e); alert('The PoC PDF could not be made: ' + e.message);
+  } finally { btn.disabled = false; btn.textContent = label; }
+}
+/* ---- end of PoC ---- */
+
 const manualIsFull = () => !Object.values(settings.modules).some(c => c.off);
 const pdfButtons = on => [document, ...(popWin && !popWin.closed ? [popWin.document] : [])].forEach(d => d.querySelectorAll('.mbtn').forEach(b => {
   b.disabled = on; b.setAttribute('aria-busy', String(on));
@@ -4954,9 +5077,10 @@ const manualClick = e => { const b = e.target.closest && e.target.closest('[data
 
 function buildDrawer() {
   const pop = h('button', { onclick: () => popOut() }, 'Pop out');
+  const poc = h('button', { onclick: () => pocPdf(poc), title: 'Proof of concept: a PDF made in the browser with pdfmake' }, 'PDF (PoC)');
   const close = h('button', { onclick: () => drawer.classList.remove('open') }, 'Close');
   const body = h('div', { class: 'dbody' }); body.innerHTML = manualHTML(settings.modules);
-  drawer.replaceChildren(h('div', { class: 'dhead' }, h('b', {}, 'MANUAL'), pop, close), body);
+  drawer.replaceChildren(h('div', { class: 'dhead' }, h('b', {}, 'MANUAL'), poc, pop, close), body);
   drawer.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#man-"]');
     if (!a) return;
@@ -5517,7 +5641,7 @@ function defuse() {
 /* =====================================================================
    7. BOOT
    ===================================================================== */
-window.__zh = { manualHTML, manualFingerprint, manualTree, typesetManual };   // used by build-manual-pdf.mjs and the tests
+window.__zh = { manualHTML, manualFingerprint, manualTree, typesetManual, pocDocument, loadPdfmake };   // used by build-manual-pdf.mjs and the tests
 // Belt and braces: block selecting and dragging text or pictures anywhere except the stand-alone manual page.
 ['selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => {
   const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
