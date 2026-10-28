@@ -4861,8 +4861,8 @@ function manualTree(html = manualHTML()) {
    The PDF is typeset from manualHTML(), the same source as the on-screen manual (see build-manual-pdf.mjs),
    and stored inside this file. It is only offered while it still matches the manual's fingerprint; if the
    manual has changed since it was built, a fresh one is printed straight from the live manual instead. */
-function manualFingerprint() {
-  const t = manualHTML();
+const manualFingerprint = () => fingerprint(manualHTML());
+function fingerprint(t) {
   let x = 2166136261;
   for (let i = 0; i < t.length; i++) { x ^= t.charCodeAt(i); x = Math.imul(x, 16777619); }
   return (x >>> 0).toString(16);
@@ -4875,13 +4875,80 @@ function manualPdfUrl() {
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return pdfUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
 }
+/* ---- typesetting a manual in the browser ----
+   A manual for only some of the modules is typeset on the spot with typst.ts: Typst 0.14.2 (the version the build uses)
+   compiled to WebAssembly, with site/manual.typ and only the fonts in site/fonts, so it looks like the built PDF. The
+   library comes from jsDelivr at pinned versions, and the browser refuses either file if it does not match its hash.
+   The first time this downloads about 28 MB, which the browser then keeps in its cache. */
+const TYPST_TS = {
+  bundle: ['https://cdn.jsdelivr.net/npm/@myriaddreamin/typst.ts@0.7.0/dist/esm/contrib/all-in-one-lite.bundle.js', 'sha384-EJFFdZPsds9hPomUuylsX218dPBLIlif5DzJW4aFW5ofF0hjMPPlFljqBDthNql+'],
+  compiler: ['https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@0.7.0/pkg/typst_ts_web_compiler_bg.wasm', 'sha384-YB32Rpk4pOvEGytOZweRBgdbuwNueLVpzJUQojjit/A8AveMWxDW8eT9ROz98jDo']
+};
+const MANUAL_FONTS = ['ChakraPetch-Regular', 'ChakraPetch-Italic', 'ChakraPetch-SemiBold', 'ChakraPetch-Bold', 'DejaVuSansMono', 'DejaVuSansMono-Bold'];
+let typstLoad = null;
+// The compiler, checked against its hash here (a fetch with an integrity option never settled in testing).
+async function compilerModule() {
+  const [url, integrity] = TYPST_TS.compiler, r = await fetch(url);
+  if (!r.ok) throw new Error('the Typst compiler did not load');
+  const buf = await r.arrayBuffer(), digest = new Uint8Array(await crypto.subtle.digest('SHA-384', buf));
+  if ('sha384-' + btoa(String.fromCharCode(...digest)) !== integrity) throw new Error('the Typst compiler does not match its hash');
+  return buf;
+}
+function loadTypst() {
+  return typstLoad || (typstLoad = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    Object.assign(s, { type: 'module', src: TYPST_TS.bundle[0], integrity: TYPST_TS.bundle[1], crossOrigin: 'anonymous' });
+    s.onload = () => {
+      window.$typst.setCompilerInitOptions({ getModule: compilerModule });
+      window.$typst.use(window.TypstSnippet.disableDefaultFontAssets(),
+        window.TypstSnippet.preloadFonts(MANUAL_FONTS.map(f => new URL(`fonts/${f}.ttf`, location.href).href)));
+      resolve(window.$typst);
+    };
+    s.onerror = () => { typstLoad = null; s.remove(); reject(new Error('typst.ts did not load')); };
+    document.head.append(s);
+  }));
+}
+const typesetPdfs = new Map();                                // manual fingerprint -> blob URL of its PDF
+async function typesetManual(html) {
+  const rev = fingerprint(html);
+  if (typesetPdfs.has(rev)) return typesetPdfs.get(rev);
+  const [typst, template] = await Promise.all([loadTypst(), fetch('manual.typ').then(r => { if (!r.ok) throw new Error('no manual.typ'); return r.text(); })]);
+  await typst.addSource('/manual.typ', template);
+  await typst.mapShadow('/manual.json', new TextEncoder().encode(JSON.stringify(manualTree(html))));
+  const pdf = await typst.pdf({ mainFilePath: '/manual.typ', inputs: { revision: rev } });
+  if (!pdf || !pdf.length) throw new Error('Typst gave no PDF');
+  const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+  typesetPdfs.set(rev, url);
+  return url;
+}
+
 const manualIsFull = () => !Object.values(settings.modules).some(c => c.off);
-function manualAction(act, win = window) {
+const pdfButtons = on => [document, ...(popWin && !popWin.closed ? [popWin.document] : [])].forEach(d => d.querySelectorAll('.mbtn').forEach(b => {
+  b.disabled = on; b.setAttribute('aria-busy', String(on));
+  if (on) { b.dataset.label = b.textContent; b.textContent = 'Preparing PDF\u2026'; } else if (b.dataset.label) b.textContent = b.dataset.label;
+}));
+async function manualAction(act, win = window) {
   if (act !== 'pdf-open' && act !== 'pdf-download') return;
-  const url = manualIsFull() ? manualPdfUrl() : null;          // the built PDF covers every module
-  if (!url) { popOut(true); return; }                         // no matching PDF: print a fresh one (choose "Save as PDF")
-  if (act === 'pdf-open') win.open(url, '_blank');
-  else { const a = win.document.createElement('a'); a.href = url; a.download = 'zero-hour-manual.pdf'; win.document.body.append(a); a.click(); a.remove(); }
+  const deliver = url => {
+    if (act === 'pdf-open') return win.open(url, '_blank');
+    const a = win.document.createElement('a'); a.href = url; a.download = 'zero-hour-manual.pdf'; win.document.body.append(a); a.click(); a.remove();
+  };
+  if (manualIsFull()) {                                       // the built PDF covers every module
+    const url = manualPdfUrl();
+    if (url) deliver(url); else popOut(true);                 // out of date: print a fresh one (choose "Save as PDF")
+    return;
+  }
+  const tab = act === 'pdf-open' ? win.open('', '_blank') : null;   // opened now, while the click still allows it
+  if (tab) tab.document.write('<title>Zero Hour manual</title><p style="font:16px sans-serif">Preparing your manual\u2026</p>');
+  pdfButtons(true);
+  try {
+    const url = await typesetManual(manualHTML(settings.modules));
+    if (tab) tab.location.href = url; else deliver(url);
+  } catch (e) {
+    console.warn('Typesetting the manual in the browser failed, printing it instead:', e);
+    if (tab) tab.close();
+    popOut(true);
+  } finally { pdfButtons(false); }
 }
 const manualClick = e => { const b = e.target.closest && e.target.closest('[data-act]'); if (b) manualAction(b.dataset.act, e.view || window); };
 
@@ -4902,8 +4969,9 @@ function buildDrawer() {
 }
 // The drawer's manual follows the module explorer: call after modules are switched on or off.
 function refreshManual() { const body = drawer.querySelector('.dbody'); if (body) body.innerHTML = manualHTML(settings.modules); }
+let popWin = null;                                            // the popped-out manual, if open
 function popOut(print = false) {
-  const w = window.open('', 'zero-hour-manual', 'width=640,height=880');
+  const w = popWin = window.open('', 'zero-hour-manual', 'width=640,height=880');
   if (!w) { alert('The browser blocked the pop-up. Use the side panel, or open this page again with ?manual on the end of the address.'); return; }
   w.document.write('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manual</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">' +
@@ -5449,7 +5517,7 @@ function defuse() {
 /* =====================================================================
    7. BOOT
    ===================================================================== */
-window.__zh = { manualHTML, manualFingerprint, manualTree };   // used by build-manual-pdf.mjs
+window.__zh = { manualHTML, manualFingerprint, manualTree, typesetManual };   // used by build-manual-pdf.mjs and the tests
 // Belt and braces: block selecting and dragging text or pictures anywhere except the stand-alone manual page.
 ['selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => {
   const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);

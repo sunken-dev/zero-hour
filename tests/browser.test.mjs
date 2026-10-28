@@ -2,6 +2,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -70,6 +71,28 @@ test('the embedded PDF is the one for the current manual, and the buttons open a
   assert.deepEqual([got.url, got.head], ['blob:', '%PDF-']);
   assert.ok(got.n > 50000);
 }));
+
+test('a manual with modules switched off is typeset in the browser: a PDF from the same template and fonts', { timeout: 240000 }, async () => {
+  // served over HTTP like the real site, since the page fetches site/manual.typ and site/fonts (typst.ts comes from jsDelivr)
+  const site = path.dirname(indexFile);
+  const server = http.createServer((req, res) => {
+    const file = path.join(site, decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\/$/, '/index.html'));
+    if (!file.startsWith(site) || !fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200); fs.createReadStream(file).pipe(res);
+  });
+  await new Promise(r => server.listen(0, r));
+  try {
+    await withPage(`http://localhost:${server.address().port}/`, async page => {
+      const r = await page.evaluate(async () => {
+        const url = await window.__zh.typesetManual(window.__zh.manualHTML({ wires: { off: true } }));
+        const b = new Uint8Array(await (await fetch(url)).arrayBuffer());
+        return { head: new TextDecoder().decode(b.slice(0, 5)), size: b.length };
+      });
+      assert.equal(r.head, '%PDF-');
+      assert.ok(r.size > 100000, `a whole manual, not an empty file (${r.size} bytes)`);
+    });
+  } finally { server.close(); }
+});
 
 test('a stale PDF is never offered: the buttons print a fresh copy of the live manual instead', T, () => withPage(home(), async page => {
   await page.waitForSelector('.arm');
