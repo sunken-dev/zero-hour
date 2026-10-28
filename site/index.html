@@ -151,7 +151,9 @@ svg{display:block}
   box-shadow:inset 0 0 0 1px #000b,inset 0 0 0 7px #111b22,inset 0 0 0 8px #43dfff38,inset 0 0 70px #000b}
 /* The shading of a face turned away from the light (--dim) is painted into the face's own background and the blank bay
    covers, never as a separate plane: a film lying just above the panel would be ordered unreliably against it as the
-   case turns, and flicker. */
+   case turns, and flicker. --dim does not inherit, and is set on each face and each blank cover: changing an inherited
+   property on a face would make the browser restyle every part on it, every frame the case turns. */
+@property --dim{syntax:'<number>';inherits:false;initial-value:0}
 /* Smooth the edges of 3D facets (a transparent outline makes the browser anti-alias them) */
 .cb>*,.fz,.fc,.cz-top,.disc{outline:1px solid transparent}
 .face,.face *{transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden}
@@ -4490,7 +4492,7 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
   // init.spin: a slow turn in degrees per second while nobody touches the case (start screen); off for reduced motion
   const spin = init.spin && !matchMedia('(prefers-reduced-motion: reduce)').matches ? init.spin : 0;
   const idle = now => spin && !drag && now - lastInput > 2500;
-  const pend = { x: 0, y: 0 }, vel = { yaw: 0, pitch: 0 }, lastDim = {};
+  const pend = { x: 0, y: 0 }, vel = { yaw: 0, pitch: 0 }, lastDim = {}, blanks = {};
   stage.classList.toggle('narrow', narrow);
 
   function shade() {
@@ -4503,7 +4505,12 @@ function createRig(stage, bomb3d, faces, L, init = {}) {
       const y2 = n[1] * cp - z * sp, z2 = n[1] * sp + z * cp;
       const b = Math.max(0, x * LIGHT[0] + y2 * LIGHT[1] + z2 * LIGHT[2]);
       const dim = (1 - Math.min(1, .38 + .8 * b)) * .8;
-      if (Math.abs(dim - (lastDim[name] ?? -1)) > .004) { lastDim[name] = dim; faces[name].style.setProperty('--dim', dim.toFixed(3)); }   // only touch the DOM when it changed
+      if (Math.abs(dim - (lastDim[name] ?? -1)) > .004) {                // only touch the DOM when it changed
+        lastDim[name] = dim;
+        const v = dim.toFixed(3);
+        faces[name].style.setProperty('--dim', v);
+        (blanks[name] || (blanks[name] = [...faces[name].querySelectorAll('.blank')])).forEach(b => b.style.setProperty('--dim', v));
+      }
       if (z2 > bz) { bz = z2; best = name; }
     }
     if (best !== facing) { facing = best; api && api.onFacing && api.onFacing(best); }
