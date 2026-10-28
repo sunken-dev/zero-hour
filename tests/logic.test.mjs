@@ -525,8 +525,9 @@ test('the PDF layout: numbered chapters, headings kept with what follows, lamp p
   assert.ok(dd.content.some(n => n.toc), 'a contents page');
   const knob = dd.content.at(-1).stack[0];
   assert.equal(knob.unbreakable, true, 'the headings and the table after them stay together');
-  assert.deepEqual([...knob.stack].map(n => n.headlineLevel || (n.table ? 'table' : '?')), [1, 2, 'table']);
-  const svg = knob.stack[2].table.body[1][0].svg;
+  const tableOf = n => n.table || (n.stack && n.stack[0] && n.stack[0].table);
+  assert.deepEqual([...knob.stack].map(n => n.headlineLevel || (tableOf(n) ? 'table' : '?')), [1, 2, 'table']);
+  const svg = tableOf(knob.stack[2]).body[1][0].svg;
   assert.equal((svg.match(/fill="none"/g) || []).length, 2, 'two empty lamps');
   assert.equal((svg.match(/<circle/g) || []).length, 4, 'four lamps');
   assert.ok(text.includes('markup the layout does not know'), 'unknown markup still shows its text');
@@ -537,6 +538,23 @@ test('the published PDF is for the current manual (run npm run pdf after changin
   const pdf = fs.readFileSync(path.join(siteDir, 'zero-hour-manual.pdf'), 'latin1');
   const subject = (pdf.match(/\/Subject (\d+) 0 R/) || [])[1], rev = subject && (pdf.match(new RegExp(`\\n${subject} 0 obj\\s*\\(Revision ([0-9a-f]+)\\)`)) || [])[1];
   assert.equal(rev, g.manualFingerprint(), 'zero-hour-manual.pdf is out of date: run npm run pdf');
+});
+
+test('the PDF layout never splits a table across pages', () => {
+  const el = (t, c, ...k) => ({ t, c, k });
+  const row = (...cells) => el('tr', '', ...cells.map(c => el('td', '', c)));
+  const tree = el('div', 'manual', el('div', 'mh', el('h1', '', 'Defusal manual')),
+    el('section', '', el('h2', '', 'Wires'), el('p', '', 'Cut one.'), el('p', '', 'Count from the top.'),
+      el('table', 'tbl', el('tbody', '', ...Array.from({ length: 30 }, (_, k) => row(String(k), 'x'))))));
+  const tables = [];
+  const find = (n, held) => {
+    if (!n || typeof n !== 'object') return;
+    if (n.table) tables.push(held || !!n.unbreakable);
+    const inner = held || !!n.unbreakable;
+    [...(n.stack || []), ...(n.columns || []), ...(n.content || [])].forEach(k => find(k, inner));
+  };
+  find(g.manualPdfDoc(tree, 'r'));
+  assert.ok(tables.length >= 1 && tables.every(Boolean), 'every table sits in an unbreakable block');
 });
 
 test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {

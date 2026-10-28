@@ -4945,7 +4945,8 @@ function manualPdfDoc(tree, revision) {
         }));
         const width = Math.max(...body.map(r => r.length));
         body.forEach(r => { while (r.length < width) r.push(''); });
-        return { table: { headerRows: rows[0] && kids(rows[0]).some(c => isEl(c, 'th')) ? 1 : 0, widths: Array(width).fill('*'), body }, layout: { hLineColor: rule, vLineColor: rule, hLineWidth: () => .5, vLineWidth: () => .5 }, fontSize: 9, margin: [0, 2, 0, 10] };
+        // a table is never split across pages: it moves to the next page whole
+        return { stack: [{ table: { headerRows: rows[0] && kids(rows[0]).some(c => isEl(c, 'th')) ? 1 : 0, widths: Array(width).fill('*'), body }, layout: { hLineColor: rule, vLineColor: rule, hLineWidth: () => .5, vLineWidth: () => .5 }, fontSize: 9, margin: [0, 2, 0, 10] }], unbreakable: true };
       }
       case 'div': {
         if (has(n, 'gcols')) return { columns: kids(n).map(col => ({ stack: kids(col).map(k => isEl(k, 'svg') ? { ...svgOf(k, 26), alignment: 'center', margin: [0, 2, 0, 2] } : { text: textOf(k), bold: true, color: amber, alignment: 'center' }) })), columnGap: 8, margin: [0, 4, 0, 10] };
