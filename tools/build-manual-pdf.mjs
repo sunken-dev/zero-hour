@@ -2,52 +2,39 @@
 //
 //   node tools/build-manual-pdf.mjs site/index.html
 //
-// It opens the stand-alone manual page (index.html?manual) in headless Chrome and reads manualTree(): manualHTML(), the
-// same source as the on-screen manual, as a tree of elements. Typst typesets that tree with site/manual.typ and only the
-// fonts in site/fonts, with the manual's fingerprint as its revision.
-//
-// Needs the typst CLI on the PATH, or TYPST_PATH set to it.
+// The PDF comes from the page itself: the same pdfmake code its Download button uses (manualPdf), for the full manual.
+// The page's folder is served over HTTP, because the page fetches its fonts from fonts/ (and pdfmake from jsDelivr), and
+// opened in headless Chrome. The file is the same for the same manual, and carries the manual's fingerprint as its
+// revision (in the PDF's subject), which the tests compare with the live manual.
 import fs from 'node:fs';
-import os from 'node:os';
+import http from 'node:http';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { launch } from './chrome.mjs';
-
-const siteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'site');
-
-export function typeset(tree, revision) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zero-hour-manual-'));
-  try {
-    fs.copyFileSync(path.join(siteDir, 'manual.typ'), path.join(dir, 'manual.typ'));
-    fs.writeFileSync(path.join(dir, 'manual.json'), JSON.stringify(tree));
-    const out = path.join(dir, 'manual.pdf');
-    try {
-      execFileSync(process.env.TYPST_PATH || 'typst', [
-        'compile', '--root', dir, '--font-path', path.join(siteDir, 'fonts'), '--ignore-system-fonts', '--ignore-embedded-fonts',
-        ...(revision ? ['--input', 'revision=' + revision] : []),
-        path.join(dir, 'manual.typ'), out
-      ], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
-    } catch (e) {
-      if (e.code === 'ENOENT') throw new Error('typst not found. Install it (https://typst.app) or set TYPST_PATH to the typst binary.');
-      throw new Error('typst could not typeset the manual:\n' + (e.stderr || e.message));
-    }
-    return fs.readFileSync(out);
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
-}
 
 export async function buildManualPdf(file) {
   file = path.resolve(file);
+  const dir = path.dirname(file);
+  const server = http.createServer((req, res) => {
+    const f = path.join(dir, decodeURIComponent(new URL(req.url, 'http://x').pathname));
+    if (!f.startsWith(dir) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200); fs.createReadStream(f).pipe(res);
+  });
+  await new Promise(r => server.listen(0, r));
   const browser = await launch();
-  let hash, tree;
+  let hash, pdf;
   try {
     const page = await browser.newPage();
-    await page.goto(pathToFileURL(file).href + '?manual', { waitUntil: 'load' });
+    await page.goto(`http://localhost:${server.address().port}/${path.basename(file)}?manual`, { waitUntil: 'load' });
     hash = await page.evaluate(() => window.__zh.manualFingerprint());
-    tree = await page.evaluate(() => window.__zh.manualTree());
-  } finally { await browser.close(); }
-  const pdf = typeset(tree, hash);
-  const pdfFile = path.join(path.dirname(file), 'zero-hour-manual.pdf');
+    pdf = Buffer.from(await page.evaluate(async () => {
+      const b = new Uint8Array(await (await fetch(await window.__zh.manualPdf({}))).arrayBuffer());
+      let s = '';
+      for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode(...b.subarray(i, i + 8192));
+      return btoa(s);
+    }), 'base64');
+  } finally { await browser.close(); server.close(); }
+  const pdfFile = path.join(dir, 'zero-hour-manual.pdf');
   fs.writeFileSync(pdfFile, pdf);
   return { hash, bytes: pdf.length, pdfFile };
 }

@@ -34,9 +34,6 @@ jobs:
       - uses: browser-actions/setup-chrome@v2
         id: chrome
 
-      - uses: typst-community/setup-typst@v5
-        with:
-          typst-version: 0.14.2
 
       - name: Test
         run: npm test

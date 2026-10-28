@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadGame } from './game.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { loadGame, siteDir } from './game.mjs';
 
 const g = loadGame();
 const isPlate = k => k === 'serial' || k === 'plate';
@@ -529,6 +531,12 @@ test('the PDF layout: numbered chapters, headings kept with what follows, lamp p
   assert.equal((svg.match(/<circle/g) || []).length, 4, 'four lamps');
   assert.ok(text.includes('markup the layout does not know'), 'unknown markup still shows its text');
   assert.match(JSON.stringify(dd.footer(3, 10)), /Revision abc123/);
+});
+
+test('the published PDF is for the current manual (run npm run pdf after changing manual text)', () => {
+  const pdf = fs.readFileSync(path.join(siteDir, 'zero-hour-manual.pdf'), 'latin1');
+  const subject = (pdf.match(/\/Subject (\d+) 0 R/) || [])[1], rev = subject && (pdf.match(new RegExp(`\\n${subject} 0 obj\\s*\\(Revision ([0-9a-f]+)\\)`)) || [])[1];
+  assert.equal(rev, g.manualFingerprint(), 'zero-hour-manual.pdf is out of date: run npm run pdf');
 });
 
 test('warning beep: intervals per mode, and one beep each time the shown clock passes a multiple', () => {

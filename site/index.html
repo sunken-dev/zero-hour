@@ -4960,7 +4960,8 @@ function manualPdfDoc(tree, revision) {
   const intro = top.filter(k => isEl(k, 'p'));
   return {
     pageSize: 'A4', pageMargins: [54, 64, 54, 60],
-    info: { title: 'Zero Hour: defusal manual' },
+    // fixed dates and the revision in the metadata: the same manual always gives the same file, and its revision can be read back
+    info: { title: 'Zero Hour: defusal manual', subject: `Revision ${revision}`, creationDate: new Date(Date.UTC(2026, 0, 1)), modDate: new Date(Date.UTC(2026, 0, 1)) },
     header: page => page > 1 ? { columns: [{ text: 'ZERO HOUR — DEFUSAL MANUAL', fontSize: 7, characterSpacing: 1, color: deep }, { text: '', width: 'auto' }], margin: [54, 30, 54, 0] } : null,
     footer: (page, pages) => page > 1 ? { columns: [{ text: `Revision ${revision}` }, { text: `Page ${page - 1} of ${pages - 1}`, alignment: 'right' }], fontSize: 8, color: deep, margin: [54, 20, 54, 0] } : null,
     defaultStyle: { font: 'Chakra', fontSize: 10, lineHeight: 1.2, color: ink },
