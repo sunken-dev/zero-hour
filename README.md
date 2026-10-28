@@ -36,15 +36,15 @@ Or just open `site/index.html` in a browser.
 site/                the published site (this folder is what gets deployed)
   index.html         the game, its manual and the embedded PDF manual
   zero-hour-manual.pdf, zero-hour-preview.png, icons, CNAME, robots.txt, sitemap.xml, ...
-tools/               build scripts, the Typst template for the PDF manual and its fonts
+tools/               build scripts
 tests/               tests (node:test)
 .github/workflows/   CI and deployment
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Runs all tests. The browser tests need Chrome: set `CHROME_PATH` to a Chrome or Chromium binary. The PDF tests need [Typst](https://typst.app). |
-| `npm run pdf` | Rebuilds the PDF manual from the manual's source and embeds it in `site/index.html`. Needs Chrome and Typst. |
+| `npm test` | Runs all tests. The browser tests need Chrome: set `CHROME_PATH` to a Chrome or Chromium binary. |
+| `npm run pdf` | Rebuilds `site/zero-hour-manual.pdf` from the manual's source. Needs Chrome and an internet connection (pdfmake comes from jsDelivr). |
 | `npm run build` | Copies `site/` to `dist/` and rebuilds the PDF inside `dist/`. This is what gets published. |
 | `npm run icons` | Redraws every favicon and app icon from the logo mark. |
 | `npm run preview` | Re-renders the link-preview images (`-- --seed 1978` picks the bomb). |
@@ -53,20 +53,16 @@ tests/               tests (node:test)
 ### The manual and its PDF
 
 The manual is generated from the modules' own text (`manual()` and `manualBack()` on each module), so it cannot drift from
-the rules. `tools/build-manual-pdf.mjs` reads that same manual from the page in headless Chrome and has Typst typeset it
-with `site/manual.typ` and the fonts in `site/fonts/`. The PDF is stored inside `index.html` with a fingerprint of the
-manual text. Typst stops with an error when a manual uses markup the template does not know: teach `site/manual.typ` the
-new element. CI pins the Typst version; use the same one locally (`typst-version` in `.github/workflows/`) so
-`npm run pdf` produces the same file. The game only offers the stored PDF while the fingerprint matches; otherwise its buttons
-print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
-test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
+the rules. Its PDF is made in the browser with [pdfmake](https://pdfmake.github.io/docs/): the page turns the manual into
+plain data (`manualTree`), lays it out (`manualPdfDoc`) and has pdfmake write the PDF with the Chakra Petch fonts in
+`site/fonts/`. pdfmake loads from jsDelivr at a pinned version, checked against its SHA-384 hash (`PDFMAKE` in
+`index.html`); it is about 0.8 MB, and the fonts about 0.3 MB. When players switch modules off in the module explorer,
+the manual and its PDF leave them out. Opened from disk, or when pdfmake cannot load, the buttons print the manual instead.
 
-The stored PDF covers every module. When players switch modules off in the module explorer, the manual leaves them out,
-and the page typesets that shorter PDF itself: [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) runs Typst 0.14.2
-as WebAssembly with the same `site/manual.typ` and fonts. It loads from jsDelivr at pinned versions and is checked
-against SHA-384 hashes (`TYPST_TS` in `index.html`); the first time it downloads about 28 MB. That is also why CI builds
-with Typst 0.14.2: the stored PDF and the one made in the browser come from the same Typst. When the page is opened from
-disk, or typst.ts cannot load, the buttons print the shorter manual instead.
+`site/zero-hour-manual.pdf`, the full manual, is made by the same code: `tools/build-manual-pdf.mjs` serves the page,
+opens it in headless Chrome and asks it for the PDF. The same manual always gives the same file, and its revision (the
+manual's fingerprint) is in the PDF's subject. After changing any rule or manual text, run `npm run pdf` before
+committing. A test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
 
 ### Adding a module
 

@@ -4836,9 +4836,9 @@ const opts = settings;   // time and module count are remembered with the other 
 let G = null, demo = null;
 const drawer = h('aside', { class: 'drawer', 'aria-label': 'Defusal manual' });
 
-// Turns the manual's HTML into plain data for the Typst template (site/manual.typ), both when the build typesets the PDF
-// and when the page typesets one itself: text becomes a string, an element becomes { t: tag, c: class, k: children }, and
-// an SVG keeps its markup in `svg`. Whitespace between block elements is dropped, as the browser does when it lays them out.
+// Turns the manual's HTML into plain data for the PDF layout (manualPdfDoc): text becomes a string, an element becomes
+// { t: tag, c: class, k: children }, and an SVG keeps its markup in `svg`. Whitespace between block elements is dropped,
+// as the browser does when it lays them out.
 function manualTree(html = manualHTML()) {
   const blocks = new Set(['div', 'section', 'nav', 'ul', 'ol', 'table', 'tbody', 'thead', 'tr']);
   const walk = n => {
