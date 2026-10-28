@@ -61,6 +61,13 @@ new element. CI pins the Typst version; use the same one locally (`typst-version
 print a fresh copy from the live manual. After changing any rule or manual text, run `npm run pdf` before committing. A
 test fails if you forget, and the deploy workflow rebuilds the PDF anyway.
 
+The stored PDF covers every module. When players switch modules off in the module explorer, the manual leaves them out,
+and the page typesets that shorter PDF itself: [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) runs Typst 0.14.2
+as WebAssembly with the same `site/manual.typ` and fonts. It loads from jsDelivr at pinned versions and is checked
+against SHA-384 hashes (`TYPST_TS` in `index.html`); the first time it downloads about 28 MB. That is also why CI builds
+with Typst 0.14.2: the stored PDF and the one made in the browser come from the same Typst. When the page is opened from
+disk, or typst.ts cannot load, the buttons print the shorter manual instead.
+
 ### Adding a module
 
 A module is one `Modules.register({ ... })` block in `site/index.html`: `id`, `title`, `difficulty`, `create(bomb, r)`,
